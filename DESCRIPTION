@@ -1,0 +1,22 @@
+Package: phylolimma
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.1.0
+Authors@R: c(
+    person("Paul", "Bastide", email = "paul.bastide@umontpellier.fr", role = c("aut", "cre")),
+    person("Mélina", "Gallopin", role = "ctb"))
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+Depends:
+    limma
+Imports:
+    ape,
+    phylolm,
+    methods
+Suggests: 
+    edgeR,
+    testthat
+RoxygenNote: 7.1.1
