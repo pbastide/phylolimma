@@ -27,6 +27,9 @@
 #' The object can be passed to \code{\link[limma]{eBayes}}.
 #'
 #' @importFrom methods new
+#'
+#' @export
+#'
 phylolmFit <- function(object, design = NULL, phy,
                        model = c("BM", "lambda", "OUfixedRoot", "delta"),
                        measurement_error = FALSE, ...) {

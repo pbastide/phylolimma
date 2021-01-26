@@ -1,15 +1,15 @@
 Package: phylolimma
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Phylogenetic Comparative Methods for limma
 Version: 0.1.0
 Authors@R: c(
     person("Paul", "Bastide", email = "paul.bastide@umontpellier.fr", role = c("aut", "cre")),
     person("Mélina", "Gallopin", role = "ctb"))
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Helper functions to correct for the phylogeny before using the empirical Bayes procedure of limma
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
+biocViews:
 Depends:
     limma
 Imports:
