@@ -18,5 +18,6 @@ Imports:
     methods
 Suggests: 
     edgeR,
-    testthat
+    testthat,
+    covr
 RoxygenNote: 7.1.1
