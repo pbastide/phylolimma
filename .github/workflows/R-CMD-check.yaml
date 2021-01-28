@@ -32,6 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name:  Provide gfortran
+      if: runner.os == 'macOS'
+        run: |
+          set -x
+          sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
+          gfortran --version
+
       - uses: r-lib/actions/setup-r@v1
         with:
           r-version: ${{ matrix.config.r }}
