@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name:  Provide gfortran
-      if: runner.os == 'macOS'
+        if: runner.os == 'macOS'
         run: |
           set -x
           sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
