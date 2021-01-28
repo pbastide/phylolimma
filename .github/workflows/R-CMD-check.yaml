@@ -81,6 +81,6 @@ jobs:
           path: check
 
       - name: Test coverage
-        if: matrix.config.os == 'macOS'
+        if: runner.os == 'macOS'
         run: covr::codecov()
         shell: Rscript {0}
