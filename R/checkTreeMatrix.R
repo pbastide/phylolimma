@@ -26,11 +26,11 @@ checkParamMatrix <- function(x, name, tree, transpose = FALSE) {
         data_tree_cor <- match(colnames(x), tree$tip.label)
         if (anyNA(tree_data_cor)) {
           # Species in the tree NOT in data
-          stop("Species '", tree$tip.label[is.na(tree_data_cor)], "' is in the tree but not in the data.")
-        }
-        if (anyNA(tree_data_cor)) {
-          # Species in data NOT in the tree
-          stop("Species '", colnames(x)[is.na(data_tree_cor)], "' is in the data but not in the tree.")
+          stopMessage <- paste0("Species '", tree$tip.label[is.na(tree_data_cor)], "' is in the tree but not in the design.")
+          if (anyNA(data_tree_cor)) {
+            # Species in data NOT in the tree
+            stop(stopMessage, "\n  ", "Species '", colnames(x)[is.na(data_tree_cor)], "' is in the design but not in the tree." )
+          }
         }
         if (length(unique(tree_data_cor)) != length(tree$tip.label)){
           stop(paste0("`", name, "` names do not match the tip labels."))
@@ -52,11 +52,12 @@ checkParamMatrix <- function(x, name, tree, transpose = FALSE) {
         data_tree_cor <- match(rownames(x), tree$tip.label)
         if (anyNA(tree_data_cor)) {
           # Species in the tree NOT in data
-          stop("Species '", tree$tip.label[is.na(tree_data_cor)], "' is in the tree but not in the design.")
-        }
-        if (anyNA(tree_data_cor)) {
-          # Species in data NOT in the tree
-          stop("Species '", rownames(x)[is.na(data_tree_cor)], "' is in the design but not in the tree.")
+          stopMessage <- paste0("Species '", tree$tip.label[is.na(tree_data_cor)], "' is in the tree but not in the design.")
+          if (anyNA(data_tree_cor)) {
+            # Species in data NOT in the tree
+            stop(stopMessage, "\n  ", "Species '", rownames(x)[is.na(data_tree_cor)], "' is in the design but not in the tree." )
+
+          }
         }
         if (length(unique(tree_data_cor)) != length(tree$tip.label)){
           stop(paste0("`", name, "` names do not match the tip labels."))

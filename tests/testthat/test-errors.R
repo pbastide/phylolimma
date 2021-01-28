@@ -11,6 +11,8 @@ test_that("Errors with species names", {
   y_data <- matrix(rnorm(ngenes*ntips), ncol = ngenes)
   expect_error(phylolmFit(y_data, phy = tree),
                "not equal to array extent")
+  expect_error(checkParamMatrix(y_data, "data", tree),
+               "`data` should have as many columns as the number of taxa in the tree.")
   # no names
   y_data <- matrix(rnorm(ngenes*ntips), nrow = ngenes)
   expect_error(phylolmFit(y_data, phy = tree),
@@ -25,14 +27,14 @@ test_that("Errors with species names", {
   # wrong names
   colnames(y_data)[1] <- "moustache"
   expect_error(phylolmFit(y_data, phy = tree),
-               "Species 't1' is in the tree but not in the data.")
+               "Species 't1' is in the tree but not in the design.\n  Species 'moustache' is in the design but not in the tree.")
   # Correct name and order
   colnames(y_data) <- tree$tip.label
   # wrong names tree
   tree_wrong <- tree
   tree_wrong$tip.label[1] <- "moustache"
   expect_error(phylolmFit(y_data, phy = tree_wrong),
-               "Species 'moustache' is in the tree but not in the data.")
+               "Species 'moustache' is in the tree but not in the design.\n  Species 't1' is in the design but not in the tree.")
 
 
   ## Design
@@ -41,6 +43,8 @@ test_that("Errors with species names", {
   # wrong dimension
   expect_error(phylolmFit(y_data, design = t(design), phy = tree),
                "row dimension of design doesn't match column dimension of data object")
+  expect_error(checkParamMatrix(t(design), "design", tree, TRUE),
+               "`design` should have as many rows as the number of taxa in the tree.")
   # no names
   expect_error(phylolmFit(y_data, design = design, phy = tree),
                "`design matrix` and/or the tips of the phylogeny are not named.")
@@ -54,7 +58,7 @@ test_that("Errors with species names", {
   # wrong names
   rownames(design)[1] <- "moustache"
   expect_error(phylolmFit(y_data, design = design, phy = tree),
-               "Species 't1' is in the tree but not in the design")
+               "Species 't1' is in the tree but not in the design.\n  Species 'moustache' is in the design but not in the tree.")
 })
 
 test_that("Unused parameters", {
