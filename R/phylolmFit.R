@@ -84,7 +84,7 @@ phylolmFit <- function(object, design = NULL, phy,
   if (model == "BM" && !measurement_error) {
     resFitFormat <- resLmFit
   } else {
-    resFitFormat <- new("MArrayLM",
+    resFitFormat <- new("PhyloMArrayLM",
                         list(coefficients = do.call(rbind, resLmFit["coefficients", ]),
                              sigma = do.call(c, resLmFit["sigma", ]),
                              stdev.unscaled = do.call(rbind, resLmFit["stdev.unscaled", ]),

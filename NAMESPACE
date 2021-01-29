@@ -3,5 +3,8 @@
 export(addReplicatesOnTree)
 export(lengthNormalizeRNASeq)
 export(phylolmFit)
+exportClasses(PhyloMArrayLM)
 import(limma)
+import(methods)
+importClassesFrom(limma,MArrayLM)
 importFrom(methods,new)
