@@ -26,10 +26,10 @@ checkParamMatrix <- function(x, name, tree, transpose = FALSE) {
         data_tree_cor <- match(colnames(x), tree$tip.label)
         if (anyNA(tree_data_cor)) {
           # Species in the tree NOT in data
-          stopMessage <- paste0("Species '", tree$tip.label[is.na(tree_data_cor)], "' is in the tree but not in the design.")
+          stopMessage <- paste0("Species '", paste(tree$tip.label[is.na(tree_data_cor)], collapse = "' '"), "' are in the tree but not in ", name, ".")
           if (anyNA(data_tree_cor)) {
             # Species in data NOT in the tree
-            stop(stopMessage, "\n  ", "Species '", colnames(x)[is.na(data_tree_cor)], "' is in the design but not in the tree." )
+            stop(stopMessage, "\n  ", "Species '", paste(colnames(x)[is.na(data_tree_cor)], collapse = "' '"), "' is in ", name, " but not in the tree.")
           }
         }
         if (length(unique(tree_data_cor)) != length(tree$tip.label)){
@@ -52,10 +52,10 @@ checkParamMatrix <- function(x, name, tree, transpose = FALSE) {
         data_tree_cor <- match(rownames(x), tree$tip.label)
         if (anyNA(tree_data_cor)) {
           # Species in the tree NOT in data
-          stopMessage <- paste0("Species '", tree$tip.label[is.na(tree_data_cor)], "' is in the tree but not in the design.")
+          stopMessage <- paste0("Species '", paste(tree$tip.label[is.na(tree_data_cor)], collapse = "', '"), "' are in the tree but not in ", name, ".")
           if (anyNA(data_tree_cor)) {
             # Species in data NOT in the tree
-            stop(stopMessage, "\n  ", "Species '", rownames(x)[is.na(data_tree_cor)], "' is in the design but not in the tree." )
+            stop(stopMessage, "\n  ", "Species '", paste(rownames(x)[is.na(data_tree_cor)], collapse = "', '"), "' are in ", name, " but not in the tree.")
 
           }
         }

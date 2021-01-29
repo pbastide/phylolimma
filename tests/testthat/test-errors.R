@@ -27,14 +27,14 @@ test_that("Errors with species names", {
   # wrong names
   colnames(y_data)[1] <- "moustache"
   expect_error(phylolmFit(y_data, phy = tree),
-               "Species 't1' is in the tree but not in the design.\n  Species 'moustache' is in the design but not in the tree.")
+               "Species 't1' are in the tree but not in expression matrix.\n  Species 'moustache' is in expression matrix but not in the tree.")
   # Correct name and order
   colnames(y_data) <- tree$tip.label
   # wrong names tree
   tree_wrong <- tree
   tree_wrong$tip.label[1] <- "moustache"
   expect_error(phylolmFit(y_data, phy = tree_wrong),
-               "Species 'moustache' is in the tree but not in the design.\n  Species 't1' is in the design but not in the tree.")
+               "Species 'moustache' are in the tree but not in expression matrix.\n  Species 't1' is in expression matrix but not in the tree.")
 
 
   ## Design
@@ -58,7 +58,7 @@ test_that("Errors with species names", {
   # wrong names
   rownames(design)[1] <- "moustache"
   expect_error(phylolmFit(y_data, design = design, phy = tree),
-               "Species 't1' is in the tree but not in the design.\n  Species 'moustache' is in the design but not in the tree.")
+               "Species 't1' are in the tree but not in design matrix.\n  Species 'moustache' are in design matrix but not in the tree.")
 })
 
 test_that("Unused parameters", {

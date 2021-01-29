@@ -17,6 +17,8 @@ Imports:
     phylolm,
     methods
 Suggests: 
+    Rphylopars,
+    phytools,
     edgeR,
     testthat,
     covr
