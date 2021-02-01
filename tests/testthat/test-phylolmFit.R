@@ -5,7 +5,7 @@ test_that("transformation is correct", {
   tree <- ape::rphylo(ntips, 0.1, 0)
   mat_tree <- ape::vcv(tree)
   ## Chol
-  C_tree <- get_chol_tree(NULL, NULL, tree, "BM", FALSE)
+  C_tree <- get_chol_tree(NULL, NULL, tree, "BM", FALSE)$C_tree
   expect_equal(t(C_tree) %*% C_tree, mat_tree)
   ## data
   ngenes <- 100
