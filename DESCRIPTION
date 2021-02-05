@@ -11,8 +11,9 @@ Encoding: UTF-8
 LazyData: true
 biocViews:
 Depends:
-    limma
+    R (>= 4.0)
 Imports:
+    limma,
     ape,
     phylolm,
     methods

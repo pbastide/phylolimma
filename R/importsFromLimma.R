@@ -31,3 +31,19 @@
 #' @import methods
 #' @importClassesFrom limma MArrayLM
 .PhyloMArrayLM <- setClass("PhyloMArrayLM", representation("list"), contains="MArrayLM")
+
+
+#' @title Empirical Bayes Statistics for Differential Expression
+#'
+#' @description
+#' This function applies \code{\link[limma]{eBayes}} to the result of function
+#' \code{\link{phylolmFit}}.
+#'
+#' @param fit a \code{\linkS4class{PhyloMArrayLM}} object, fitted using \code{\link[limma]{eBayes}}.
+#' @param ... further parameters to be passed to \code{\link[limma]{eBayes}}.
+#'
+#' @export
+#'
+eBayes <- function(fit, ...) {
+  return(limma::eBayes(fit, ...))
+}

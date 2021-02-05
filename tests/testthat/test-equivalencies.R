@@ -56,6 +56,14 @@ test_that("phylolmFit - equivalencies", {
       phylolm_stdev <- t(sapply(fplm, function(z) sqrt(diag(z$vcov) / (ntips / (ntips-2) * z$sigma2))))
       expect_equivalent(phylolm_stdev, resLmFit$stdev.unscaled)
     }
+    # t.value
+    phylolm_tvalue <- t(sapply(fplm, function(z) summary(z)$coefficients[, "t.value"]))
+    phylolimma_tvalue <- resLmFit$coef / resLmFit$stdev.unscaled / resLmFit$sigma
+    expect_equivalent(phylolm_tvalue, phylolimma_tvalue)
+    # p.value
+    phylolm_pvalue <- t(sapply(fplm, function(z) summary(z)$coefficients[, "p.value"]))
+    phylolimma_pvalue <- 2 * pt(-abs(phylolimma_tvalue), df = resLmFit$df.residual)
+    expect_equivalent(phylolm_pvalue, phylolimma_pvalue)
   }
 
   ## Tests

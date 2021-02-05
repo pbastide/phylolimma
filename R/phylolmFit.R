@@ -357,7 +357,10 @@ transform_design_tree <- function(C_tree, design) {
 }
 
 transform_design_one_tree <- function(C_tree, design, transpose = FALSE) {
-  return(backsolve(C_tree, design, transpose = TRUE))
+  res <- backsolve(C_tree, design, transpose = TRUE)
+  colnames(res) <- colnames(design)
+  rownames(res) <- rownames(design)
+  return(res)
 }
 
 #' @title Transform data matrix
