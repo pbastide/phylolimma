@@ -59,6 +59,11 @@ test_that("phylolmFit - BM", {
   expect_equal(colnames(fitphy$p.value), colnames(fitlimma$p.value))
   expect_equal(dim(fitphy$p.value), dim(fitlimma$p.value))
 
+  ## Other functions
+  expect_error(treat(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
+  expect_error(decideTests(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
+  expect_error(classifyTestsF(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
+
 })
 
 # test_that("phylolmFit - BM - error", {
