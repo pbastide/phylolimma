@@ -229,13 +229,62 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...
   if (model == "BM" && !measurement_error) return(phy) # no transformation needed
   data_phylolm <- as.data.frame(cbind(y, design))
   colnames(data_phylolm)[1] <- "expr"
-  fplm <- phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model, measurement_error = measurement_error, ...)
+  lower_bounds <- get_lower_bounds(...)
+  dots_args <- get_dots_args(...)
+  tmp_fun <- function(...) {
+    return(phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model,
+                     measurement_error = measurement_error, lower.bound = lower_bounds,
+                     ...))
+  }
+  fplm <- do.call(tmp_fun, dots_args)
   phy_trans_params <- switch(model,
                              BM = transform_tree_model_BM(phy, fplm, measurement_error),
                              lambda = transform_tree_model_lambda(phy, fplm, measurement_error),
                              OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
                              delta = transform_tree_model_delta(phy, fplm, measurement_error))
   return(phy_trans_params)
+}
+
+#' @title Get lower bounds on parameters
+#'
+#' @description
+#' Get the lower bounds on the parameters
+#'
+#' @param ... user specified parameters
+#'
+#' @return list of lower bounds on parameters
+#'
+#' @keywords internal
+#'
+get_lower_bounds <- function(...) {
+  dot_args <- dots(...)
+  lower_bounds <- NULL
+  if ("lower.bound" %in% names(dot_args)) {
+    lower_bounds <- dot_args$lower.bound
+    if ("sigma2_error" %in% names(lower_bounds)) return(lower_bounds)
+  }
+  # If no bounds specified on sigma2_error, set it.
+  lower_bounds <- c(lower_bounds, sigma2_error = (.Machine$double.eps)^0.9)
+  return(as.list(lower_bounds))
+}
+
+#' @title Get all paramters but lower_bounds
+#'
+#' @description
+#' Get all paramters but lower_bounds
+#'
+#' @param ... user specified parameters
+#'
+#' @return list of parameters
+#'
+#' @keywords internal
+#'
+get_dots_args <- function(...) {
+  dot_args <- dots(...)
+  if ("lower.bound" %in% names(dot_args)) {
+    dot_args <- dot_args[names(dot_args) != "lower.bound"]
+  }
+  return(dot_args)
 }
 
 #' @title Get lambda transformed tree

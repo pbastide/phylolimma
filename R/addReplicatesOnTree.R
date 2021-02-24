@@ -15,7 +15,7 @@
 #'
 #' @export
 #'
-addReplicatesOnTree <- function(tree, traits, species = "species", id = "id", eps = .Machine$double.eps) {
+addReplicatesOnTree <- function(tree, traits, species = "species", id = "id", eps = .Machine$double.eps^2) {
   if (!requireNamespace("phytools", quietly = TRUE)) {
     stop("Package 'phytools' is needed for function 'add_replicates'.", call. = FALSE)
   }

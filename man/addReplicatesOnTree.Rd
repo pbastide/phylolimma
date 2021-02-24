@@ -9,7 +9,7 @@ addReplicatesOnTree(
   traits,
   species = "species",
   id = "id",
-  eps = .Machine$double.eps
+  eps = .Machine$double.eps^2
 )
 }
 \arguments{

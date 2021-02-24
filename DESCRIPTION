@@ -4,7 +4,7 @@ Title: Phylogenetic Comparative Methods for limma
 Version: 0.1.0
 Authors@R: c(
     person("Paul", "Bastide", email = "paul.bastide@umontpellier.fr", role = c("aut", "cre")),
-    person("Mélina", "Gallopin", role = "ctb"))
+    person("Mélina", "Gallopin", role = "aut"))
 Description: Helper functions to correct for the phylogeny before using the empirical Bayes procedure of limma.
 License: GPL (>= 2)
 Encoding: UTF-8
@@ -23,4 +23,5 @@ Suggests:
     edgeR,
     testthat,
     covr
+Remotes: lamho86/phylolm
 RoxygenNote: 7.1.1

@@ -44,7 +44,7 @@ test_that("phylolmFit - equivalencies", {
     ## Comparison
     # coefficients
     phylolm_coef <- t(sapply(fplm, function(z) z$coefficients))
-    expect_equivalent(phylolm_coef, resLmFit$coefficients)
+    expect_equivalent(phylolm_coef, resLmFit$coefficients, 1e-7)
     # df
     phylolm_df <- sapply(fplm, function(z) z$n - z$d)
     expect_equivalent(phylolm_df, resLmFit$df.residual)
@@ -59,11 +59,11 @@ test_that("phylolmFit - equivalencies", {
     # t.value
     phylolm_tvalue <- t(sapply(fplm, function(z) summary(z)$coefficients[, "t.value"]))
     phylolimma_tvalue <- resLmFit$coef / resLmFit$stdev.unscaled / resLmFit$sigma
-    expect_equivalent(phylolm_tvalue, phylolimma_tvalue)
+    expect_equivalent(phylolm_tvalue, phylolimma_tvalue, 1e-7)
     # p.value
     phylolm_pvalue <- t(sapply(fplm, function(z) summary(z)$coefficients[, "p.value"]))
     phylolimma_pvalue <- 2 * pt(-abs(phylolimma_tvalue), df = resLmFit$df.residual)
-    expect_equivalent(phylolm_pvalue, phylolimma_pvalue)
+    expect_equivalent(phylolm_pvalue, phylolimma_pvalue, 1e-7)
   }
 
   ## Tests
