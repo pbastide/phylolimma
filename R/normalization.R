@@ -71,6 +71,48 @@ lengthNormalizeRNASeq <- function(countMatrix,
   return(data.trans)
 }
 
+#' @title Invert log2 normalization
+#'
+#' @description
+#' Invert log2 normalization.
+#'
+#' @param log2_vector vector of means to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_normalisation <- function(log2_vector, countMatrix, lengthMatrix, normalisationFactor,
+                                      lengthNormalization = c("TPM", "RPKM", "none")) {
+
+  res <- switch(lengthNormalization,
+                none = invert_log2_CPM(log2_vector, countMatrix, lengthMatrix, normalisationFactor),
+                TPM = invert_log2_TPM(log2_vector, countMatrix, lengthMatrix, normalisationFactor),
+                RPKM = invert_log2_RPKM(log2_vector, countMatrix, lengthMatrix, normalisationFactor))
+}
+
+#' @title Invert log2 normalization
+#'
+#' @description
+#' Invert log2 normalization.
+#'
+#' @param log2_matrix matrix of fitted values to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_fitted <- function(log2_matrix, countMatrix, lengthMatrix, normalisationFactor,
+                               lengthNormalization = c("TPM", "RPKM", "none")) {
+
+  res <- switch(lengthNormalization,
+                none = invert_log2_fitted_CPM(log2_matrix, countMatrix, lengthMatrix, normalisationFactor),
+                TPM = invert_log2_fitted_TPM(log2_matrix, countMatrix, lengthMatrix, normalisationFactor),
+                RPKM = invert_log2_fitted_RPKM(log2_matrix, countMatrix, lengthMatrix, normalisationFactor))
+}
+
 #' @title Normalize RNASeq count data
 #'
 #' @description
@@ -95,6 +137,49 @@ normalize_none <- function(countMatrix, normalisationFactor, dataTransformation)
   if (dataTransformation != "asin(sqrt)") data.norm <- data.norm * 1e6
 
   return(data.norm)
+}
+
+#' @title Invert CPM normalization
+#'
+#' @description
+#' Invert log2 CPM normalization.
+#'
+#' @param log2_matrix matrix of fitted values to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_fitted_CPM <- function(log2_matrix, countMatrix, lengthMatrix, normalisationFactor) {
+
+  lib.size <- colSums(countMatrix) * normalisationFactor
+
+  fitted.cpm <- 2^log2_matrix
+  fitted.count <- sweep(fitted.cpm, 2, lib.size + 1, '*') * 1e-6
+  fitted.logcount <- log2(fitted.count)
+
+  return(fitted.logcount)
+}
+
+#' @title Invert CPM normalization
+#'
+#' @description
+#' Invert log2 CPM normalization.
+#'
+#' @param log2_vector vector of means to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_CPM <- function(log2_vector, countMatrix, lengthMatrix, normalisationFactor) {
+
+  lib.size <- colSums(countMatrix) * normalisationFactor
+
+  return(list(sx = log2_vector + mean(log2(lib.size + 1)) - log2(1e6),
+              name_sx = "log2( count size + 0.5 )"))
 }
 
 #' @title Normalize RNASeq count data
@@ -124,6 +209,49 @@ normalize_TPM <- function(countMatrix, lengthMatrix,
   return(data.norm)
 }
 
+#' @title Invert TPM normalization
+#'
+#' @description
+#' Invert log2 TPM normalization.
+#'
+#' @param log2_matrix matrix of fitted values to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_fitted_TPM <- function(log2_matrix, countMatrix, lengthMatrix, normalisationFactor) {
+
+  lib.size <- colSums(countMatrix / lengthMatrix) * normalisationFactor
+
+  fitted.cpm <- 2^log2_matrix
+  fitted.count <- sweep(fitted.cpm, 2, lib.size + 1, '*') * 1e-6
+  fitted.logcount <- log2(fitted.count)
+
+  return(fitted.logcount)
+}
+
+#' @title Invert TPM normalization
+#'
+#' @description
+#' Invert log2 TPM normalization.
+#'
+#' @param log2_vector vector of means to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_TPM <- function(log2_vector, countMatrix, lengthMatrix, normalisationFactor) {
+
+  lib.size <- colSums(countMatrix / lengthMatrix) * normalisationFactor
+
+  return(list(sx = log2_vector + mean(log2(lib.size + 1)) - log2(1e6),
+              name_sx = "log2( count size + 0.5 ) - log2( length )"))
+}
+
 #' @title Normalize RNASeq count data
 #'
 #' @description
@@ -149,4 +277,47 @@ normalize_RPKM <- function(countMatrix, lengthMatrix,
   if (dataTransformation != "asin(sqrt)") data.norm <- data.norm * 1e9
 
   return(data.norm)
+}
+
+#' @title Invert RPKM normalization
+#'
+#' @description
+#' Invert log2 RPKM normalization.
+#'
+#' @param log2_matrix matrix of fitted values to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_fitted_RPKM <- function(log2_matrix, countMatrix, lengthMatrix, normalisationFactor) {
+
+  lib.size <- colSums(countMatrix) * normalisationFactor
+
+  fitted.cpm <- 2^log2_matrix
+  fitted.count <- sweep(fitted.cpm, 2, lib.size + 1, '*') * 1e-9
+  fitted.logcount <- log2(fitted.count)
+
+  return(fitted.logcount)
+}
+
+#' @title Invert RPKM normalization
+#'
+#' @description
+#' Invert log2 RPKM normalization.
+#'
+#' @param log2_vector vector of means to invert
+#' @inheritParams lengthNormalizeRNASeq
+#'
+#' @return A vector of untransformed log2 means.
+#'
+#' @keywords internal
+#'
+invert_log2_RPKM <- function(log2_vector, countMatrix, lengthMatrix, normalisationFactor) {
+
+  lib.size <- colSums(countMatrix) * normalisationFactor
+
+  return(list(sx = log2_vector + mean(log2(lib.size + 1)) - log2(1e9),
+              name_sx = "log2( count size + 0.5 ) - log2( length )"))
 }

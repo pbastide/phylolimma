@@ -17,6 +17,8 @@
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' See \code{\link[phylolm]{phylolm}} for more details.
+#' @param weights a named vector or matrix with weights to be applied on the measurement error term.
+#' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.
 #'
@@ -30,15 +32,17 @@
 #'
 #' @export
 #'
+#' @importFrom graphics lines title
+#' @importFrom stats approxfun lowess model.matrix
+#'
 phylolmFit <- function(object, design = NULL, phy,
                        model = c("BM", "lambda", "OUfixedRoot", "delta"),
-                       measurement_error = FALSE, ...) {
+                       measurement_error = FALSE, weights = NULL, ...) {
 
   ## Check unused parameters
   dot_args <- dots(...)
   if ("ndups" %in% names(dot_args) && dot_args$ndups != 1) stop("'ndups' can only be '1' in 'phylolmFit' (for now).")
   if ("spacing" %in% names(dot_args) && dot_args$spacing != 1) stop("'spacing' can only be '1' in 'phylolmFit' (for now).")
-  if ("weights" %in% names(dot_args) && !is.null(dot_args$weights)) stop("'weights' can only be 'null' in 'phylolmFit' (for now).")
   if ("method" %in% names(dot_args) && dot_args$method != "ls") stop("'method' can only be 'ls' in 'phylolmFit' (for now).")
   if ("correlation" %in% names(dot_args)) stop("'correlation' is not used in 'phylolmFit' (for now).")
   if ("block" %in% names(dot_args) && !is.null(dot_args$block)) stop("'block' can only be 'null' in 'phylolmFit' (for now).")
@@ -47,6 +51,14 @@ phylolmFit <- function(object, design = NULL, phy,
   if (!is.matrix(object)) stop("'object' must be a matrix.")
   y <- limma::getEAWP(object)
   if (!nrow(y$exprs)) stop("expression matrix has zero rows")
+
+  #	Check weights
+  if(!is.null(weights)) {
+    message("'weights' will be used in the independent errors.")
+    weights <- limma::asMatrixWeights(weights, dim(y))
+    weights[weights <= 0] <- NA
+    y[!is.finite(weights)] <- NA
+  }
 
   ##	Check design matrix
   if(is.null(design)) design <- y$design
@@ -71,7 +83,7 @@ phylolmFit <- function(object, design = NULL, phy,
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 
   ## phylo model
-  C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, ...)
+  C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, weights, ...)
   C_tree <- C_tree_params$C_tree
 
   ## Transform design and data
@@ -101,6 +113,9 @@ phylolmFit <- function(object, design = NULL, phy,
   resFitFormat$lambda_error <- C_tree_params$lambda_error
   resFitFormat$sigma2_phy <- C_tree_params$sigma2_phy
   resFitFormat$sigma2_error <- C_tree_params$sigma2_error
+
+  resFitFormat$design_trans <- design_trans
+  resFitFormat$design <- design
 
   ## Result
   return(resFitFormat)
@@ -162,7 +177,7 @@ lmFitLimma <- function(y_trans, design_trans, ...) {
 #'
 #' @keywords internal
 #'
-get_chol_tree <- function(y_data, design, phy, model, measurement_error, ...) {
+get_chol_tree <- function(y_data, design, phy, model, measurement_error, weights, ...) {
   if (!measurement_error && model == "BM") { ## Easy case, not fit necessary
     C_tree <- ape::vcv(phy)
     C_tree_chol <- chol(C_tree)
@@ -173,8 +188,8 @@ get_chol_tree <- function(y_data, design, phy, model, measurement_error, ...) {
                 sigma2_phy = NA,
                 sigma2_error = 0))
   } else {
-    C_tree_chol_and_params <- apply(y_data, 1,
-                                    get_C_tree, design, phy, model, measurement_error, ...)
+    C_tree_chol_and_params <- lapply(1:nrow(y_data),
+                                     function(i) return(get_C_tree(y_data[i, ], design, phy, model, measurement_error, weights[i, ], ...)))
     C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
     return(C_tree_chol_and_params)
   }
@@ -201,8 +216,8 @@ format_list <- function(C_tree_chol_and_params) {
 #'
 #' @keywords internal
 #'
-get_C_tree <- function(y, design, phy, model, measurement_error, ...) {
-  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, ...)
+get_C_tree <- function(y, design, phy, model, measurement_error, weights, ...) {
+  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, weights, ...)
   tree_model <- trans_tree_params$tree_model
   C_tree <- ape::vcv(tree_model)
   C_tree_chol <- chol(C_tree)
@@ -225,7 +240,7 @@ get_C_tree <- function(y, design, phy, model, measurement_error, ...) {
 #'
 #' @keywords internal
 #'
-transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...) {
+transform_tree_phylolm <- function(y, design, phy, model, measurement_error, weights, ...) {
   if (model == "BM" && !measurement_error) return(phy) # no transformation needed
   data_phylolm <- as.data.frame(cbind(y, design))
   colnames(data_phylolm)[1] <- "expr"
@@ -233,8 +248,8 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...
   dots_args <- get_dots_args(...)
   tmp_fun <- function(...) {
     return(phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model,
-                     measurement_error = measurement_error, lower.bound = lower_bounds,
-                     ...))
+                            measurement_error = measurement_error, lower.bound = lower_bounds,
+                            error_weight = weights, ...))
   }
   fplm <- do.call(tmp_fun, dots_args)
   phy_trans_params <- switch(model,
@@ -300,7 +315,9 @@ get_dots_args <- function(...) {
 #'
 transform_tree_model_lambda <- function(phy, phyfit, measurement_error) {
   if (measurement_error) stop("Measurement error is not allowed with lambda model.")
-  return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = phyfit$optpar))$tree,
+  return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda",
+                                                          parameters = list(lambda = phyfit$optpar),
+                                                          error_weight = phyfit$error_weight)$tree,
               optpar = NA,
               lambda_error = 1,
               sigma2_phy = phyfit$sigma2,
@@ -321,7 +338,9 @@ transform_tree_model_lambda <- function(phy, phyfit, measurement_error) {
 transform_tree_model_BM <- function(phy, phyfit, measurement_error) {
   if (!measurement_error) stop("Measurement error should be true here.")
   lambda_error <- phyfit$sigma2 / (phyfit$sigma2_error / max(ape::vcv(phy)) + phyfit$sigma2)
-  return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_error))$tree,
+  return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda",
+                                                          parameters = list(lambda = lambda_error),
+                                                          error_weight = phyfit$error_weight)$tree,
               optpar = NA,
               lambda_error = lambda_error,
               sigma2_phy = phyfit$sigma2,
@@ -340,7 +359,8 @@ transform_tree_model_BM <- function(phy, phyfit, measurement_error) {
 #' @keywords internal
 #'
 transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
-  tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = phyfit$optpar))$tree
+  tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
+                                               parameters = list(alpha = phyfit$optpar))$tree
   if (!measurement_error) {
     return(list(tree_model = tree_model,
                 optpar = NA,
@@ -350,7 +370,9 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
   }
   tilde_t <- max(ape::vcv(tree_model)) / (2 * phyfit$optpar)
   lambda_ou_error <- phyfit$sigma2 * tilde_t / (phyfit$sigma2_error + phyfit$sigma2 * tilde_t)
-  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
+  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda",
+                                               parameters = list(lambda = lambda_ou_error),
+                                               error_weight = phyfit$error_weight)$tree
   return(list(tree_model = tree_model,
               optpar = phyfit$optpar,
               lambda_error = lambda_ou_error,
@@ -380,7 +402,9 @@ transform_tree_model_delta <- function(phy, phyfit, measurement_error) {
   }
   tilde_t <- max(ape::vcv(tree_model))
   lambda_delta_error <- phyfit$sigma2 * tilde_t / (phyfit$sigma2_error + phyfit$sigma2 * tilde_t)
-  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_delta_error))$tree
+  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda",
+                                               parameters = list(lambda = lambda_delta_error),
+                                               error_weight = phyfit$error_weight)$tree
   return(list(tree_model = tree_model,
               optpar = phyfit$optpar,
               lambda_error = lambda_delta_error,
@@ -429,4 +453,21 @@ transform_data_tree <- function(C_tree, y_data) {
   return(mapply(transform_design_one_tree,
                 C_tree,
                 lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
+}
+
+#' @title Predict values
+#'
+#' @description
+#' Return the fitted values.
+#'
+#' @param fit a PhyloMArrayLM object.
+#'
+#' @return fitted values
+#'
+#' @keywords internal
+#'
+predict_phylolmFit <- function(fit) {
+  res <- fit$coefficients %*% t(fit$design)
+  colnames(res) <- rownames(fit$design)
+  return(res)
 }

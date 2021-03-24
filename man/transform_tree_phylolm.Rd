@@ -4,7 +4,7 @@
 \alias{transform_tree_phylolm}
 \title{Get transformed tree}
 \usage{
-transform_tree_phylolm(y, design, phy, model, measurement_error, ...)
+transform_tree_phylolm(y, design, phy, model, measurement_error, weights, ...)
 }
 \arguments{
 \item{y}{A vector data containing normalized expression values for one gene.}
@@ -21,6 +21,9 @@ Must be one of "BM", "lambda", "OUfixedRoot" or "delta".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
+See \code{\link[phylolm]{phylolm}} for more details.}
+
+\item{weights}{a named vector or matrix with weights to be applied on the measurement error term.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{...}{further parameters to be passed

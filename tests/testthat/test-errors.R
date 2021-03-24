@@ -75,7 +75,7 @@ test_that("Unused parameters", {
 
   expect_error(phylolmFit(y_data, phy = tree, ndups = 2), "'ndups' can only be '1'")
   expect_error(phylolmFit(y_data, phy = tree, spacing = 2), "'spacing' can only be '1'")
-  expect_error(phylolmFit(y_data, phy = tree, weights = rep(0.5, ntips)), "'weights' can only be 'null'")
+  # expect_error(phylolmFit(y_data, phy = tree, weights = rep(0.5, ntips)), "'weights' can only be 'null'")
   expect_error(phylolmFit(y_data, phy = tree, method = "robust"), "'method' can only be 'ls'")
   expect_error(phylolmFit(y_data, phy = tree, correlation = 0.5), "'correlation' is not used")
   expect_error(phylolmFit(y_data, phy = tree, block = sample(c(0, 1), ntips, replace = TRUE)), "'block' can only be 'null'")

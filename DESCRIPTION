@@ -22,6 +22,8 @@ Suggests:
     phytools,
     edgeR,
     testthat,
-    covr
+    covr,
+    phylocompcodeR,
+    Biobase
 Remotes: lamho86/phylolm
 RoxygenNote: 7.1.1
