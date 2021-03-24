@@ -16,6 +16,7 @@
 #' Must be one of "BM", "lambda", "OUfixedRoot" or "delta".
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param measurement_error a logical value indicating whether there is measurement error.
+#' Default to \code{TRUE}.
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param weights a named vector or matrix with weights to be applied on the measurement error term.
 #' See \code{\link[phylolm]{phylolm}} for more details.
@@ -37,7 +38,7 @@
 #'
 phylolmFit <- function(object, design = NULL, phy,
                        model = c("BM", "lambda", "OUfixedRoot", "delta"),
-                       measurement_error = FALSE, weights = NULL, ...) {
+                       measurement_error = TRUE, weights = NULL, ...) {
 
   ## Check unused parameters
   dot_args <- dots(...)

@@ -46,6 +46,7 @@ Must be one of "BM", "lambda", "OUfixedRoot" or "delta".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
+Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{weights}{

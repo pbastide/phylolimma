@@ -11,6 +11,7 @@ transform_tree_model_OUfixedRoot(phy, phyfit, measurement_error)
 with tips having the same names as the columns of \code{object}.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
+Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
 }
 \value{
