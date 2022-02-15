@@ -39,6 +39,11 @@ test_that("Rphylopars vs phylolm", {
   ## Likelihood
   expect_equivalent(fit_phylopars$logLik, fit_phylolm$logLik)
 
+  ## Timing
+  # trait_phylopars <- traits[, 1:2]
+  # microbenchmark::microbenchmark(phylolm::phylolm(g1 ~ 1, traits, tree_rep, measurement_error = TRUE),
+  #                                Rphylopars::phylopars(trait_phylopars, tree, REML = FALSE))
+
   ##############################################################################
   ### OU
 
@@ -57,6 +62,33 @@ test_that("Rphylopars vs phylolm", {
   expect_equivalent(fit_phylopars$model$alpha, fit_phylolm$optpar, tolerance = 1e-4)
   ## Likelihood
   expect_equivalent(fit_phylopars$logLik, fit_phylolm$logLik, tolerance = 1e-6)
+
+  ## Timing
+  # trait_phylopars <- traits[, 1:2]
+  # microbenchmark::microbenchmark(phylolm::phylolm(g1 ~ 1, traits, tree_rep,
+  #                                                 model = "OUfixedRoot", measurement_error = TRUE,
+  #                                                 lower.bound = list(sigma2_error = 1e-7)),
+  #                                Rphylopars::phylopars(trait_phylopars, tree, model = "OU", REML = FALSE))
+
+  ##############################################################################
+  ### With predictors - BM
+
+  # ## Condition
+  # traits$cond <- rep(sample(c(0, 1), ntips, replace = TRUE), r)
+  # traits[traits$cond == 1, "g1"] <- traits[traits$cond == 1, "g1"] + 5 ## strong effect
+  #
+  # ## phylolm
+  # fit_phylolm <- phylolm::phylolm(g1 ~ 1 + cond, traits, tree_rep, measurement_error = TRUE)
+  #
+  # ## Rphylopars
+  # fit_phylopars <- Rphylopars::phylopars.lm(g1 ~ 1 + cond, traits[, c(1:2, 4)], tree, pheno_error = TRUE, REML = FALSE)
+  #
+  # ## Test phylo variance
+  # expect_equivalent(fit_phylopars$pars$phylocov, fit_phylolm$sigma2, tolerance = 1e-6)
+  # ## Test pheno variance
+  # expect_equivalent(fit_phylopars$pars$phenocov, fit_phylolm$sigma2_error, tolerance = 1e-7)
+  # ## Likelihood
+  # expect_equivalent(fit_phylopars$logLik, fit_phylolm$logLik)
 
 })
 

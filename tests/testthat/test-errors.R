@@ -11,15 +11,21 @@ test_that("Errors with species names", {
   y_data <- matrix(rnorm(ngenes*ntips), ncol = ngenes)
   expect_error(phylolmFit(y_data, phy = tree),
                "not equal to array extent")
+  expect_error(phylogeneticCorrelations(y_data, phy = tree),
+               "not equal to array extent")
   expect_error(checkParamMatrix(y_data, "data", tree),
                "`data` should have as many columns as the number of taxa in the tree.")
   # no names
   y_data <- matrix(rnorm(ngenes*ntips), nrow = ngenes)
   expect_error(phylolmFit(y_data, phy = tree),
                "`expression matrix` and/or the tips of the phylogeny are not named.")
+  expect_error(phylogeneticCorrelations(y_data, phy = tree),
+               "`expression matrix` and/or the tips of the phylogeny are not named.")
   # wrong order
   colnames(y_data) <- sample(tree$tip.label, ntips)
   expect_warning(res1 <- phylolmFit(y_data, phy = tree),
+                 "expression matrix` was not sorted in the correct order")
+  expect_warning(phylogeneticCorrelations(y_data, phy = tree),
                  "expression matrix` was not sorted in the correct order")
   y_data <- y_data[, match(tree$tip.label, colnames(y_data)), drop = FALSE]
   res2 <- phylolmFit(y_data, phy = tree)
@@ -28,12 +34,16 @@ test_that("Errors with species names", {
   colnames(y_data)[1] <- "moustache"
   expect_error(phylolmFit(y_data, phy = tree),
                "Species 't1' are in the tree but not in expression matrix.\n  Species 'moustache' is in expression matrix but not in the tree.")
+  expect_error(phylogeneticCorrelations(y_data, phy = tree),
+               "Species 't1' are in the tree but not in expression matrix.\n  Species 'moustache' is in expression matrix but not in the tree.")
   # Correct name and order
   colnames(y_data) <- tree$tip.label
   # wrong names tree
   tree_wrong <- tree
   tree_wrong$tip.label[1] <- "moustache"
   expect_error(phylolmFit(y_data, phy = tree_wrong),
+               "Species 'moustache' are in the tree but not in expression matrix.\n  Species 't1' is in expression matrix but not in the tree.")
+  expect_error(phylogeneticCorrelations(y_data, phy = tree_wrong),
                "Species 'moustache' are in the tree but not in expression matrix.\n  Species 't1' is in expression matrix but not in the tree.")
 
 
@@ -43,14 +53,20 @@ test_that("Errors with species names", {
   # wrong dimension
   expect_error(phylolmFit(y_data, design = t(design), phy = tree),
                "row dimension of design doesn't match column dimension of data object")
+  expect_error(phylogeneticCorrelations(y_data, design = t(design), phy = tree),
+               "row dimension of design doesn't match column dimension of data object")
   expect_error(checkParamMatrix(t(design), "design", tree, TRUE),
                "`design` should have as many rows as the number of taxa in the tree.")
   # no names
   expect_error(phylolmFit(y_data, design = design, phy = tree),
                "`design matrix` and/or the tips of the phylogeny are not named.")
+  expect_error(phylogeneticCorrelations(y_data, design = design, phy = tree),
+               "`design matrix` and/or the tips of the phylogeny are not named.")
   # wrong order
   rownames(design) <- sample(tree$tip.label, ntips)
   expect_warning(res1 <- phylolmFit(y_data, design = design, phy = tree),
+                 "`design matrix` was not sorted in the correct order")
+  expect_warning(phylogeneticCorrelations(y_data, design = design, phy = tree),
                  "`design matrix` was not sorted in the correct order")
   design <- design[match(tree$tip.label, rownames(design)), , drop = FALSE]
   res2 <- phylolmFit(y_data, design = design, phy = tree)
@@ -58,6 +74,8 @@ test_that("Errors with species names", {
   # wrong names
   rownames(design)[1] <- "moustache"
   expect_error(phylolmFit(y_data, design = design, phy = tree),
+               "Species 't1' are in the tree but not in design matrix.\n  Species 'moustache' are in design matrix but not in the tree.")
+  expect_error(phylogeneticCorrelations(y_data, design = design, phy = tree),
                "Species 't1' are in the tree but not in design matrix.\n  Species 'moustache' are in design matrix but not in the tree.")
 })
 
@@ -82,4 +100,38 @@ test_that("Unused parameters", {
 
   y <- limma::getEAWP(y_data)
   expect_error(phylolmFit(y, phy = tree), "'object' must be a matrix.")
+})
+
+test_that("Errors with phylogenetic correlations", {
+  set.seed(12891026)
+  ## Tree
+  ntips <- 20
+  tree <- ape::rphylo(ntips, 0.1, 0)
+  mat_tree <- ape::vcv(tree)
+  ## data
+  ngenes <- 50
+  y_data <- matrix(rnorm(ngenes*ntips), nrow = ngenes)
+  colnames(y_data) <- tree$tip.label
+  ## Design
+  design <- matrix(1, nrow = ntips, ncol = 2)
+  design[sample(1:ntips, floor(ntips / 2)), 2] <- 0
+  rownames(design) <- tree$tip.label
+
+  ## phylo cor
+  expect_warning(
+    pc <- phylogeneticCorrelations(y_data, design, phy = tree, model = "OUfixedRoot", measurement_error = FALSE),
+    "the estimation of alpha matches the upper/lower bound for this parameter.")
+
+  expect_error(
+    phylolmFit(y_data, design = design, phy = tree, use_consensus = TRUE, consensus_tree = pc),
+    "The consensus tree was computed with the OUfixedRoot model, but the model used is BM.")
+
+  expect_error(
+    phylolmFit(y_data, design = design, phy = tree, model = "OUfixedRoot", measurement_error = TRUE, use_consensus = TRUE, consensus_tree = pc),
+    "The consensus tree was computed with `measurement_error=FALSE`, but you specified `measurement_error=TRUE`.")
+
+  expect_error(
+    phylolmFit(y_data, design = design, phy = tree, model = "OUfixedRoot", measurement_error = FALSE, use_consensus = FALSE, consensus_tree = pc),
+    "You set `use_consensus=FALSE`, but provided a consensus tree. Please either set `use_consensus=TRUE` or `consensus_tree=NULL`.")
+
 })

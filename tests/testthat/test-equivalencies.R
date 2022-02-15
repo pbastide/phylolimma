@@ -18,7 +18,8 @@ test_that("phylolmFit - equivalencies", {
     ## Transform design and data and fit
     resLmFit <- suppressWarnings(phylolmFit(y_data, design = design, phy = tree,
                                             model = model,
-                                            measurement_error = measurement_error))
+                                            measurement_error = measurement_error,
+                                            use_consensus = FALSE))
 
     ## phylolm fit
     phylolm_fit <- function(y, design, phy, model, measurement_error, ...) {

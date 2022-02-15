@@ -39,7 +39,8 @@ test_that("phylolmFit - BM", {
   ## Fit Phylo
   resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
                               model = model,
-                              measurement_error = measurement_error)
+                              measurement_error = measurement_error,
+                              use_consensus = FALSE)
   ## Fit
   resLmFit <- limma::lmFit(y_data, design = design)
 
@@ -82,45 +83,58 @@ test_that("phylolmFit - bounds", {
   rownames(design) <- tree$tip.label
 
   ## Set lower bound
-  resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
-                              model = "BM",
-                              measurement_error = TRUE,
-                              lower.bound = list(sigma2_error = 0.1))
+  resPhyloLmFit <- expect_warning(
+    phylolmFit(y_data, design = design, phy = tree,
+               model = "BM",
+               measurement_error = TRUE,
+               lower.bound = list(sigma2_error = 0.1),
+               use_consensus = FALSE),
+    "the estimation of sigma2_error matches the upper/lower bound for this parameter.")
 
   expect_true(all(resPhyloLmFit$sigma2_error >= 0.1 * resPhyloLmFit$sigma2_phy))
 
   ## Default lower bound
   resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
                               model = "BM",
-                              measurement_error = TRUE)
+                              measurement_error = TRUE,
+                              use_consensus = FALSE)
 
   expect_true(all(resPhyloLmFit$sigma2_error >= (.Machine$double.eps)^0.9 * resPhyloLmFit$sigma2_phy))
 
   ## Default lower bound
-  resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
-                              model = "OUfixedRoot",
-                              measurement_error = TRUE)
+  resPhyloLmFit <- expect_warning(
+    phylolmFit(y_data, design = design, phy = tree,
+               model = "OUfixedRoot",
+               measurement_error = TRUE,
+               use_consensus = FALSE),
+    "the estimation of sigma2_error matches the upper/lower bound for this parameter.")
 
   expect_true(all(resPhyloLmFit$sigma2_error >= (.Machine$double.eps)^0.9 * resPhyloLmFit$sigma2_phy))
 
   ## Set upper bound and starting values
-  resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
-                              model = "BM",
-                              measurement_error = TRUE,
-                              lower.bound = list(sigma2_error = 0.01),
-                              upper.bound = list(sigma2_error = 0.5),
-                              starting.value = list(sigma2_error = 0.05))
+  resPhyloLmFit <- expect_warning(
+    phylolmFit(y_data, design = design, phy = tree,
+               model = "BM",
+               measurement_error = TRUE,
+               lower.bound = list(sigma2_error = 0.01),
+               upper.bound = list(sigma2_error = 0.5),
+               starting.value = list(sigma2_error = 0.05),
+               use_consensus = FALSE),
+    "the estimation of sigma2_error matches the upper/lower bound for this parameter.")
 
   expect_true(all(resPhyloLmFit$sigma2_error >= 0.01 * resPhyloLmFit$sigma2_phy))
   expect_true(all(resPhyloLmFit$sigma2_error <= 0.5 * resPhyloLmFit$sigma2_phy))
 
   ## Set upper bound and starting values
-  resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
-                              model = "OUfixedRoot",
-                              measurement_error = TRUE,
-                              lower.bound = list(sigma2_error = 0.01),
-                              upper.bound = list(sigma2_error = 0.5),
-                              starting.value = list(sigma2_error = 0.05))
+  resPhyloLmFit <- expect_warning(
+    phylolmFit(y_data, design = design, phy = tree,
+               model = "OUfixedRoot",
+               measurement_error = TRUE,
+               lower.bound = list(sigma2_error = 0.01),
+               upper.bound = list(sigma2_error = 0.5),
+               starting.value = list(sigma2_error = 0.05),
+               use_consensus = FALSE),
+    "the estimation of sigma2_error matches the upper/lower bound for this parameter.")
 
   expect_true(all(resPhyloLmFit$sigma2_error >= 0.01 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))
   expect_true(all(resPhyloLmFit$sigma2_error <= 0.5 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))
@@ -131,7 +145,8 @@ test_that("phylolmFit - bounds", {
                                              measurement_error = TRUE,
                                              lower.bound = list(alpha = 0.1, sigma2_error = 0.01),
                                              upper.bound = list(alpha = 10, sigma2_error = 0.5),
-                                             starting.value = list(alpha = 5, sigma2_error = 0.05)))
+                                             starting.value = list(alpha = 5, sigma2_error = 0.05),
+                                             use_consensus = FALSE))
 
   expect_true(all(resPhyloLmFit$sigma2_error >= 0.01 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))
   expect_true(all(resPhyloLmFit$sigma2_error <= 0.5 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))
@@ -139,12 +154,15 @@ test_that("phylolmFit - bounds", {
   expect_true(all(resPhyloLmFit$optpar <= 10))
 
   ## Set upper bound and starting values
-  resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
-                              model = "OUfixedRoot",
-                              measurement_error = TRUE,
-                              lower.bound = list(sigma2_error = 0.01),
-                              upper.bound = list(sigma2_error = 0.02),
-                              starting.value = list(alpha = 1, sigma2_error = 0.015))
+  resPhyloLmFit <- expect_warning(
+    phylolmFit(y_data, design = design, phy = tree,
+               model = "OUfixedRoot",
+               measurement_error = TRUE,
+               lower.bound = list(sigma2_error = 0.01),
+               upper.bound = list(sigma2_error = 0.02),
+               starting.value = list(alpha = 1, sigma2_error = 0.015),
+               use_consensus = FALSE),
+    "the estimation of sigma2_error matches the upper/lower bound for this parameter.")
 
   expect_true(all(resPhyloLmFit$sigma2_error >= 0.01 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))
   expect_true(all(resPhyloLmFit$sigma2_error <= 0.02 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))

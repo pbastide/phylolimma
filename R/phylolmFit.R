@@ -18,6 +18,12 @@
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
 #' See \code{\link[phylolm]{phylolm}} for more details.
+#' @param use_consensus If \code{TRUE}, one consensus tree is used to represent the correlation structure. see \code{\link{phylogeneticCorrelations}}.
+#' If \code{FALSE}, each gene will use its own model parameters and will have its own correlation structure accordingly.
+#' Default to TRUE.
+#' @param consensus_tree If not \code{NULL}, the consensus tree containing the correlation structure,
+#' result of function \code{\link{phylogeneticCorrelations}}.
+#' If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.
 #'
@@ -33,7 +39,9 @@
 #'
 phylolmFit <- function(object, design = NULL, phy,
                        model = c("BM", "lambda", "OUfixedRoot", "delta"),
-                       measurement_error = FALSE, ...) {
+                       measurement_error = FALSE,
+                       use_consensus = TRUE,
+                       consensus_tree = NULL, ...) {
 
   ##################################################################################################
   ## Check unused parameters
@@ -73,10 +81,34 @@ phylolmFit <- function(object, design = NULL, phy,
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 
   ##################################################################################################
+  ## Consensus tree
 
-  ## phylo model
-  C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, ...)
-  C_tree <- C_tree_params$C_tree
+  if (!use_consensus && !is.null(consensus_tree)) stop("You set `use_consensus=FALSE`, but provided a consensus tree. Please either set `use_consensus=TRUE` or `consensus_tree=NULL`.")
+
+  if (model == "BM" && !measurement_error) use_consensus <- TRUE
+
+  if (use_consensus) {
+    if (!is.null(consensus_tree)) {
+
+      check.consensus_tree(consensus_tree, model, measurement_error)
+
+    } else {
+      consensus_tree <- phylogeneticCorrelations(object = object, design = design, phy = phy,
+                                                 model = model,
+                                                 measurement_error = measurement_error,
+                                                 weights = NULL, ...)
+    }
+
+    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, ...) ## BM on the consensus tree
+    C_tree <- C_tree_params$C_tree
+
+  } else {
+    ## one phylo model per gene
+    C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, ...)
+    C_tree <- C_tree_params$C_tree
+  }
+
+  ##################################################################################################
 
   ## Transform design and data
   design_trans <- transform_design_tree(C_tree, design)
@@ -86,7 +118,7 @@ phylolmFit <- function(object, design = NULL, phy,
   resLmFit <- lmFitLimma(y_trans, design_trans, ...)
 
   ## Format
-  if (model == "BM" && !measurement_error) {
+  if (use_consensus) {
     resFitFormat <- resLmFit
   } else {
     resFitFormat <- new("PhyloMArrayLM",

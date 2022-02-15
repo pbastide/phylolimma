@@ -24,4 +24,4 @@ Suggests:
     testthat,
     covr
 Remotes: lamho86/phylolm
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
