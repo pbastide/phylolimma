@@ -16,30 +16,18 @@ test_that("phylolmFit - equivalencies", {
   ## Test function
   test_lmFit_phylolm <- function(y_data, design, tree, model, measurement_error) {
     ## Transform design and data and fit
-    if (model != "delta") {
-      resLmFit <- phylolmFit(y_data, design = design, phy = tree,
-                             model = model,
-                             measurement_error = measurement_error)
-    } else {
-      expect_warning(resLmFit <- phylolmFit(y_data, design = design, phy = tree,
+    resLmFit <- suppressWarnings(phylolmFit(y_data, design = design, phy = tree,
                                             model = model,
-                                            measurement_error = measurement_error),
-                     "the estimation of delta matches the upper/lower bound for this parameter.")
-    }
+                                            measurement_error = measurement_error))
 
     ## phylolm fit
     phylolm_fit <- function(y, design, phy, model, measurement_error, ...) {
       data_phylolm <- as.data.frame(cbind(y, design))
       colnames(data_phylolm)[1] <- "expr"
-      fplm <- phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model, measurement_error = measurement_error, ...)
+      fplm <- suppressWarnings(phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model, measurement_error = measurement_error, ...))
       return(fplm)
     }
-    if (model != "delta") {
-      fplm <- apply(y_data, 1, phylolm_fit, design = design, phy = tree, model = model, measurement_error = measurement_error)
-    } else {
-      expect_warning(fplm <- apply(y_data, 1, phylolm_fit, design = design, phy = tree, model = model, measurement_error = measurement_error),
-                     "the estimation of delta matches the upper/lower bound for this parameter.")
-    }
+    fplm <- apply(y_data, 1, phylolm_fit, design = design, phy = tree, model = model, measurement_error = measurement_error)
 
     ## Comparison
     # coefficients

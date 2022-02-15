@@ -35,6 +35,7 @@ phylolmFit <- function(object, design = NULL, phy,
                        model = c("BM", "lambda", "OUfixedRoot", "delta"),
                        measurement_error = FALSE, ...) {
 
+  ##################################################################################################
   ## Check unused parameters
   dot_args <- dots(...)
   if ("ndups" %in% names(dot_args) && dot_args$ndups != 1) stop("'ndups' can only be '1' in 'phylolmFit' (for now).")
@@ -70,6 +71,8 @@ phylolmFit <- function(object, design = NULL, phy,
   if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
   y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
+
+  ##################################################################################################
 
   ## phylo model
   C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, ...)
