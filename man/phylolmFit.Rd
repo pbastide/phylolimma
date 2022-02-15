@@ -9,8 +9,7 @@ phylolmFit(
   design = NULL,
   phy,
   model = c("BM", "lambda", "OUfixedRoot", "delta"),
-  measurement_error = TRUE,
-  weights = NULL,
+  measurement_error = FALSE,
   ...
 )
 }
@@ -31,9 +30,6 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.
-See \code{\link[phylolm]{phylolm}} for more details.}
-
-\item{weights}{a named vector or matrix with weights to be applied on the measurement error term.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{...}{further parameters to be passed

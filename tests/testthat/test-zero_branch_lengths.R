@@ -21,7 +21,7 @@ test_that("Rphylopars vs phylolm", {
   rownames(traits) <- traits$id
 
   ## Replicates
-  tree_rep <- addReplicatesOnTree(tree, traits, species = "species", id = "id")
+  tree_rep <- addReplicatesOnTree(tree, traits, species = "species", id = "id", eps = .Machine$double.eps^0.5)
 
   ##############################################################################
   ### BM
@@ -44,8 +44,7 @@ test_that("Rphylopars vs phylolm", {
 
   ## phylolm
   fit_phylolm <- phylolm::phylolm(g1 ~ 1, traits, tree_rep,
-                                  model = "OUfixedRoot", measurement_error = TRUE,
-                                  lower.bound = list(sigma2_error = 1e-7))
+                                  model = "OUfixedRoot", measurement_error = TRUE)
 
   ## Rphylopars
   fit_phylopars <- Rphylopars::phylopars(traits[, 1:2], tree, model = "OU", REML = FALSE)

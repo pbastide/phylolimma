@@ -4,7 +4,7 @@
 \alias{get_chol_tree}
 \title{Get Tree Normalizing Inverse Cholesky}
 \usage{
-get_chol_tree(y_data, design, phy, model, measurement_error, weights, ...)
+get_chol_tree(y_data, design, phy, model, measurement_error, ...)
 }
 \arguments{
 \item{y_data}{A matrix data object containing normalized expression values,
@@ -23,9 +23,6 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.
-See \code{\link[phylolm]{phylolm}} for more details.}
-
-\item{weights}{a named vector or matrix with weights to be applied on the measurement error term.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{...}{further parameters to be passed
