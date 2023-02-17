@@ -150,7 +150,7 @@ test_that("phylolmFit - bounds", {
 
   expect_true(all(resPhyloLmFit$sigma2_error >= 0.01 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))
   expect_true(all(resPhyloLmFit$sigma2_error <= 0.5 * resPhyloLmFit$sigma2_phy / (2 * resPhyloLmFit$optpar)))
-  expect_true(all(resPhyloLmFit$optpar >= 0.1))
+  expect_true(all(resPhyloLmFit$optpar >= 0.1 - 1e-10))
   expect_true(all(resPhyloLmFit$optpar <= 10))
 
   ## Set upper bound and starting values

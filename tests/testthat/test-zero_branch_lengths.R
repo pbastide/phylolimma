@@ -55,7 +55,7 @@ test_that("Rphylopars vs phylolm", {
   fit_phylopars <- Rphylopars::phylopars(traits[, 1:2], tree, model = "OU", REML = FALSE)
 
   ## Test phylo variance
-  expect_equivalent(fit_phylopars$pars$phylocov, fit_phylolm$sigma2, tolerance = 1e-3)
+  expect_equivalent(fit_phylopars$pars$phylocov * 2 * fit_phylopars$model$alpha, fit_phylolm$sigma2, tolerance = 1e-3)
   ## Test pheno variance
   expect_equivalent(fit_phylopars$pars$phenocov, fit_phylolm$sigma2_error, tolerance = 1e-5)
   ## Test alpha

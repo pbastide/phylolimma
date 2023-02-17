@@ -117,7 +117,10 @@ test_that("phylogeneticCorrelations - separate call", {
                            measurement_error = measurement_error,
                            use_consensus = TRUE,
                            trim = 0.25)
-        pc <- phylogeneticCorrelations(y_data, design = design, phy = tree, model = model, measurement_error = measurement_error, trim = 0.25)
+        pc <- phylogeneticCorrelations(y_data, design = design, phy = tree,
+                                       model = model,
+                                       measurement_error = measurement_error,
+                                       trim = 0.25)
         res2 <- phylolmFit(y_data, design = design, phy = tree,
                            model = model,
                            measurement_error = measurement_error,
