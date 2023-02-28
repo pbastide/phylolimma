@@ -74,7 +74,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy,
     if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
   }
   ne <- limma::nonEstimable(design)
-  if(!is.null(ne)) cat("Coefficients not estimable:", paste(ne, collapse = " "), "\n")
+  if(!is.null(ne)) message("Coefficients not estimable:", paste(ne, collapse = " "), "\n")
 
   ## phylo model
   model <- match.arg(model)

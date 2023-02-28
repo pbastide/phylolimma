@@ -147,3 +147,97 @@ test_that("phylogeneticCorrelations - separate call", {
 
 
 })
+
+test_that("phylogeneticCorrelations - Errors", {
+  set.seed(12891026)
+  ## Tree
+  ntips <- 10
+  tree <- ape::rphylo(ntips, 0.1, 0)
+  mat_tree <- ape::vcv(tree)
+  ## data
+  ngenes <- 20
+  y_data <- t(phylolm::rTrait(ngenes, tree, model = "delta", parameters = list(delta = 0.1)))
+  ## Design
+  design <- matrix(1, nrow = ntips, ncol = 2)
+  design[sample(1:ntips, floor(ntips / 2)), 2] <- 0
+  colnames(design) <- c("(Intercept)", "condition")
+  rownames(design) <- tree$tip.label
+  ## Model
+  model <- "BM"
+
+  #################################################################################################
+  ## Errors
+
+  # matrix of data
+  expect_error(phylogeneticCorrelations(y_data[1, ], design = design, phy = tree,
+                                        model = model,
+                                        measurement_error = TRUE,
+                                        trim = 0.25),
+               "must be a matrix.")
+  expect_error(phylolmFit(y_data[1, ], design = design, phy = tree,
+                          model = model,
+                          measurement_error = TRUE,
+                          use_consensus = TRUE,
+                          trim = 0.25),
+               "must be a matrix.")
+
+  # no weights
+  expect_error(phylogeneticCorrelations(y_data, design = design, phy = tree,
+                                        model = model,
+                                        measurement_error = TRUE,
+                                        trim = 0.25, weights = 1:ntips / sum(1:ntips)),
+               "weights are not allowed with the phylogenetic regression")
+  expect_error(phylolmFit(y_data[1, ], design = design, phy = tree,
+                          model = model,
+                          measurement_error = TRUE,
+                          use_consensus = TRUE,
+                          trim = 0.25, weights = 1:ntips / sum(1:ntips)),
+               "'weights' can only be 'null' in 'phylolmFit'")
+
+  # numeric design
+  designError <- design
+  designError[, "condition"] <- c("A", "B")[designError[, "condition"] + 1]
+  expect_error(phylogeneticCorrelations(y_data, design = designError, phy = tree,
+                                        model = model,
+                                        measurement_error = TRUE,
+                                        trim = 0.25),
+               "design must be a numeric matrix")
+  expect_error(phylolmFit(y_data, design = designError, phy = tree,
+                          model = model,
+                          measurement_error = TRUE,
+                          use_consensus = TRUE,
+                          trim = 0.25),
+               "design must be a numeric matrix")
+
+  # identifiable design
+  designError <- design
+  designError <- cbind(designError, 1 - designError[, "condition"])
+  expect_error(expect_message(phylogeneticCorrelations(y_data, design = designError, phy = tree,
+                                                       model = model,
+                                                       measurement_error = TRUE,
+                                                       trim = 0.25),
+                              "Coefficients not estimable:"),
+               "system is computationally singular")
+  expect_error(expect_message(phylolmFit(y_data, design = designError, phy = tree,
+                                         model = model,
+                                         measurement_error = TRUE,
+                                         use_consensus = TRUE,
+                                         trim = 0.25),
+                              "Coefficients not estimable:"),
+               "system is computationally singular")
+
+  # tree
+  treeError <- tree
+  attr(treeError, "class") <- NULL
+  expect_error(phylogeneticCorrelations(y_data, design = design, phy = treeError,
+                                        model = model,
+                                        measurement_error = TRUE,
+                                        trim = 0.25),
+               "must be of class 'phylo'")
+  expect_error(phylolmFit(y_data, design = design, phy = treeError,
+                          model = model,
+                          measurement_error = TRUE,
+                          use_consensus = TRUE,
+                          trim = 0.25),
+               "must be of class 'phylo'")
+})
