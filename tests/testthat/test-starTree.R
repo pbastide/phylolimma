@@ -1,4 +1,5 @@
 test_that("phylogeneticCorrelations - star tree", {
+  skip_if_not_installed("statmod")
   set.seed(12891026)
   ## Star tree
   ntips <- 50
@@ -40,6 +41,7 @@ test_that("phylogeneticCorrelations - star tree", {
 })
 
 test_that("phylogeneticCorrelations - Convergence issues", {
+  skip_if_not_installed("statmod")
   set.seed(12891026)
   ## Star tree
   ntips <- 50
