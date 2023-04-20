@@ -75,7 +75,7 @@ test_that("phylogeneticCorrelations - BM", {
 
   expect_equal(resPhyloLmFitConsLambda@.Data[which(!names(resPhyloLmFitConsLambda) %in% c("modelphy", "measurement_error"))],
                resPhyloLmFitCons@.Data[which(!names(resPhyloLmFitConsLambda) %in% c("modelphy", "measurement_error"))],
-               tol = 1e-6)
+               tol = 1e-5)
 
 
 })
@@ -212,19 +212,17 @@ test_that("phylogeneticCorrelations - Errors", {
   # identifiable design
   designError <- design
   designError <- cbind(designError, 1 - designError[, "condition"])
-  expect_error(expect_message(phylogeneticCorrelations(y_data, design = designError, phy = tree,
-                                                       model = model,
-                                                       measurement_error = TRUE,
-                                                       trim = 0.25),
-                              "Coefficients not estimable:"),
-               "system is computationally singular")
-  expect_error(expect_message(phylolmFit(y_data, design = designError, phy = tree,
-                                         model = model,
-                                         measurement_error = TRUE,
-                                         use_consensus = TRUE,
-                                         trim = 0.25),
-                              "Coefficients not estimable:"),
-               "system is computationally singular")
+  expect_error(phylogeneticCorrelations(y_data, design = designError, phy = tree,
+                                        model = model,
+                                        measurement_error = TRUE,
+                                        trim = 0.25),
+               "Coefficients not estimable:")
+  expect_error(phylolmFit(y_data, design = designError, phy = tree,
+                          model = model,
+                          measurement_error = TRUE,
+                          use_consensus = TRUE,
+                          trim = 0.25),
+               "Coefficients not estimable:")
 
   # tree
   treeError <- tree

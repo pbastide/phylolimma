@@ -33,6 +33,11 @@
 #' These quantities take the phylogenetic model into account.
 #' The object can be passed to \code{\link[limma]{eBayes}}.
 #'
+#' @details
+#' The default bounds on the phylogenetic parameters are the same as in
+#' \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU.
+#'
+#'
 #' @importFrom methods new
 #'
 #' @export
@@ -69,7 +74,7 @@ phylolmFit <- function(object, design = NULL, phy,
     if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
   }
   ne <- limma::nonEstimable(design)
-  if(!is.null(ne)) message("Coefficients not estimable:", paste(ne, collapse = " "), "\n")
+  if(!is.null(ne)) stop("Coefficients not estimable: ", paste(ne, collapse = " "), "\n")
 
   ## phylo model
   # if (model != "BM") stop("'modelphy' can only be 'BM' (for now).")
@@ -265,12 +270,23 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...
   if (model == "BM" && !measurement_error) return(phy) # no transformation needed
   data_phylolm <- as.data.frame(cbind(y, design))
   colnames(data_phylolm)[1] <- "expr"
-  lower_bounds <- get_lower_bounds(...)
+  alpha_bounds <- getBoundsSelectionStrength(phy)
+  min_error <- getMinError(phy)
+  lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
+  upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
+  starting_values <- get_starting_values(alpha_bounds, ...)
   dots_args <- get_dots_args(...)
   tmp_fun <- function(...) {
-    return(phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model,
-                     measurement_error = measurement_error, lower.bound = lower_bounds,
-                     ...))
+    return(withCallingHandlers(phylolm::phylolm(expr ~ -1 + .,
+                                                data = data_phylolm, phy = phy, model = model,
+                                                measurement_error = measurement_error,
+                                                lower.bound = lower_bounds,
+                                                upper.bound = upper_bounds,
+                                                starting.value = starting_values,
+                                                ...),
+                               warning = function(cond) {
+                                 if (grepl(pattern="upper/lower", x = conditionMessage(cond)) && "warning" %in% class(cond)) invokeRestart("muffleWarning")
+                               }))
   }
   fplm <- do.call(tmp_fun, dots_args)
   phy_trans_params <- switch(model,
@@ -279,48 +295,6 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...
                              OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
                              delta = transform_tree_model_delta(phy, fplm, measurement_error))
   return(phy_trans_params)
-}
-
-#' @title Get lower bounds on parameters
-#'
-#' @description
-#' Get the lower bounds on the parameters
-#'
-#' @param ... user specified parameters
-#'
-#' @return list of lower bounds on parameters
-#'
-#' @keywords internal
-#'
-get_lower_bounds <- function(...) {
-  dot_args <- dots(...)
-  lower_bounds <- NULL
-  if ("lower.bound" %in% names(dot_args)) {
-    lower_bounds <- dot_args$lower.bound
-    if ("sigma2_error" %in% names(lower_bounds)) return(lower_bounds)
-  }
-  # If no bounds specified on sigma2_error, set it.
-  lower_bounds <- c(lower_bounds, sigma2_error = (.Machine$double.eps)^0.9)
-  return(as.list(lower_bounds))
-}
-
-#' @title Get all paramters but lower_bounds
-#'
-#' @description
-#' Get all paramters but lower_bounds
-#'
-#' @param ... user specified parameters
-#'
-#' @return list of parameters
-#'
-#' @keywords internal
-#'
-get_dots_args <- function(...) {
-  dot_args <- dots(...)
-  if ("lower.bound" %in% names(dot_args)) {
-    dot_args <- dot_args[names(dot_args) != "lower.bound"]
-  }
-  return(dot_args)
 }
 
 #' @title Get lambda transformed tree
@@ -356,7 +330,7 @@ transform_tree_model_lambda <- function(phy, phyfit, measurement_error) {
 #'
 transform_tree_model_BM <- function(phy, phyfit, measurement_error) {
   if (!measurement_error) stop("Measurement error should be true here.")
-  lambda_error <- phyfit$sigma2 / (phyfit$sigma2_error / max(ape::vcv(phy)) + phyfit$sigma2)
+  lambda_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tree_height(phy))
   return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_error))$tree,
               optpar = NA,
               lambda_error = lambda_error,
@@ -384,8 +358,8 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
                 sigma2_phy = phyfit$sigma2,
                 sigma2_error = 0))
   }
-  tilde_t <- max(ape::vcv(tree_model)) / (2 * phyfit$optpar)
-  lambda_ou_error <- phyfit$sigma2 * tilde_t / (phyfit$sigma2_error + phyfit$sigma2 * tilde_t)
+  tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
+  lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
   return(list(tree_model = tree_model,
               optpar = phyfit$optpar,
@@ -414,8 +388,8 @@ transform_tree_model_delta <- function(phy, phyfit, measurement_error) {
                 sigma2_phy = phyfit$sigma2,
                 sigma2_error = 0))
   }
-  tilde_t <- max(ape::vcv(tree_model))
-  lambda_delta_error <- phyfit$sigma2 * tilde_t / (phyfit$sigma2_error + phyfit$sigma2 * tilde_t)
+  tilde_t <- tree_height(tree_model)
+  lambda_delta_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_delta_error))$tree
   return(list(tree_model = tree_model,
               optpar = phyfit$optpar,

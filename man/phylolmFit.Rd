@@ -57,3 +57,7 @@ This function applies \code{\link[limma]{lmFit}} to the normalized data,
 in order to take the phylogeny into account.
 TODO: explain more.
 }
+\details{
+The default bounds on the phylogenetic parameters are the same as in
+\code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU.
+}

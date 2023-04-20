@@ -118,9 +118,8 @@ test_that("Errors with phylogenetic correlations", {
   rownames(design) <- tree$tip.label
 
   ## phylo cor
-  expect_warning(
-    pc <- phylogeneticCorrelations(y_data, design, phy = tree, model = "OUfixedRoot", measurement_error = FALSE),
-    "the estimation of alpha matches the upper/lower bound for this parameter.")
+  pc <- phylogeneticCorrelations(y_data, design, phy = tree, model = "OUfixedRoot", measurement_error = FALSE)
+  expect_equal(pc$params$alpha, 4.754609, tol = 1e-6)
 
   expect_error(
     phylolmFit(y_data, design = design, phy = tree, use_consensus = TRUE, consensus_tree = pc),

@@ -16,16 +16,24 @@ test_that("phylolmFit - equivalencies", {
   ## Test function
   test_lmFit_phylolm <- function(y_data, design, tree, model, measurement_error) {
     ## Transform design and data and fit
-    resLmFit <- suppressWarnings(phylolmFit(y_data, design = design, phy = tree,
-                                            model = model,
-                                            measurement_error = measurement_error,
-                                            use_consensus = FALSE))
+    resLmFit <- phylolmFit(y_data, design = design, phy = tree,
+                           model = model,
+                           measurement_error = measurement_error,
+                           use_consensus = FALSE)
 
     ## phylolm fit
+    bounds_alpha <- getBoundsSelectionStrength(tree)
+    min_sig_err <- getMinError(tree)
     phylolm_fit <- function(y, design, phy, model, measurement_error, ...) {
       data_phylolm <- as.data.frame(cbind(y, design))
       colnames(data_phylolm)[1] <- "expr"
-      fplm <- suppressWarnings(phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model, measurement_error = measurement_error, ...))
+      fplm <- suppressWarnings(phylolm::phylolm(expr ~ -1 + .,
+                                                data = data_phylolm, phy = phy, model = model,
+                                                measurement_error = measurement_error,
+                                                upper.bound = list(alpha = bounds_alpha[2], lambda = getMaxLambda(min_sig_err)),
+                                                lower.bound = list(alpha = bounds_alpha[1], sigma2_error = min_sig_err),
+                                                starting.value = list(alpha = mean(bounds_alpha)),
+                                                ...))
       return(fplm)
     }
     fplm <- apply(y_data, 1, phylolm_fit, design = design, phy = tree, model = model, measurement_error = measurement_error)

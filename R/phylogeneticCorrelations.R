@@ -74,7 +74,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy,
     if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
   }
   ne <- limma::nonEstimable(design)
-  if(!is.null(ne)) message("Coefficients not estimable:", paste(ne, collapse = " "), "\n")
+  if(!is.null(ne)) stop("Coefficients not estimable: ", paste(ne, collapse = " "), "\n")
 
   ## phylo model
   model <- match.arg(model)
@@ -116,14 +116,32 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
 
     data_phylolm <- as.data.frame(cbind(y, design))
     colnames(data_phylolm)[1] <- "expr"
-    lower_bounds <- get_lower_bounds(...)
+    alpha_bounds <- getBoundsSelectionStrength(phy)
+    min_error <- getMinError(phy)
+    lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
+    upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
+    starting_values <- get_starting_values(alpha_bounds, ...)
     dots_args <- get_dots_args(...)
 
+    nafun <- function(e) {
+      if (grepl("distinguishable", e)) stop(e)
+      return(list(optpar = NA,
+                  sigma2 = NA,
+                  sigma2_error = NA))
+    }
     tmp_fun <- function(...) {
-      return(phylolm::phylolm(expr ~ -1 + ., data = data_phylolm, phy = phy, model = model,
-                              measurement_error = measurement_error, lower.bound = lower_bounds,
-                              ...))
-                              # error_weight = weights, ...))
+      return(tryCatch(withCallingHandlers(phylolm::phylolm(expr ~ -1 + .,
+                                                           data = data_phylolm, phy = phy, model = model,
+                                                           measurement_error = measurement_error,
+                                                           lower.bound = lower_bounds,
+                                                           upper.bound = upper_bounds,
+                                                           starting.value = starting_values,
+                                                           ...),
+                                          warning = function(cond) {
+                                            if (grepl(pattern="upper/lower", x = conditionMessage(cond)) && "warning" %in% class(cond)) invokeRestart("muffleWarning")
+                                          }),
+                      error = nafun))
+      # error_weight = weights, ...))
     }
     all_fits[[i]] <- do.call(tmp_fun, dots_args)
 
@@ -158,7 +176,8 @@ get_consensus_tree_lambda <- function(phy, all_phyfit, measurement_error, trim) 
   return(list(tree = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree,
               params = list(model = "lambda",
                             measurement_error = measurement_error,
-                            lambda = lambda_mean)))
+                            lambda = lambda_mean,
+                            atanh_lambda = all_lambdas_transform)))
 }
 
 #' @title Get BM transformed tree
@@ -176,7 +195,8 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
 
   if (!measurement_error) stop("Measurement error should be true here.")
 
-  all_lambda_error <- sapply(all_phyfit, function(phyfit) phyfit$sigma2 / (phyfit$sigma2_error / max(ape::vcv(phy)) + phyfit$sigma2))
+  h_tree <- tree_height(phy)
+  all_lambda_error <- sapply(all_phyfit, function(phyfit) get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, h_tree))
 
   all_lambdas_transform <- atanh(pmax(-1, all_lambda_error))
   lambda_mean <- tanh(mean(all_lambdas_transform, trim = trim, na.rm = TRUE))
@@ -184,7 +204,8 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
   return(list(tree = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree,
               params = list(model = "BM",
                             measurement_error = measurement_error,
-                            lambda_error = lambda_mean)))
+                            lambda_error = lambda_mean,
+                            atanh_lambda_error = all_lambdas_transform)))
 }
 
 #' @title Get OU transformed tree
@@ -209,19 +230,20 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
     return(list(tree = phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree,
                 params = list(model = "OUfixedRoot",
                               measurement_error = measurement_error,
-                              alpha = alpha_mean)))
+                              alpha = alpha_mean,
+                              log_alpha = all_alphas_transform)))
   }
 
-  get_lambda_error <- function(phyfit) {
+  get_lambda_error_OU <- function(phyfit) {
     tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
                                                  parameters = list(alpha = phyfit$optpar))$tree
-    tilde_t <- max(ape::vcv(tree_model)) / (2 * phyfit$optpar)
-    lambda_ou_error <- phyfit$sigma2 * tilde_t / (phyfit$sigma2_error + phyfit$sigma2 * tilde_t)
+    tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
+    lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
     return(lambda_ou_error)
   }
 
   ## consensus lambda error
-  all_lambda_error <- sapply(all_phyfit, get_lambda_error)
+  all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
   lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
@@ -233,7 +255,9 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
               params = list(model = "OUfixedRoot",
                             measurement_error = measurement_error,
                             alpha = alpha_mean,
-                            lambda_error = lambda_error_mean)))
+                            lambda_error = lambda_error_mean,
+                            log_alpha = all_alphas_transform,
+                            atanh_lambda_error = all_lambda_error_transform)))
 }
 
 #' @title Get delta transformed tree
@@ -258,17 +282,18 @@ get_consensus_tree_delta <- function(phy, all_phyfit, measurement_error, trim) {
     return(list(tree = phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = delta_mean))$tree,
                 params = list(model = "delta",
                               measurement_error = measurement_error,
-                              delta = delta_mean)))
+                              delta = delta_mean,
+                              log_delta = all_deltas_transform)))
   }
 
-  get_lambda_error <- function(phyfit) {
+  get_lambda_error_delta <- function(phyfit) {
     tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = phyfit$optpar))$tree
-    tilde_t <- max(ape::vcv(tree_model))
-    lambda_delta_error <- phyfit$sigma2 * tilde_t / (phyfit$sigma2_error + phyfit$sigma2 * tilde_t)
+    tilde_t <- tree_height(tree_model)
+    lambda_delta_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
     return(lambda_delta_error)
   }
 
-  all_lambda_error <- sapply(all_phyfit, get_lambda_error)
+  all_lambda_error <- sapply(all_phyfit, get_lambda_error_delta)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
   lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
@@ -280,7 +305,9 @@ get_consensus_tree_delta <- function(phy, all_phyfit, measurement_error, trim) {
               params = list(model = "delta",
                             measurement_error = measurement_error,
                             delta = delta_mean,
-                            lambda_error = lambda_error_mean)))
+                            lambda_error = lambda_error_mean,
+                            log_delta = all_deltas_transform,
+                            atanh_lambda_error = all_lambda_error_transform)))
 }
 
 check.consensus_tree <- function(consensus_tree, model, measurement_error) {
