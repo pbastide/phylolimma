@@ -1,6 +1,8 @@
 context("Rphylopars vs phylolm")
 
 test_that("Rphylopars vs phylolm", {
+  skip_if_not_installed("Rphylopars")
+  skip_if_not_installed("phytools")
   ## Tree
   set.seed(1289)
   ntips <- 10

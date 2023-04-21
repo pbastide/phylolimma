@@ -21,6 +21,7 @@ Suggests:
     Rphylopars,
     phytools,
     edgeR,
+    statmod,
     testthat,
     covr
 Remotes: lamho86/phylolm
