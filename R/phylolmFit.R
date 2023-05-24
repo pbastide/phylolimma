@@ -130,7 +130,8 @@ phylolmFit <- function(object, design = NULL, phy,
                         list(coefficients = do.call(rbind, resLmFit["coefficients", ]),
                              sigma = do.call(c, resLmFit["sigma", ]),
                              stdev.unscaled = do.call(rbind, resLmFit["stdev.unscaled", ]),
-                             df.residual = do.call(c, resLmFit["df.residual", ])))
+                             df.residual = do.call(c, resLmFit["df.residual", ]),
+                             Amean = do.call(c, resLmFit["Amean", ])))
   }
 
   ## Add slots

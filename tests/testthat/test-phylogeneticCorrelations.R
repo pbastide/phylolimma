@@ -148,6 +148,47 @@ test_that("phylogeneticCorrelations - separate call", {
 
 })
 
+test_that("phylogeneticCorrelations - eBayes", {
+  set.seed(12891026)
+  ## Tree
+  ntips <- 10
+  tree <- ape::rphylo(ntips, 0.1, 0)
+  mat_tree <- ape::vcv(tree)
+  ## data
+  ngenes <- 20
+  y_data <- t(phylolm::rTrait(ngenes, tree, model = "delta", parameters = list(delta = 0.1)))
+  ## Design
+  design <- matrix(1, nrow = ntips, ncol = 2)
+  design[sample(1:ntips, floor(ntips / 2)), 2] <- 0
+  colnames(design) <- c("(Intercept)", "condition")
+  rownames(design) <- tree$tip.label
+
+  ## Fit Phylo Consensus
+  fit1 <- phylolmFit(y_data, design = design, phy = tree,
+                     model = "OUfixedRoot",
+                     measurement_error = TRUE,
+                     use_consensus = TRUE)
+  fit1eb <- eBayes(fit1)
+  fit1ebtrend <- eBayes(fit1, trend = TRUE)
+
+  ## phyCor
+  pc <- phylogeneticCorrelations(y_data, design = design, phy = tree,
+                                 model = "OUfixedRoot",
+                                 measurement_error = TRUE)
+  fit2 <- phylolmFit(y_data, design = design, phy = tree,
+                     model = "OUfixedRoot",
+                     measurement_error = TRUE,
+                     use_consensus = TRUE,
+                     consensus_tree = pc)
+  fit2eb <- eBayes(fit2)
+  fit2ebtrend <- eBayes(fit2, trend = TRUE)
+
+  expect_equal(fit1, fit2)
+  expect_equal(fit1eb, fit2eb)
+  expect_equal(fit1ebtrend, fit2ebtrend)
+})
+
+
 test_that("phylogeneticCorrelations - Errors", {
   set.seed(12891026)
   ## Tree
