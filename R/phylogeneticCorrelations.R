@@ -109,6 +109,13 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                 params = list(model = "BM",
                               measurement_error = FALSE)))
 
+  flag_BM_error <- FALSE
+  if (model == "BM" && measurement_error) {
+    model <- "lambda"
+    measurement_error <- FALSE
+    flag_BM_error <- TRUE
+  }
+
   all_fits <- list()
   for (i in 1:nrow(y_data)) {
     y <- y_data[i, ]
@@ -152,6 +159,10 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
                    OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim),
                    delta = get_consensus_tree_delta(phy, all_fits, measurement_error, trim))
+  if (flag_BM_error) {
+    params$model <- "BM"
+    params$measurement_error <- TRUE
+  }
   return(params)
 }
 
@@ -234,6 +245,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
                               log_alpha = all_alphas_transform)))
   }
 
+  ## TODO : use _OU or _OU_cons ?
   get_lambda_error_OU <- function(phyfit) {
     tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
                                                  parameters = list(alpha = phyfit$optpar))$tree
@@ -242,10 +254,30 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
     return(lambda_ou_error)
   }
 
+  get_lambda_error_OU_cons <- function(phyfit) {
+    tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
+                                                 parameters = list(alpha = alpha_mean))$tree
+    tilde_t <- tree_height(tree_model) / (2 * alpha_mean)
+    lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+    return(lambda_ou_error)
+  }
+
   ## consensus lambda error
-  all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
+  all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU_cons)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
   lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+
+  ## Geometric median
+  # trim_fun <- function(x, trim = 0.15) {
+  #   q <- quantile(x, c(trim, 1 - trim))
+  #   return(x >= q[1] & x <= q[2] & !is.na(x))
+  # }
+  # trim_ind <- trim_fun(all_alphas_transform, trim = trim) & trim_fun(all_lambda_error_transform, trim = trim)
+  # trans_params <- cbind(all_alphas_transform[trim_ind],
+  #                       all_lambda_error_transform[trim_ind])
+  # kk <- kmeans(trans_params, 1)
+  # alpha_mean <- exp(kk$center[1])
+  # lambda_error_mean <- tanh(kk$center[1])
 
   ## transform tree
   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree

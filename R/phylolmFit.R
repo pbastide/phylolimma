@@ -106,6 +106,8 @@ phylolmFit <- function(object, design = NULL, phy,
 
     C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, ...) ## BM on the consensus tree
     C_tree <- C_tree_params$C_tree
+    C_tree_params$optpar <- consensus_tree$alpha
+    C_tree_params$lambda_error <- consensus_tree$lambda_error
 
   } else {
     ## one phylo model per gene
@@ -143,6 +145,7 @@ phylolmFit <- function(object, design = NULL, phy,
   resFitFormat$lambda_error <- C_tree_params$lambda_error
   resFitFormat$sigma2_phy <- C_tree_params$sigma2_phy
   resFitFormat$sigma2_error <- C_tree_params$sigma2_error
+  if (use_consensus) resFitFormat$consensus_tree <- consensus_tree
 
   ## Result
   return(resFitFormat)

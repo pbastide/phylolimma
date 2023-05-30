@@ -145,7 +145,8 @@ get_starting_values <- function(bounds_alpha, ...) {
   starting_values <- list()
   if ("starting.value" %in% names(dot_args)) starting_values <- eval(dot_args$starting.value)
   # If no bounds specified on alpha, set it.
-  if (!("alpha" %in% names(starting_values))) starting_values$alpha = mean(bounds_alpha)
+  # if (!("alpha" %in% names(starting_values))) starting_values$alpha = mean(bounds_alpha)
+  ## TODO init alpha from cheries ?
   return(as.list(starting_values))
 }
 
