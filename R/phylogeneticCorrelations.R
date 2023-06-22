@@ -51,7 +51,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy,
                                      model = c("BM", "lambda", "OUfixedRoot", "delta"),
                                      measurement_error = TRUE,
                                      trim = 0.15, weights = NULL, REML = TRUE,
-                                     ddf_method = c("Samples", "Species"), #c("Satterthwaite", "Species", "Samples"),
+                                     ddf_method = c("Satterthwaite", "Species", "Samples"),
                                      ...) {
 
   ##################################################################################################
@@ -92,6 +92,9 @@ phylogeneticCorrelations <- function(object, design = NULL, phy,
   y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 
+  ## ddf
+  ddf_method <- match.arg(ddf_method)
+
   ##################################################################################################
 
   tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ...)
@@ -116,7 +119,8 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
   if (model == "BM" && !measurement_error) # no parameter to estimate
     return(list(tree = phy,
                 params = list(model = "BM",
-                              measurement_error = FALSE)))
+                              measurement_error = FALSE),
+                ddf = rep(nrow(design) - ncol(design), nrow(y_data))))
 
   # flag_BM_error <- FALSE
   # if (model == "BM" && measurement_error) {
@@ -175,7 +179,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
                    OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU),
                    delta = get_consensus_tree_delta(phy, all_fits, measurement_error, trim))
-  params$ddf <- lapply(all_fits, get_ddf(ddf_method))
+  params$ddf <- sapply(all_fits, get_ddf(ddf_method), phylo = phy)
   # if (flag_BM_error) {
   #   params$model <- "BM"
   #   params$measurement_error <- TRUE

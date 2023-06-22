@@ -17,13 +17,16 @@ Imports:
     ape,
     phylolm,
     methods,
-    pracma
+    pracma,
+    numDeriv
 Suggests: 
     Rphylopars,
     phytools,
     edgeR,
     statmod,
     testthat,
-    covr
+    covr,
+    lme4,
+    lmerTest
 Remotes: lamho86/phylolm
 RoxygenNote: 7.2.3

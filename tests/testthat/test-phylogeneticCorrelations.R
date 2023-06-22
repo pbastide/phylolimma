@@ -41,12 +41,14 @@ test_that("phylogeneticCorrelations - BM", {
   resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
                               model = model,
                               measurement_error = measurement_error,
-                              use_consensus = FALSE)
+                              use_consensus = FALSE,
+                              ddf_method = "Samples")
   ## Fit Phylo Consensus
   resPhyloLmFitCons <- phylolmFit(y_data, design = design, phy = tree,
                                   model = model,
                                   measurement_error = measurement_error,
-                                  use_consensus = TRUE)
+                                  use_consensus = TRUE,
+                                  ddf_method = "Samples")
 
   ## Test names and dimensions
   expect_equal(colnames(resPhyloLmFit$coefficients), colnames(resPhyloLmFitCons$coefficients))

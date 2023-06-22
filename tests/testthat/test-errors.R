@@ -25,7 +25,7 @@ test_that("Errors with species names", {
   colnames(y_data) <- sample(tree$tip.label, ntips)
   expect_warning(res1 <- phylolmFit(y_data, phy = tree),
                  "expression matrix` was not sorted in the correct order")
-  expect_warning(phylogeneticCorrelations(y_data, phy = tree),
+  expect_warning(phylogeneticCorrelations(y_data, phy = tree, ddf_method = "Samples"),
                  "expression matrix` was not sorted in the correct order")
   y_data <- y_data[, match(tree$tip.label, colnames(y_data)), drop = FALSE]
   res2 <- phylolmFit(y_data, phy = tree)

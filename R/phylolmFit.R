@@ -53,7 +53,7 @@ phylolmFit <- function(object, design = NULL, phy,
                        measurement_error = FALSE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
-                       ddf_method = c("Samples", "Species"), #c("Satterthwaite", "Species", "Samples"),
+                       ddf_method = c("Satterthwaite", "Species", "Samples"),
                        REML = TRUE, ...) {
 
   ##################################################################################################
@@ -92,6 +92,9 @@ phylolmFit <- function(object, design = NULL, phy,
   if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
   y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
+
+  ## ddf
+  ddf_method <- match.arg(ddf_method)
 
   ##################################################################################################
   ## Consensus tree
@@ -151,17 +154,7 @@ phylolmFit <- function(object, design = NULL, phy,
                              Amean = do.call(c, resLmFit["Amean", ])))
   }
 
-  ddf_method <- match.arg(ddf_method)
-  if (ddf_method == "Species") {
-    ## Degrees of freedom
-    # If several observation per species, take the number of species as the basis
-    # for the computation.
-    nspecies <- getSpeciesNumber(phy)
-    nsamples <- ncol(y_data)
-    resFitFormat$df.residual <- resFitFormat$df.residual - nsamples + nspecies
-  } else if (ddf_method == "Satterthwaite") {
-    resFitFormat$df.residual <- ddf_fits
-  }
+  resFitFormat$df.residual <- ddf_fits
 
   ## Add slots
   resFitFormat$phy <- phy
@@ -328,7 +321,7 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REM
                              lambda = transform_tree_model_lambda(phy, fplm, measurement_error),
                              OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
                              delta = transform_tree_model_delta(phy, fplm, measurement_error))
-  phy_trans_params$ddf <- get_ddf(ddf_method)(fplm)
+  phy_trans_params$ddf <- get_ddf(ddf_method)(fplm, phy)
   return(phy_trans_params)
 }
 

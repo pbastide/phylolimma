@@ -12,6 +12,8 @@ phylogeneticCorrelations(
   measurement_error = TRUE,
   trim = 0.15,
   weights = NULL,
+  REML = TRUE,
+  ddf_method = c("Satterthwaite", "Species", "Samples"),
   ...
 )
 }
@@ -38,6 +40,14 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{weights}{a named vector or matrix with weights to be applied on the measurement error term.
 See \code{\link[phylolm]{phylolm}} for more details.}
+
+\item{REML}{Use REML (default) or ML for estimating the parameters.}
+
+\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
+Default to \code{ddf_method="Satterthwaite"}.
+If \code{ddf_method="Species"}, then the number of species is taken for the
+computation of the degrees of freedom,
+while if \code{ddf_method="Samples"} the total number of individuals is used.}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}}.}

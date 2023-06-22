@@ -4,7 +4,16 @@
 \alias{get_chol_tree}
 \title{Get Tree Normalizing Inverse Cholesky}
 \usage{
-get_chol_tree(y_data, design, phy, model, measurement_error, ...)
+get_chol_tree(
+  y_data,
+  design,
+  phy,
+  model,
+  measurement_error,
+  REML,
+  ddf_method,
+  ...
+)
 }
 \arguments{
 \item{y_data}{A matrix data object containing normalized expression values,
@@ -24,6 +33,14 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
+
+\item{REML}{Use REML (default) or ML for estimating the parameters.}
+
+\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
+Default to \code{ddf_method="Satterthwaite"}.
+If \code{ddf_method="Species"}, then the number of species is taken for the
+computation of the degrees of freedom,
+while if \code{ddf_method="Samples"} the total number of individuals is used.}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}
