@@ -12,6 +12,7 @@ phylolmFit(
   measurement_error = FALSE,
   use_consensus = TRUE,
   consensus_tree = NULL,
+  df_species = TRUE,
   ...
 )
 }
@@ -41,6 +42,9 @@ Default to TRUE.}
 \item{consensus_tree}{If not \code{NULL}, the consensus tree containing the correlation structure,
 result of function \code{\link{phylogeneticCorrelations}}.
 If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.}
+
+\item{df_species}{if \code{TRUE}, then the number of species is taken for the
+computation of the degrees of freedom, instead of the total number of individuals.}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}

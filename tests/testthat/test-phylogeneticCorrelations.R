@@ -6,7 +6,7 @@ test_that("phylogeneticCorrelations - BM", {
   mat_tree <- ape::vcv(tree)
   ## data
   ngenes <- 20
-  y_data <- t(phylolm::rTrait(ngenes, tree, model = "delta", parameters = list(delta = 0.1)))
+  y_data <- t(phylolm::rTrait(ngenes, tree, model = "lambda", parameters = list(lambda = 0.5)))
   ## Design
   design <- matrix(1, nrow = ntips, ncol = 2)
   design[sample(1:ntips, floor(ntips / 2)), 2] <- 0
@@ -73,10 +73,39 @@ test_that("phylogeneticCorrelations - BM", {
                                         measurement_error = FALSE,
                                         use_consensus = TRUE)
 
-  expect_equal(resPhyloLmFitConsLambda@.Data[which(!names(resPhyloLmFitConsLambda) %in% c("modelphy", "measurement_error"))],
-               resPhyloLmFitCons@.Data[which(!names(resPhyloLmFitConsLambda) %in% c("modelphy", "measurement_error"))],
-               tol = 1e-5)
+  expect_equal(names(resPhyloLmFitConsLambda), names(resPhyloLmFitCons))
+  for (nn in names(resPhyloLmFitConsLambda)) {
+    if (!nn %in% c("modelphy", "measurement_error", "consensus_tree", "phy_trans")) {
+      expect_equal(resPhyloLmFitConsLambda[[nn]],
+                   resPhyloLmFitCons[[nn]],
+                   tol = 1e-4)
+    }
+  }
+  expect_equal(resPhyloLmFitConsLambda$consensus_tree$params$lambda,
+               resPhyloLmFitCons$consensus_tree$params$lambda_error,
+               tol = 1e-4)
 
+  expect_equal(resPhyloLmFitConsLambda$phy_trans,
+               resPhyloLmFitCons$phy_trans,
+               tol = 1e-4)
+
+  #################################################################################################
+  ## OU
+
+  ## Fit Phylo Consensus
+  resPhyloLmFitConsOU <- phylolmFit(y_data, design = design, phy = tree,
+                                    model = "OUfixedRoot",
+                                    measurement_error = TRUE,
+                                    use_consensus = TRUE)
+
+  resPhyloLmFitConsOUmed <- phylolmFit(y_data, design = design, phy = tree,
+                                       model = "OUfixedRoot",
+                                       measurement_error = TRUE,
+                                       use_consensus = TRUE,
+                                       medianOU = TRUE)
+
+  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$alpha <= resPhyloLmFitConsOU$consensus_tree$params$alpha)
+  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$lambda_error <= resPhyloLmFitConsOU$consensus_tree$params$lambda_error)
 
 })
 

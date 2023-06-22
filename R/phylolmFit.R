@@ -24,6 +24,12 @@
 #' @param consensus_tree If not \code{NULL}, the consensus tree containing the correlation structure,
 #' result of function \code{\link{phylogeneticCorrelations}}.
 #' If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.
+#' @param ddf_method the method for the computation of the degrees of freedom of the t statistics (before moderation).
+#' Default to \code{ddf_method="Satterthwaite"}.
+#' If \code{ddf_method="Species"}, then the number of species is taken for the
+#' computation of the degrees of freedom,
+#' while if \code{ddf_method="Samples"} the total number of individuals is used.
+#' @param REML Use REML (default) or ML for estimating the parameters.
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.
 #'
@@ -46,7 +52,9 @@ phylolmFit <- function(object, design = NULL, phy,
                        model = c("BM", "lambda", "OUfixedRoot", "delta"),
                        measurement_error = FALSE,
                        use_consensus = TRUE,
-                       consensus_tree = NULL, ...) {
+                       consensus_tree = NULL,
+                       ddf_method = c("Samples", "Species"), #c("Satterthwaite", "Species", "Samples"),
+                       REML = TRUE, ...) {
 
   ##################################################################################################
   ## Check unused parameters
@@ -101,18 +109,24 @@ phylolmFit <- function(object, design = NULL, phy,
       consensus_tree <- phylogeneticCorrelations(object = object, design = design, phy = phy,
                                                  model = model,
                                                  measurement_error = measurement_error,
+                                                 REML = REML,
+                                                 ddf_method = ddf_method,
                                                  weights = NULL, ...)
     }
 
-    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, ...) ## BM on the consensus tree
+    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, REML, ddf_method, ...) ## BM on the consensus tree
     C_tree <- C_tree_params$C_tree
     C_tree_params$optpar <- consensus_tree$alpha
     C_tree_params$lambda_error <- consensus_tree$lambda_error
 
+    ddf_fits <- consensus_tree$ddf
+
   } else {
     ## one phylo model per gene
-    C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, ...)
+    C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, REML, ddf_method, ...)
     C_tree <- C_tree_params$C_tree
+
+    ddf_fits <- C_tree_params$ddf
   }
 
   ##################################################################################################
@@ -124,6 +138,7 @@ phylolmFit <- function(object, design = NULL, phy,
   ## Apply lmFit
   resLmFit <- lmFitLimma(y_trans, design_trans, ...)
 
+
   ## Format
   if (use_consensus) {
     resFitFormat <- resLmFit
@@ -134,6 +149,18 @@ phylolmFit <- function(object, design = NULL, phy,
                              stdev.unscaled = do.call(rbind, resLmFit["stdev.unscaled", ]),
                              df.residual = do.call(c, resLmFit["df.residual", ]),
                              Amean = do.call(c, resLmFit["Amean", ])))
+  }
+
+  ddf_method <- match.arg(ddf_method)
+  if (ddf_method == "Species") {
+    ## Degrees of freedom
+    # If several observation per species, take the number of species as the basis
+    # for the computation.
+    nspecies <- getSpeciesNumber(phy)
+    nsamples <- ncol(y_data)
+    resFitFormat$df.residual <- resFitFormat$df.residual - nsamples + nspecies
+  } else if (ddf_method == "Satterthwaite") {
+    resFitFormat$df.residual <- ddf_fits
   }
 
   ## Add slots
@@ -207,7 +234,7 @@ lmFitLimma <- function(y_trans, design_trans, ...) {
 #'
 #' @keywords internal
 #'
-get_chol_tree <- function(y_data, design, phy, model, measurement_error, ...) {
+get_chol_tree <- function(y_data, design, phy, model, measurement_error, REML, ddf_method, ...) {
   if (!measurement_error && model == "BM") { ## Easy case, not fit necessary
     C_tree <- ape::vcv(phy)
     C_tree_chol <- chol(C_tree)
@@ -219,7 +246,7 @@ get_chol_tree <- function(y_data, design, phy, model, measurement_error, ...) {
                 sigma2_error = 0))
   } else {
     C_tree_chol_and_params <- apply(y_data, 1,
-                                    get_C_tree, design, phy, model, measurement_error, ...)
+                                    get_C_tree, design, phy, model, measurement_error, REML, ddf_method, ...)
     C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
     return(C_tree_chol_and_params)
   }
@@ -231,7 +258,8 @@ format_list <- function(C_tree_chol_and_params) {
               optpar = sapply(C_tree_chol_and_params, function(x) x$optpar),
               lambda_error = sapply(C_tree_chol_and_params, function(x) x$lambda_error),
               sigma2_phy = sapply(C_tree_chol_and_params, function(x) x$sigma2_phy),
-              sigma2_error = sapply(C_tree_chol_and_params, function(x) x$sigma2_error)))
+              sigma2_error = sapply(C_tree_chol_and_params, function(x) x$sigma2_error),
+              ddf = sapply(C_tree_chol_and_params, function(x) x$ddf)))
 }
 
 #' @title Get Tree Normalizing Inverse Cholesky
@@ -246,8 +274,8 @@ format_list <- function(C_tree_chol_and_params) {
 #'
 #' @keywords internal
 #'
-get_C_tree <- function(y, design, phy, model, measurement_error, ...) {
-  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, ...)
+get_C_tree <- function(y, design, phy, model, measurement_error, REML, ddf_method, ...) {
+  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, REML, ddf_method, ...)
   tree_model <- trans_tree_params$tree_model
   C_tree <- ape::vcv(tree_model)
   C_tree_chol <- chol(C_tree)
@@ -256,7 +284,8 @@ get_C_tree <- function(y, design, phy, model, measurement_error, ...) {
               optpar = trans_tree_params$optpar,
               lambda_error = trans_tree_params$lambda_error,
               sigma2_phy = trans_tree_params$sigma2_phy,
-              sigma2_error = trans_tree_params$sigma2_error))
+              sigma2_error = trans_tree_params$sigma2_error,
+              ddf = trans_tree_params$ddf))
 }
 
 #' @title Get transformed tree
@@ -270,7 +299,7 @@ get_C_tree <- function(y, design, phy, model, measurement_error, ...) {
 #'
 #' @keywords internal
 #'
-transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...) {
+transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REML, ddf_method, ...) {
   if (model == "BM" && !measurement_error) return(phy) # no transformation needed
   data_phylolm <- as.data.frame(cbind(y, design))
   colnames(data_phylolm)[1] <- "expr"
@@ -287,6 +316,7 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...
                                                 lower.bound = lower_bounds,
                                                 upper.bound = upper_bounds,
                                                 starting.value = starting_values,
+                                                REML = REML,
                                                 ...),
                                warning = function(cond) {
                                  if (grepl(pattern="upper/lower", x = conditionMessage(cond)) && "warning" %in% class(cond)) invokeRestart("muffleWarning")
@@ -298,6 +328,7 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, ...
                              lambda = transform_tree_model_lambda(phy, fplm, measurement_error),
                              OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
                              delta = transform_tree_model_delta(phy, fplm, measurement_error))
+  phy_trans_params$ddf <- get_ddf(ddf_method)(fplm)
   return(phy_trans_params)
 }
 

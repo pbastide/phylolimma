@@ -21,8 +21,14 @@
 #' @param trim the fraction of observations to be trimmed from each end when computing the trimmed mean. Default to 0.15, as in \code{\link[limma]{duplicateCorrelation}}.
 #' @param weights a named vector or matrix with weights to be applied on the measurement error term.
 #' See \code{\link[phylolm]{phylolm}} for more details.
+#' @param REML Use REML (default) or ML for estimating the parameters.
+#' @param ddf_method the method for the computation of the degrees of freedom of the t statistics (before moderation).
+#' Default to \code{ddf_method="Satterthwaite"}.
+#' If \code{ddf_method="Species"}, then the number of species is taken for the
+#' computation of the degrees of freedom,
+#' while if \code{ddf_method="Samples"} the total number of individuals is used.
 #' @param ... further parameters to be passed
-#' to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.
+#' to \code{\link[limma]{lmFit}}.
 #'
 #' @return An object of class \code{TransTree-class},
 #' with list components:
@@ -44,7 +50,9 @@
 phylogeneticCorrelations <- function(object, design = NULL, phy,
                                      model = c("BM", "lambda", "OUfixedRoot", "delta"),
                                      measurement_error = TRUE,
-                                     trim = 0.15, weights = NULL, ...) {
+                                     trim = 0.15, weights = NULL, REML = TRUE,
+                                     ddf_method = c("Samples", "Species"), #c("Satterthwaite", "Species", "Samples"),
+                                     ...) {
 
   ##################################################################################################
   ## Checks
@@ -86,8 +94,9 @@ phylogeneticCorrelations <- function(object, design = NULL, phy,
 
   ##################################################################################################
 
-  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, ...)
+  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ...)
 
+  return(tree_model)
 }
 
 #' @title Get transformed tree
@@ -101,7 +110,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy,
 #'
 #' @keywords internal
 #'
-get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, ...) {
+get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ...) {
   if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression (yet).")
 
   if (model == "BM" && !measurement_error) # no parameter to estimate
@@ -109,12 +118,12 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                 params = list(model = "BM",
                               measurement_error = FALSE)))
 
-  flag_BM_error <- FALSE
-  if (model == "BM" && measurement_error) {
-    model <- "lambda"
-    measurement_error <- FALSE
-    flag_BM_error <- TRUE
-  }
+  # flag_BM_error <- FALSE
+  # if (model == "BM" && measurement_error) {
+  #   model <- "lambda"
+  #   measurement_error <- FALSE
+  #   flag_BM_error <- TRUE
+  # }
 
   all_fits <- list()
   for (i in 1:nrow(y_data)) {
@@ -143,7 +152,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                                                            lower.bound = lower_bounds,
                                                            upper.bound = upper_bounds,
                                                            starting.value = starting_values,
-                                                           ...),
+                                                           REML = REML),
                                           warning = function(cond) {
                                             if (grepl(pattern="upper/lower", x = conditionMessage(cond)) && "warning" %in% class(cond)) invokeRestart("muffleWarning")
                                           }),
@@ -154,15 +163,23 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
 
   }
 
+  dot_args <- dots(...)
+  if (!"medianOU" %in% names(dot_args)) {
+    medianOU <- FALSE
+  } else {
+    medianOU <- dot_args$medianOU
+  }
+
   params <- switch(model,
                    BM = get_consensus_tree_BM(phy, all_fits, measurement_error, trim),
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
-                   OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim),
+                   OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU),
                    delta = get_consensus_tree_delta(phy, all_fits, measurement_error, trim))
-  if (flag_BM_error) {
-    params$model <- "BM"
-    params$measurement_error <- TRUE
-  }
+  params$ddf <- lapply(all_fits, get_ddf(ddf_method))
+  # if (flag_BM_error) {
+  #   params$model <- "BM"
+  #   params$measurement_error <- TRUE
+  # }
   return(params)
 }
 
@@ -225,19 +242,22 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
 #' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
 #'
 #' @inheritParams get_C_tree
+#' @param median if TRUE, the \code{pracma::geo_median} function is used to take
+#' the geometric median.
 #'
 #' @return The transformed tree.
 #'
 #' @keywords internal
 #'
-get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim) {
+get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim, median = FALSE) {
 
   all_alphas <- sapply(all_phyfit, function(x) x$optpar)
   all_alphas_transform <- log(all_alphas)
-  alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+  # alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
 
   if (!measurement_error) {
 
+    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
     return(list(tree = phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree,
                 params = list(model = "OUfixedRoot",
                               measurement_error = measurement_error,
@@ -263,21 +283,21 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   }
 
   ## consensus lambda error
-  all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU_cons)
+  all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
   lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
-  ## Geometric median
-  # trim_fun <- function(x, trim = 0.15) {
-  #   q <- quantile(x, c(trim, 1 - trim))
-  #   return(x >= q[1] & x <= q[2] & !is.na(x))
-  # }
-  # trim_ind <- trim_fun(all_alphas_transform, trim = trim) & trim_fun(all_lambda_error_transform, trim = trim)
-  # trans_params <- cbind(all_alphas_transform[trim_ind],
-  #                       all_lambda_error_transform[trim_ind])
-  # kk <- kmeans(trans_params, 1)
-  # alpha_mean <- exp(kk$center[1])
-  # lambda_error_mean <- tanh(kk$center[1])
+  if (!median) {
+    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+    lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+  } else {
+    ## Geometric median
+    all_pars_OU_transform <- cbind(all_alphas_transform, all_lambda_error_transform)
+    gmed <- pracma::geo_median(all_pars_OU_transform)
+    gmed <- unname(gmed$p)
+    alpha_mean <- exp(gmed[1])
+    lambda_error_mean <- tanh(gmed[2])
+  }
 
   ## transform tree
   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree

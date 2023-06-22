@@ -21,6 +21,9 @@ test_that("Rphylopars vs phylolm", {
   expect_equal(length(tree_rep$tip.label), sum(reps))
   expect_equal(ape::is.ultrametric(tree_rep), TRUE)
 
+  ## species number
+  expect_equal(getSpeciesNumber(tree_rep), ntips - 2)
+
   ## Check produced data
   rownames(traits) <- traits$id
   expect_warning(checkParamMatrix(traits, 'data', tree_rep, transpose = TRUE),

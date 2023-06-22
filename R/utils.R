@@ -104,6 +104,7 @@ get_lower_bounds <- function(bounds_alpha, min_sigma2_error, ...) {
   if (!("sigma2_error" %in% names(lower_bounds))) lower_bounds$sigma2_error = min_sigma2_error
   # If no bounds specified on alpha, set it.
   if (!("alpha" %in% names(lower_bounds))) lower_bounds$alpha = bounds_alpha[1]
+  if (!("lambda" %in% names(lower_bounds))) lower_bounds$lambda = 1e-16
   return(as.list(lower_bounds))
 }
 
@@ -203,4 +204,31 @@ tree_height <- function(tree) {
 #'
 get_lambda_error <- function(sigma2, sigma2_error, h_tree) {
   return(sigma2 * h_tree / (sigma2_error + sigma2 * h_tree))
+}
+
+#' @title Get the number of species
+#'
+#' @description
+#' Compute the number of different species on a tree that possibly has replicates
+#' coded as tips with zero length branches.
+#'
+#'
+#' @param phy a phylogentic tree, with possible replicates coded as tips with zero length branches.
+#' @param tol a numeric value giving the tolerance to consider a branch length significantly greater than zero.
+#'
+#' @return the number of different species in the tree
+#'
+#' @keywords internal
+#'
+getSpeciesNumber <- function(phy, tol = .Machine$double.eps^(1/2)) {
+  n <- length(phy$tip.label)
+  R <- ape::cophenetic.phylo(phy) <= tol
+  R <- colSums(R)
+  nspecies <- 0
+  ind <- 1
+  while(ind <= length(R)) {
+    nspecies <- nspecies + 1
+    ind <- ind + R[ind]
+  }
+  return(nspecies)
 }

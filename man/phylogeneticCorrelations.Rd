@@ -40,7 +40,7 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{...}{further parameters to be passed
-to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}
+to \code{\link[limma]{lmFit}}.}
 }
 \value{
 An object of class \code{TransTree-class},

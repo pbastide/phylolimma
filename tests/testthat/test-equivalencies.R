@@ -14,17 +14,18 @@ test_that("phylolmFit - equivalencies", {
   rownames(design) <- tree$tip.label
 
   ## Test function
-  test_lmFit_phylolm <- function(y_data, design, tree, model, measurement_error) {
+  test_lmFit_phylolm <- function(y_data, design, tree, model, measurement_error, REML) {
     ## Transform design and data and fit
     resLmFit <- phylolmFit(y_data, design = design, phy = tree,
                            model = model,
                            measurement_error = measurement_error,
-                           use_consensus = FALSE)
+                           use_consensus = FALSE,
+                           REML = REML)
 
     ## phylolm fit
     bounds_alpha <- getBoundsSelectionStrength(tree)
     min_sig_err <- getMinError(tree)
-    phylolm_fit <- function(y, design, phy, model, measurement_error, ...) {
+    phylolm_fit <- function(y, design, phy, model, measurement_error, REML, ...) {
       data_phylolm <- as.data.frame(cbind(y, design))
       colnames(data_phylolm)[1] <- "expr"
       fplm <- suppressWarnings(phylolm::phylolm(expr ~ -1 + .,
@@ -32,11 +33,11 @@ test_that("phylolmFit - equivalencies", {
                                                 measurement_error = measurement_error,
                                                 upper.bound = list(alpha = bounds_alpha[2], lambda = getMaxLambda(min_sig_err)),
                                                 lower.bound = list(alpha = bounds_alpha[1], sigma2_error = min_sig_err),
-                                                starting.value = list(alpha = mean(bounds_alpha)),
+                                                REML = REML,
                                                 ...))
       return(fplm)
     }
-    fplm <- apply(y_data, 1, phylolm_fit, design = design, phy = tree, model = model, measurement_error = measurement_error)
+    fplm <- apply(y_data, 1, phylolm_fit, design = design, phy = tree, model = model, measurement_error = measurement_error, REML = REML)
 
     ## Comparison
     # coefficients
@@ -47,10 +48,10 @@ test_that("phylolmFit - equivalencies", {
     expect_equivalent(phylolm_df, resLmFit$df.residual)
     if (model == "BM" && !measurement_error) {
       # sigma
-      phylolm_sigma <- sapply(fplm, function(z) sqrt(ntips/(ntips-2) * z$sigma2))
+      phylolm_sigma <- sapply(fplm, function(z) sqrt(ntips/(ntips-2*(1-REML)) * z$sigma2))
       expect_equal(phylolm_sigma, resLmFit$sigma)
       # stdev
-      phylolm_stdev <- t(sapply(fplm, function(z) sqrt(diag(z$vcov) / (ntips / (ntips-2) * z$sigma2))))
+      phylolm_stdev <- t(sapply(fplm, function(z) sqrt(diag(z$vcov) / (ntips / (ntips-2*(1-REML)) * z$sigma2))))
       expect_equivalent(phylolm_stdev, resLmFit$stdev.unscaled)
     }
     # t.value
@@ -66,25 +67,46 @@ test_that("phylolmFit - equivalencies", {
   ## Tests
   model <- "BM"
   measurement_error <- FALSE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error)
+  REML <- FALSE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  REML <- TRUE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
   measurement_error <- TRUE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error)
+  REML <- FALSE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  REML <- TRUE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
 
   model <- "OUfixedRoot"
   measurement_error <- FALSE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error)
+  REML <- FALSE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  REML <- TRUE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
   measurement_error <- TRUE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error)
+  REML <- FALSE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  REML <- TRUE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
 
   model <- "lambda"
   measurement_error <- FALSE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error)
+  REML <- FALSE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  REML <- TRUE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
 
 
   model <- "delta"
   measurement_error <- FALSE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error)
+  REML <- FALSE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  REML <- TRUE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
   measurement_error <- TRUE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error)
+  REML <- FALSE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  REML <- TRUE
+  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
 
 })

@@ -52,6 +52,10 @@ test_that("phylolmFit - BM", {
   expect_equal(colnames(resPhyloLmFit$stdev.unscaled), colnames(resLmFit$stdev.unscaled))
   expect_equal(dim(resPhyloLmFit$stdev.unscaled), dim(resLmFit$stdev.unscaled))
 
+  ## ddf
+  expect_equal(resPhyloLmFit$df.residual, resLmFit$df.residual)
+  expect_equal(getSpeciesNumber(tree), ntips)
+
   ## ebayes
   fitphy <- eBayes(resPhyloLmFit)
   fitlimma <- limma::eBayes(resLmFit)
@@ -182,6 +186,8 @@ test_that("phylolmFit - mammals", {
                    measurement_error = TRUE,
                    use_consensus = FALSE)
   expect_true(all(pp$sigma2_error >= 0.001 * pp$sigma2_phy))
+
+  expect_equal(getSpeciesNumber(tree), length(unique(sub("\\.[0-9]", "", tree$tip.label))))
 
   pp <- phylolmFit(y_data, design = design, phy = tree,
                    model = "BM",

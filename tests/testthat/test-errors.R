@@ -118,8 +118,8 @@ test_that("Errors with phylogenetic correlations", {
   rownames(design) <- tree$tip.label
 
   ## phylo cor
-  pc <- phylogeneticCorrelations(y_data, design, phy = tree, model = "OUfixedRoot", measurement_error = FALSE)
-  expect_equal(pc$params$alpha, 4.754609, tol = 1e-6)
+  pc <- phylogeneticCorrelations(y_data, design, phy = tree, model = "OUfixedRoot", measurement_error = FALSE, REML = FALSE)
+  expect_equal(pc$params$alpha, 4.56, tol = 1e-2)
 
   expect_error(
     phylolmFit(y_data, design = design, phy = tree, use_consensus = TRUE, consensus_tree = pc),

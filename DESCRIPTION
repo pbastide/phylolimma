@@ -16,7 +16,8 @@ Imports:
     limma,
     ape,
     phylolm,
-    methods
+    methods,
+    pracma
 Suggests: 
     Rphylopars,
     phytools,
