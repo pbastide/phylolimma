@@ -370,7 +370,9 @@ transform_tree_model_lambda <- function(phy, phyfit, measurement_error) {
 transform_tree_model_BM <- function(phy, phyfit, measurement_error) {
   if (!measurement_error) stop("Measurement error should be true here.")
   lambda_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tree_height(phy))
-  return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_error))$tree,
+  tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_error))$tree
+  tree_model <- rescale_tree(tree_model)
+  return(list(tree_model = tree_model,
               optpar = NA,
               lambda_error = lambda_error,
               sigma2_phy = phyfit$sigma2,
@@ -400,6 +402,8 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
   tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
   lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
+  tree_model <- rescale_tree(tree_model)
+
   return(list(tree_model = tree_model,
               optpar = phyfit$optpar,
               lambda_error = lambda_ou_error,
@@ -431,6 +435,7 @@ transform_tree_model_OUrandomRoot <- function(phy, phyfit, measurement_error) {
   tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
   lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
+  tree_model <- rescale_tree(tree_model)
   return(list(tree_model = tree_model,
               optpar = phyfit$optpar,
               lambda_error = lambda_ou_error,
@@ -461,6 +466,7 @@ transform_tree_model_delta <- function(phy, phyfit, measurement_error) {
   tilde_t <- tree_height(tree_model)
   lambda_delta_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_delta_error))$tree
+  tree_model <- rescale_tree(tree_model)
   return(list(tree_model = tree_model,
               optpar = phyfit$optpar,
               lambda_error = lambda_delta_error,

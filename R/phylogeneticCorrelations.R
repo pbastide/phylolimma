@@ -205,8 +205,10 @@ get_consensus_tree_lambda <- function(phy, all_phyfit, measurement_error, trim) 
   all_lambdas <- sapply(all_phyfit, function(x) x$optpar)
   all_lambdas_transform <- atanh(pmax(-1, all_lambdas))
   lambda_mean <- tanh(mean(all_lambdas_transform, trim = trim, na.rm = TRUE))
+  tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree
+  tree_model <- rescale_tree(tree_model)
 
-  return(list(tree = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree,
+  return(list(tree = tree_model,
               params = list(model = "lambda",
                             measurement_error = measurement_error,
                             lambda = lambda_mean,
@@ -234,7 +236,10 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
   all_lambdas_transform <- atanh(pmax(-1, all_lambda_error))
   lambda_mean <- tanh(mean(all_lambdas_transform, trim = trim, na.rm = TRUE))
 
-  return(list(tree = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree,
+  tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree
+  tree_model <- rescale_tree(tree_model)
+
+  return(list(tree = tree_model,
               params = list(model = "BM",
                             measurement_error = measurement_error,
                             lambda_error = lambda_mean,
@@ -307,6 +312,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   ## transform tree
   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
+  tree_model <- rescale_tree(tree_model)
 
   return(list(tree = tree_model,
               params = list(model = "OUfixedRoot",
@@ -375,6 +381,7 @@ get_consensus_tree_OUrandomRoot <- function(phy, all_phyfit, measurement_error, 
   tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = alpha_mean))$tree
   tree_model$root.edge <- 0
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
+  tree_model <- rescale_tree(tree_model)
 
   return(list(tree = tree_model,
               params = list(model = "OUrandomRoot",
@@ -425,6 +432,7 @@ get_consensus_tree_delta <- function(phy, all_phyfit, measurement_error, trim) {
   ## transform tree
   tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = delta_mean))$tree
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
+  tree_model <- rescale_tree(tree_model)
 
   return(list(tree = tree_model,
               params = list(model = "delta",

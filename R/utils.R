@@ -307,3 +307,20 @@ pos_inv <- function(h, tol = 1e-8) {
       t(vectors[, pos, drop=FALSE]) })
   return(h_inv)
 }
+
+#' @title Scale tree to unit height
+#'
+#' @description
+#' Scale the tree to unit height
+#'
+#' @param tree a phylogenetic tree
+#'
+#' @return The re-scaled tree
+#'
+#' @keywords internal
+#'
+#'
+rescale_tree <- function(tree) {
+  tree$edge.length <- tree$edge.length / tree_height(tree)
+  return(tree)
+}
