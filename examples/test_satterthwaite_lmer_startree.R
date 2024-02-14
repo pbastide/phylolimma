@@ -41,8 +41,9 @@ all.equal(attr(VarCorr(fit_lmer), "sc")^2, fit_phylolm$sigma2_error)
 anova(fit_lmer)
 
 ddf_satterthwaite_sum(fit_phylolm, tree_rep, FALSE)
+fit_phylolm$coefficients[1] / sqrt(res_lm$vcov[1, 1])
 
-# ddf_satterthwaite_BM(fit_phylolm, tree_rep, FALSE)
+ddf_satterthwaite_BM(fit_phylolm, tree_rep, FALSE)
 
 ## REML
 ## lmer reg
@@ -53,6 +54,9 @@ all.equal(VarCorr(fit_lmer)$species[1], fit_phylolm$sigma2)
 all.equal(attr(VarCorr(fit_lmer), "sc")^2, fit_phylolm$sigma2_error)
 anova(fit_lmer)
 ddf_satterthwaite_sum(fit_phylolm, tree_rep, REML = TRUE)
+fit_phylolm$coefficients[2]^2 / fit_phylolm$vcov[2, 2]
+
+ddf_satterthwaite_BM(fit_phylolm, tree_rep, TRUE)
 
 ##############################################################################
 ##############################################################################

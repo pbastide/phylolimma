@@ -13,7 +13,7 @@
 #' @param phy an object of class \code{\link[ape]{phylo}},
 #' with tips having the same names as the columns of \code{object}.
 #' @param model the phylogenetic model used to correct for the phylogeny.
-#' Must be one of "BM", "lambda", "OUfixedRoot" or "delta".
+#' Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
@@ -48,7 +48,7 @@
 #' @importFrom stats approxfun lowess model.matrix
 #'
 phylogeneticCorrelations <- function(object, design = NULL, phy,
-                                     model = c("BM", "lambda", "OUfixedRoot", "delta"),
+                                     model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
                                      measurement_error = TRUE,
                                      trim = 0.15, weights = NULL, REML = TRUE,
                                      ddf_method = c("Satterthwaite", "Species", "Samples"),
@@ -178,6 +178,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                    BM = get_consensus_tree_BM(phy, all_fits, measurement_error, trim),
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
                    OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU),
+                   OUrandomRoot = get_consensus_tree_OUrandomRoot(phy, all_fits, measurement_error, trim, medianOU),
                    delta = get_consensus_tree_delta(phy, all_fits, measurement_error, trim))
   params$ddf <- sapply(all_fits, get_ddf(ddf_method), phylo = phy)
   # if (flag_BM_error) {
@@ -309,6 +310,74 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
 
   return(list(tree = tree_model,
               params = list(model = "OUfixedRoot",
+                            measurement_error = measurement_error,
+                            alpha = alpha_mean,
+                            lambda_error = lambda_error_mean,
+                            log_alpha = all_alphas_transform,
+                            atanh_lambda_error = all_lambda_error_transform)))
+}
+
+#' @title Get OU transformed tree
+#'
+#' @description
+#' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
+#'
+#' @inheritParams get_C_tree
+#' @param median if TRUE, the \code{pracma::geo_median} function is used to take
+#' the geometric median.
+#'
+#' @return The transformed tree.
+#'
+#' @keywords internal
+#'
+get_consensus_tree_OUrandomRoot <- function(phy, all_phyfit, measurement_error, trim, median = FALSE) {
+
+  all_alphas <- sapply(all_phyfit, function(x) x$optpar)
+  all_alphas_transform <- log(all_alphas)
+  # alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+
+  if (!measurement_error) {
+
+    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+    return(list(tree = phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = alpha_mean))$tree,
+                params = list(model = "OUrandomRoot",
+                              measurement_error = measurement_error,
+                              alpha = alpha_mean,
+                              log_alpha = all_alphas_transform)))
+  }
+
+  get_lambda_error_OU <- function(phyfit) {
+    tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot",
+                                                 parameters = list(alpha = phyfit$optpar))$tree
+    tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
+    lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+    return(lambda_ou_error)
+  }
+
+  ## consensus lambda error
+  all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
+  all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
+  lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+
+  if (!median) {
+    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+    lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+  } else {
+    ## Geometric median
+    all_pars_OU_transform <- cbind(all_alphas_transform, all_lambda_error_transform)
+    gmed <- pracma::geo_median(all_pars_OU_transform)
+    gmed <- unname(gmed$p)
+    alpha_mean <- exp(gmed[1])
+    lambda_error_mean <- tanh(gmed[2])
+  }
+
+  ## transform tree
+  tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = alpha_mean))$tree
+  tree_model$root.edge <- 0
+  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
+
+  return(list(tree = tree_model,
+              params = list(model = "OUrandomRoot",
                             measurement_error = measurement_error,
                             alpha = alpha_mean,
                             lambda_error = lambda_error_mean,

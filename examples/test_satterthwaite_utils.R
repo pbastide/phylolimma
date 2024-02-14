@@ -1,78 +1,16 @@
-#' @title Get ddf function
-#'
-#' @description
-#' Get the ddf function
-#'
-#' @param ddf_method one of "Satterthwaite", "Species", "Samples"
-#'
-#' @return A function of a phylolm fit and a phylogetic tree
-#' returning the ddf.
-#'
-#' @keywords internal
-#'
-get_ddf <- function(ddf_method) {
-  if (ddf_method == "Satterthwaite") return(ddf_satterthwaite)
-  if (ddf_method == "Samples") return(ddf_samples)
-  if (ddf_method == "Species") return(ddf_species)
+bind_star_trees <- function(trees_rep) {
+  bind_text <- "("
+  tree_text <- sub(";", "", write.tree(trees_rep[1]))
+  bind_text <- paste0(bind_text, tree_text)
+  for (tt in trees_rep[-1]) {
+    tree_text <- sub(";", "", write.tree(tt))
+    bind_text <- paste0(bind_text, ",", tree_text)
+  }
+  bind_text <- paste0(bind_text, ");")
+  return(read.tree(text = bind_text))
 }
 
-#' @title Function for vanilla ddf
-#'
-#' @param fitlm a phylolm fit
-#' @param phylo the corresponding phylogenetic tree
-#'
-#' @return nsamples - nvariables
-#'
-#' @keywords internal
-#'
-ddf_samples <- function(fitlm, phylo) {
-  return(fitlm$n - fitlm$d)
-}
-
-#' @title Function for species ddf
-#'
-#' @param fitlm a phylolm fit
-#' @param phylo the corresponding phylogenetic tree
-#'
-#' @return nspecies - nvariables
-#'
-#' @keywords internal
-#'
-ddf_species <- function(fitlm, phylo) {
-  nspecies <- getSpeciesNumber(phylo)
-  return(nspecies - fitlm$d)
-}
-
-#' @title Function for Satterthwaite ddf
-#'
-#' @param fitlm a phylolm fit
-#' @param phylo the corresponding phylogenetic tree
-#'
-#' @return nspecies - nvariables
-#'
-#' @keywords internal
-#'
-ddf_satterthwaite <- function(fitlm, phylo) {
-  if (!is.null(fitlm$model) && !is.na(fitlm$model) && fitlm$model == "BM" &&
-      !is.null(fitlm$sigma2_error) && !is.na(fitlm$sigma2_error) && fitlm$sigma2_error != 0) return(ddf_satterthwaite_BM_error(fitlm, phylo)$ddf[1])
-  return(ddf_species(fitlm, phylo))
-}
-
-#' @title Satterthwaite for BM with error
-#'
-#' @description
-#' Compute ddf for a \code{\link[phylolm]{phylolm}} fit with the BM and measurement error.
-#'
-#' @param fit_phylolm a \code{\link[phylolm]{phylolm}} fitted object.
-#' Must be fitted with \code{model="BM"} and \code{measurement_error=TRUE}.
-#' @param phylo the phylogenetic tre used for the phylolm fit.
-#'
-#' @return A list, with the approximated degrees of freedom,
-#' and the vcov matrix of the parameters.
-#'
-#' @keywords internal
-#'
-ddf_satterthwaite_BM_error <- function(fit_phylolm, phylo) {
+ddf_satterthwaite_sum <- function(fit_phylolm, phylo, REML = FALSE) {
 
   X <- fit_phylolm$X
   y <- as.matrix(fit_phylolm$y)
@@ -81,44 +19,40 @@ ddf_satterthwaite_BM_error <- function(fit_phylolm, phylo) {
   rownames(yhat) <- names(fit_phylolm$fitted.values)
   n <- length(phylo$tip.label)
   d <- ncol(X)
-  REML <- fit_phylolm$REML
 
+  # Using the log scale so that parameters are on the entire real line
   optpars <- c(fit_phylolm$sigma2, fit_phylolm$sigma2_error)
 
-  ## Hessian
-  K <- ape::vcv(phylo)
+  ## Hessian: numerical computation
+  K <- vcv(phylo)
   Kd <- diag(diag(K))
   A <- hessianMinusLogLik(optpars, y, yhat, X, K, Kd, REML)
-  # A <- chol2inv(chol(Matrix::nearPD(A)$mat))
-  # A <- Matrix::nearPD(solve(A))$mat
-  A <- pos_inv(A)
+  A <- chol2inv(chol(A))
 
-  ## Satterthwaite
+  ## Gradient of f
   V <- fit_phylolm$sigma2 * K + fit_phylolm$sigma2_error * Kd
   Vinv <- chol2inv(chol(V))
   ell <- c(0, 1)
 
   C <- fit_phylolm$vcov
   if (!REML) C <- C * (n - d) / n
+  # Cbis <- solve(t(X) %*% Vinv %*% X)
+  # all.equal(C, Cbis)
 
   facmat <- C %*% t(X) %*% Vinv
   derfsigma2 <- t(ell) %*% facmat %*% K %*% t(facmat) %*% ell
   derfsigma2_error <- t(ell) %*% facmat %*% Kd %*% t(facmat) %*% ell
   derf <- c(derfsigma2, derfsigma2_error)
+
+  ## Variance estimation
   varestim <- t(derf) %*% A %*% derf
 
+  ## Satterthwaite
   ddf <- 2 * (t(ell) %*% C %*% ell)^2 / varestim
 
   return(list(ddf = ddf, vcov = A))
 }
 
-#' @title Hessian of the minus likelihood
-#'
-#' @description
-#' Computes the hessian of minus the likelihood of a BM with error on a tree.
-#'
-#' @keywords internal
-#'
 hessianMinusLogLik <- function(pars, y, yhat, X, K, Kd, REML) {
   n <- nrow(X)
   d <- ncol(X)
@@ -149,21 +83,7 @@ hessianMinusLogLik <- function(pars, y, yhat, X, K, Kd, REML) {
   return(matrix(c(dspsp, dspse, dspse, dsese), 2, 2) / 2)
 }
 
-#' @title Satterthwaite for BM with error
-#'
-#' @description
-#' Compute ddf for a \code{\link[phylolm]{phylolm}} fit with the BM and measurement error.
-#'
-#' @param fit_phylolm a \code{\link[phylolm]{phylolm}} fitted object.
-#' Must be fitted with \code{model="BM"} and \code{measurement_error=TRUE}.
-#' @param phylo the phylogenetic tre used for the phylolm fit.
-#'
-#' @return A list, with the approximated degrees of freedom,
-#' and the vcov matrix of the parameters.
-#'
-#' @keywords internal
-#'
-ddf_satterthwaite_BM_error_approx <- function(fit_phylolm, phylo) {
+ddf_satterthwaite_sum_approx <- function(fit_phylolm, phylo, REML = FALSE) {
 
   X <- fit_phylolm$X
   y <- as.matrix(fit_phylolm$y)
@@ -172,15 +92,14 @@ ddf_satterthwaite_BM_error_approx <- function(fit_phylolm, phylo) {
   rownames(yhat) <- names(fit_phylolm$fitted.values)
   n <- length(phylo$tip.label)
   d <- ncol(X)
-  REML <- fit_phylolm$REML
 
-  ## Likelihood
+  ## Likelihood function
   minusLogLik <- function(pars, y, yhat, X, phy, model) {
     n <- nrow(X)
     d <- ncol(X)
     parameters <- list(sigma2 = exp(pars[1]), sigma2_error = exp(pars[2] - pars[1]))
-    phytrans <- phylolm::transf.branch.lengths(phy, model, parameters = parameters)$tree
-    comp <- phylolm::three.point.compute(phytrans, P = y - yhat, Q = X)
+    phytrans <- transf.branch.lengths(phy, model, parameters = parameters)$tree
+    comp <- three.point.compute(phytrans, P = y - yhat, Q = X)
 
     if (!REML) {
       n2llh <- as.numeric( n * log(2 * pi) + n * log(parameters$sigma2) + comp$logd + comp$PP / parameters$sigma2) # -2 log-likelihood
@@ -193,17 +112,21 @@ ddf_satterthwaite_BM_error_approx <- function(fit_phylolm, phylo) {
     return(n2llh / 2)
   }
 
+  # Using the log scale so that parameters are on the entire real line
   optpars <- c(log(fit_phylolm$sigma2), log(fit_phylolm$sigma2_error))
 
-  ## Hessian
+  # all.equal(minusLogLik(optpars, y, yhat, X, phylo, "BM"),
+  #           -fit_phylolm$logLik)
+
+  ## Hessian: numerical computation
   fun <- function(x) {
     return(minusLogLik(x, y, yhat, X, phylo, "BM"))
   }
   J <- diag(c(1 / fit_phylolm$sigma2, 1 / fit_phylolm$sigma2_error))
-  A <- compute_inv_hessian(optpars = optpars, fun = fun, grad_trans = J)
+  A <- compute_hessian(optpars = optpars, fun = fun, grad_trans = J)
 
-  ## Satterthwaite
-  K <- ape::vcv(phylo)
+  ## Gradient of f
+  K <- vcv(phylo)
   Kd <- diag(diag(K))
   V <- fit_phylolm$sigma2 * K + fit_phylolm$sigma2_error * Kd
   Vinv <- chol2inv(chol(V))
@@ -211,14 +134,55 @@ ddf_satterthwaite_BM_error_approx <- function(fit_phylolm, phylo) {
 
   C <- fit_phylolm$vcov
   if (!REML) C <- C * (n - d) / n
+  # Cbis <- solve(t(X) %*% Vinv %*% X)
+  # all.equal(C, Cbis)
 
   facmat <- C %*% t(X) %*% Vinv
   derfsigma2 <- t(ell) %*% facmat %*% K %*% t(facmat) %*% ell
   derfsigma2_error <- t(ell) %*% facmat %*% Kd %*% t(facmat) %*% ell
   derf <- c(derfsigma2, derfsigma2_error)
+
+  ## Variance estimation
   varestim <- t(derf) %*% A %*% derf
 
+  ## Satterthwaite
   ddf <- 2 * (t(ell) %*% C %*% ell)^2 / varestim
 
   return(list(ddf = ddf, vcov = A))
+}
+
+# Adapted from lmerTest
+# https://github.com/runehaubo/lmerTestR/blob/35dc5885205d709cdc395b369b08ca2b7273cb78/R/lmer.R#L173
+compute_hessian <- function(optpars, fun, grad_trans, tol = 1e-8, ...) {
+  # Compute Hessian:
+  h <- numDeriv::hessian(func = fun, x = optpars, ...)
+  # back transformation of parameters
+  h <- t(grad_trans) %*% h %*% grad_trans
+  # Eigen decompose the Hessian:
+  eig_h <- eigen(h, symmetric=TRUE)
+  evals <- eig_h$values
+  neg <- evals < -tol
+  pos <- evals > tol
+  zero <- evals > -tol & evals < tol
+  if(sum(neg) > 0) { # negative eigenvalues
+    eval_chr <- if(sum(neg) > 1) "eigenvalues" else "eigenvalue"
+    evals_num <- paste(sprintf("%1.1e", evals[neg]), collapse = " ")
+    warning(sprintf("Model failed to converge with %d negative %s: %s",
+                    sum(neg), eval_chr, evals_num), call.=FALSE)
+  }
+  # Note: we warn about negative AND zero eigenvalues:
+  if(sum(zero) > 0) { # some eigenvalues are zero
+    eval_chr <- if(sum(zero) > 1) "eigenvalues" else "eigenvalue"
+    evals_num <- paste(sprintf("%1.1e", evals[zero]), collapse = " ")
+    warning(sprintf("Model may not have converged with %d %s close to zero: %s",
+                    sum(zero), eval_chr, evals_num))
+  }
+  # Compute vcov(varpar):
+  pos <- eig_h$values > tol
+  q <- sum(pos)
+  # Using the Moore-Penrose generalized inverse for h:
+  h_inv <- with(eig_h, {
+    vectors[, pos, drop=FALSE] %*% diag(1/values[pos], nrow=q) %*%
+      t(vectors[, pos, drop=FALSE]) })
+  return(h_inv)
 }

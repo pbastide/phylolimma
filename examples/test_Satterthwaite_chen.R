@@ -96,9 +96,9 @@ mean(pbis <= 0.05)
 ##############################################################################
 ##############################################################################
 Nrep <- 100
-pvanilla <- psatt <- psatt_lambda <- pbis <- dsatt <- dsatt_lambda <- NULL
+pvanilla <- psatt <- psattapprox <- psatt_lambda <- pbis <- dsatt <- dsattapprox <- dsatt_lambda <- psatt_prod <- dsatt_prod <- NULL
 effect <- 0
-sigphylo <- 0.5
+sigphylo <- 0.1
 set.seed(1289)
 for (rep in 1:Nrep) {
 
@@ -109,7 +109,7 @@ for (rep in 1:Nrep) {
 
   traits <- data.frame(species = species,
                        id = species,
-                       g1 = sim + rnorm(length(sim), 0, sd = sqrt(1 - sigphylo)),
+                       g1 = sim + rnorm(length(sim), 0, sd = sqrt(10)),
                        design = as.factor(design + 0), REML = TRUE)
   rownames(traits) <- species
   traits$g1[design] <- traits$g1[design] + effect
@@ -125,35 +125,48 @@ for (rep in 1:Nrep) {
                                          upper.bound = list(lambda = getMaxLambda(getMinError(tree_rep))), REML = TRUE)
   # fit_gls <- nlme::gls(g1 ~ design, traits, corPagel(0.5, tree_rep, form = ~species))
 
-  res_satt <- ddf_satterthwaite_sum(fit_phylolm, tree_rep, REML = TRUE)
-  df <- res_satt$ddf
+  res_satt <- ddf_satterthwaite_BM_error(fit_phylolm, tree_rep)
+  res_satt_approx <- ddf_satterthwaite_BM_error_approx(fit_phylolm, tree_rep)
+  df <- res_satt$ddf[1,1]
   dsatt <- c(dsatt, df)
+  dsattapprox <- c(dsattapprox, res_satt_approx$ddf)
 
-  res_satt_lambda <- ddf_satterthwaite_lambda(fit_phylolm_lambda, tree_rep, REML = TRUE)
-  df_lambda <- res_satt_lambda$ddf
-  dsatt_lambda <- c(dsatt_lambda, df_lambda)
+  # res_satt_prod <- ddf_satterthwaite_BM(fit_phylolm, tree_rep, REML = TRUE)
+  # df_prod <- res_satt_prod$df
+  # dsatt_prod <- c(dsatt_prod, df_prod)
+  #
+  # res_satt_lambda <- ddf_satterthwaite_lambda(fit_phylolm_lambda, tree_rep, REML = TRUE)
+  # df_lambda <- res_satt_lambda$ddf
+  # dsatt_lambda <- c(dsatt_lambda, df_lambda)
 
   tval <- summary(fit_phylolm)$coefficients[2, "t.value"]
   pvanilla <- c(pvanilla, 2 * pt(-abs(tval), df = fit_phylolm$n - fit_phylolm$d))
   psatt <- c(psatt, 2 * pt(-abs(tval), df = df))
+  psattapprox <- c(psattapprox, 2 * pt(-abs(tval), df = res_satt_approx$ddf))
   pbis <- c(pbis, 2 * pt(-abs(tval), df = ntips - 2))
-  psatt_lambda <- c(psatt_lambda, 2 * pt(-abs(tval), df = df_lambda))
+  # psatt_lambda <- c(psatt_lambda, 2 * pt(-abs(tval), df = df_lambda))
+  # psatt_prod <- c(psatt_prod, 2 * pt(-abs(tval), df = df_prod))
 }
-hist(pvanilla)
-hist(psatt)
-hist(pbis)
-hist(psatt_lambda)
+# hist(pvanilla)
+# hist(psatt)
+# hist(pbis)
+# hist(psatt_lambda)
 plot(sort(pvanilla))
 points(sort(psatt), col = "red")
-points(sort(psatt_lambda), col = "orange")
+points(sort(psattapprox), col = "orange")
+# points(sort(psatt_lambda), col = "orange")
 points(sort(pbis), col = "green")
+# points(sort(psatt_prod), col = "blue")
 abline(a = 0, b = 1/Nrep)
 plot(dsatt, ylim = c(0, fit_phylolm$n), col = "red")
-points(dsatt_lambda, col = "orange")
+points(dsattapprox, col = "orange")
+# points(dsatt_lambda, col = "orange")
+# points(dsatt_prod, col = "blue")
 abline(a = fit_phylolm$n-2, b = 0)
 abline(a = ntips-2, b = 0, col = "green")
 mean(psatt <= 0.05)
-mean(psatt_lambda <= 0.05)
+mean(psattapprox <= 0.05)
+# mean(psatt_lambda <= 0.05)
 mean(pvanilla <= 0.05)
 mean(pbis <= 0.05)
 

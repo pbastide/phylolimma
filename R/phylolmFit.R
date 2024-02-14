@@ -13,7 +13,7 @@
 #' @param phy an object of class \code{\link[ape]{phylo}},
 #' with tips having the same names as the columns of \code{object}.
 #' @param model the phylogenetic model used to correct for the phylogeny.
-#' Must be one of "BM", "lambda", "OUfixedRoot" or "delta".
+#' Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
@@ -49,7 +49,7 @@
 #' @export
 #'
 phylolmFit <- function(object, design = NULL, phy,
-                       model = c("BM", "lambda", "OUfixedRoot", "delta"),
+                       model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
                        measurement_error = FALSE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
@@ -144,14 +144,21 @@ phylolmFit <- function(object, design = NULL, phy,
 
   ## Format
   if (use_consensus) {
-    resFitFormat <- resLmFit
+    resFitFormat <- new("PhyloMArrayLM",
+                        list(coefficients = resLmFit$coefficients,
+                             sigma = resLmFit$sigma,
+                             stdev.unscaled = resLmFit$stdev.unscaled,
+                             df.residual = resLmFit$df.residual,
+                             Amean = resLmFit$Amean,
+                             qr = resLmFit$qr))
   } else {
     resFitFormat <- new("PhyloMArrayLM",
                         list(coefficients = do.call(rbind, resLmFit["coefficients", ]),
                              sigma = do.call(c, resLmFit["sigma", ]),
                              stdev.unscaled = do.call(rbind, resLmFit["stdev.unscaled", ]),
                              df.residual = do.call(c, resLmFit["df.residual", ]),
-                             Amean = do.call(c, resLmFit["Amean", ])))
+                             Amean = do.call(c, resLmFit["Amean", ]),
+                             qr = resLmFit["qr", ]))
   }
 
   resFitFormat$df.residual <- ddf_fits
@@ -161,11 +168,14 @@ phylolmFit <- function(object, design = NULL, phy,
   resFitFormat$modelphy <- model
   resFitFormat$measurement_error <- measurement_error
   resFitFormat$phy_trans <- C_tree_params$trans_tree
+  resFitFormat$C_tree <- C_tree_params$C_tree
   resFitFormat$optpar <- C_tree_params$optpar
   resFitFormat$lambda_error <- C_tree_params$lambda_error
   resFitFormat$sigma2_phy <- C_tree_params$sigma2_phy
   resFitFormat$sigma2_error <- C_tree_params$sigma2_error
+  resFitFormat$REML <- REML
   if (use_consensus) resFitFormat$consensus_tree <- consensus_tree
+  resFitFormat$use_consensus <- use_consensus
 
   ## Result
   return(resFitFormat)
@@ -320,6 +330,7 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REM
                              BM = transform_tree_model_BM(phy, fplm, measurement_error),
                              lambda = transform_tree_model_lambda(phy, fplm, measurement_error),
                              OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
+                             OUrandomRoot = transform_tree_model_OUrandomRoot(phy, fplm, measurement_error),
                              delta = transform_tree_model_delta(phy, fplm, measurement_error))
   phy_trans_params$ddf <- get_ddf(ddf_method)(fplm, phy)
   return(phy_trans_params)
@@ -379,6 +390,37 @@ transform_tree_model_BM <- function(phy, phyfit, measurement_error) {
 #'
 transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = phyfit$optpar))$tree
+  if (!measurement_error) {
+    return(list(tree_model = tree_model,
+                optpar = NA,
+                lambda_error = 1,
+                sigma2_phy = phyfit$sigma2,
+                sigma2_error = 0))
+  }
+  tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
+  lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
+  return(list(tree_model = tree_model,
+              optpar = phyfit$optpar,
+              lambda_error = lambda_ou_error,
+              sigma2_phy = phyfit$sigma2,
+              sigma2_error = phyfit$sigma2_error))
+}
+
+#' @title Get OU transformed tree
+#'
+#' @description
+#' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
+#'
+#' @inheritParams get_C_tree
+#'
+#' @return The transformed tree.
+#'
+#' @keywords internal
+#'
+transform_tree_model_OUrandomRoot <- function(phy, phyfit, measurement_error) {
+  tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = phyfit$optpar))$tree
+  tree_model$root.edge <- 0
   if (!measurement_error) {
     return(list(tree_model = tree_model,
                 optpar = NA,
@@ -467,4 +509,37 @@ transform_data_tree <- function(C_tree, y_data) {
   return(mapply(transform_design_one_tree,
                 C_tree,
                 lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
+}
+
+setGeneric("log_likelihood", function(object) standardGeneric("log_likelihood"))
+setMethod("log_likelihood", "MArrayLM", function(object) NULL)
+setMethod("log_likelihood", "PhyloMArrayLM", function(object) log_likelihood_internal(object))
+
+log_likelihood_internal <- function (object) {
+  REML <- object$REML
+  sigma_hat <- object$sigma^2
+  N <- length(object$phy$tip.label)
+  p <-  N - object$df.residual
+  sum_res <- sigma_hat * (N - p)
+  if (!is.null(object$weights)) stop("A PhyloMArrayLM object cannot have weights.")
+  if (!is.list(object$C_tree)) {
+    tree_det <- sum(log(diag(object$C_tree)))
+  } else {
+    tree_det <- sapply(object$C_tree, function(CC) sum(log(diag(CC))))
+  }
+  N0 <- N
+  if (REML) N <- N - p
+  val <- 0.5 * (- N * (log(2 * pi) + 1 + log(sum_res) - log(N))) - tree_det
+  if (REML) {
+    if (object$use_consensus) {
+      val <- val - sapply(p, function(pp) sum(log(abs(diag(object$qr$qr)[1L:pp]))))
+    } else {
+      val <- val - sapply(1:length(p), function(pp) sum(log(abs(diag(object$qr[[pp]]$qr)[1L:p[pp]]))))
+    }
+  }
+  attr(val, "nall") <- N0
+  attr(val, "nobs") <- N
+  attr(val, "df") <- p + 1
+  class(val) <- "logLik"
+  val
 }
