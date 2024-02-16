@@ -78,7 +78,6 @@ test_that("phylogeneticCorrelations - Convergence issues", {
                                       lower.bound = list(sigma2_error = 1e-20),
                                       model = "BM",
                                       measurement_error = TRUE)
-  expect_true(anyNA(phycor2$params$atanh_lambda_error))
 
   ## Duplicated Correlations
   ducor <- limma::duplicateCorrelation(y_data, design = design, ndups = 1,

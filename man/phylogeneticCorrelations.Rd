@@ -8,6 +8,7 @@ phylogeneticCorrelations(
   object,
   design = NULL,
   phy,
+  col_species = NULL,
   model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
   measurement_error = TRUE,
   trim = 0.15,
@@ -25,8 +26,12 @@ with rows corresponding to genes and columns to samples (species).}
 with rows corresponding to samples and columns to coefficients to be estimated.
 Defaults to the unit vector (intercept).}
 
-\item{phy}{an object of class \code{\link[ape]{phylo}},
-with tips having the same names as the columns of \code{object}.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}.
+It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
+or a tree such that tip labels match with species names in `col_species`.}
+
+\item{col_species}{a character vector with same length as columns in the expression matrix,
+specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
 Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".

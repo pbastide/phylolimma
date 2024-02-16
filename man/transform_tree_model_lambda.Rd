@@ -7,8 +7,9 @@
 transform_tree_model_lambda(phy, phyfit, measurement_error)
 }
 \arguments{
-\item{phy}{an object of class \code{\link[ape]{phylo}},
-with tips having the same names as the columns of \code{object}.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}.
+It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
+or a tree such that tip labels match with species names in `col_species`.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.

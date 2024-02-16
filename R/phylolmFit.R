@@ -10,8 +10,11 @@
 #' @param design the design matrix of the experiment,
 #' with rows corresponding to samples and columns to coefficients to be estimated.
 #' Defaults to the unit vector (intercept).
-#' @param phy an object of class \code{\link[ape]{phylo}},
-#' with tips having the same names as the columns of \code{object}.
+#' @param phy an object of class \code{\link[ape]{phylo}}.
+#' It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
+#' or a tree such that tip labels match with species names in `col_species`.
+#' @param col_species a character vector with same length as columns in the expression matrix,
+#' specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.
 #' @param model the phylogenetic model used to correct for the phylogeny.
 #' Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
 #' See \code{\link[phylolm]{phylolm}} for more details.
@@ -48,7 +51,7 @@
 #'
 #' @export
 #'
-phylolmFit <- function(object, design = NULL, phy,
+phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                        model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
                        measurement_error = FALSE,
                        use_consensus = TRUE,
@@ -90,6 +93,16 @@ phylolmFit <- function(object, design = NULL, phy,
 
   ## tree
   if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
+  if (length(phy$tip.label) == ncol(y$exprs)) {
+    tree_rep <- phy
+  } else {
+    if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
+    tt <- data.frame(species = col_species,
+                     id = colnames(y$exprs))
+    tree_rep <- addReplicatesOnTree(phy, tt)
+    tree_norep <- phy
+    phy <- tree_rep
+  }
   y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 

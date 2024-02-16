@@ -43,7 +43,7 @@ addReplicatesOnTree <- function(tree, traits, species = "species", id = "id", ep
   # Add replicates
   for (tip_label in tree$tip.label) {
     all_rep_ids <- traits[[id]][traits[[species]] == tip_label]
-    for (rep_id in all_rep_ids) {
+    for (rep_id in rev(all_rep_ids)) {
       tree_rep <- phytools::bind.tip(tree_rep, tip.label = rep_id,
                                      where = which(tree_rep$tip.label == tip_label))
     }
@@ -52,7 +52,54 @@ addReplicatesOnTree <- function(tree, traits, species = "species", id = "id", ep
   tree_rep <- ape::drop.tip(tree_rep, tree$tip.label)
   # No true zeros
   tree_rep$edge.length[tree_rep$edge[, 2] %in% 1:length(tree_rep$tip.label)] <- tree_rep$edge.length[tree_rep$edge[, 2] %in% 1:length(tree_rep$tip.label)] + eps
+  # relabel to initial order
+  tree_rep <- relabel(tree_rep, traits[[id]])
   # result
   return(tree_rep)
 }
 
+# Function extracted from ape:::.compressTipLabel
+relabel <- function(y, ref) {
+  n <- length(ref)
+  label <- y$tip.label
+  if (!identical(label, ref)) {
+    if (length(label) != length(ref))
+      stop("one tree has a different number of tips")
+    ilab <- match(label, ref)
+    if (any(is.na(ilab)))
+      stop("one tree has different tip labels")
+    ie <- match(1:n, y$edge[, 2])
+    y$edge[ie, 2] <- ilab
+  }
+  y$tip.label <- ref
+  y
+}
+
+#' @title Add replicates to a tree
+#'
+#' @description
+#' Utility function to add replicates to a tree, as tips with zero length branches.
+#'
+#' @param tree A phylogenetic tree with n tips.
+#' @param ids a vector of sample ids.
+#' @param pattern a regular expression to find species from sample names.
+#' Default to removing everything after a dot or underscore.
+#'
+#' @return A vector of the same length as `ids`, with the species of each sample.
+#'
+#' @keywords internal
+#'
+parse_species <- function(tree, ids, pattern = "(_|\\.).*$") {
+  # create species column
+  colSpecies <- sub(pattern, "", ids)
+
+  # Check species
+  species <- tree$tip.label
+  data_tree_cor <- match(colSpecies, species)
+  tree_data_cor <- match(species, colSpecies)
+  if (anyNA(data_tree_cor) || anyNA(tree_data_cor)) {
+    stop("Sample ids could not be automatically matched against the species in the tree. Please provide a `col_species` id vector, specifying to which species each of the sample must be matched.")
+  }
+
+  return(colSpecies)
+}

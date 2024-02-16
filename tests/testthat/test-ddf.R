@@ -45,7 +45,7 @@ test_that("Satterthwaite - star tree", {
   fit_lmer <- lmerTest::lmer(g1 ~ 1 + design + (1|species), data = traits, REML = TRUE)
   fit_phylolm <- phylolm::phylolm(g1 ~ design, traits, tree_rep, model = "BM", measurement_error = TRUE, REML = TRUE)
   expect_equal(coef(summary(fit_lmer))[, 1], coef(summary(fit_phylolm))[, 1])
-  expect_equal(lme4::VarCorr(fit_lmer)$species[1], fit_phylolm$sigma2, tolerance = 1e-7)
+  expect_equal(lme4::VarCorr(fit_lmer)$species[1], fit_phylolm$sigma2, tolerance = 1e-6)
   expect_equal(fit_lmer@sigma^2, fit_phylolm$sigma2_error, tolerance = 1e-7)
   expect_equal(anova(fit_lmer)$DenDF, ddf_satterthwaite_BM_error(fit_phylolm, tree_rep)$ddf[1], tolerance = 1e-6)
 

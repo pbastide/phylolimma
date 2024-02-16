@@ -10,8 +10,11 @@
 #' @param design the design matrix of the experiment,
 #' with rows corresponding to samples and columns to coefficients to be estimated.
 #' Defaults to the unit vector (intercept).
-#' @param phy an object of class \code{\link[ape]{phylo}},
-#' with tips having the same names as the columns of \code{object}.
+#' @param phy an object of class \code{\link[ape]{phylo}}.
+#' It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
+#' or a tree such that tip labels match with species names in `col_species`.
+#' @param col_species a character vector with same length as columns in the expression matrix,
+#' specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.
 #' @param model the phylogenetic model used to correct for the phylogeny.
 #' Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
 #' See \code{\link[phylolm]{phylolm}} for more details.
@@ -47,7 +50,7 @@
 #' @importFrom graphics lines title
 #' @importFrom stats approxfun lowess model.matrix
 #'
-phylogeneticCorrelations <- function(object, design = NULL, phy,
+phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
                                      model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
                                      measurement_error = TRUE,
                                      trim = 0.15, weights = NULL, REML = TRUE,
@@ -89,6 +92,16 @@ phylogeneticCorrelations <- function(object, design = NULL, phy,
 
   ## tree
   if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
+  if (length(phy$tip.label) == ncol(y$exprs)) {
+    tree_rep <- phy
+  } else {
+    if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
+    tt <- data.frame(species = col_species,
+                     id = colnames(y$exprs))
+    tree_rep <- addReplicatesOnTree(phy, tt)
+    tree_norep <- phy
+    phy <- tree_rep
+  }
   y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 
@@ -275,7 +288,6 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
                               log_alpha = all_alphas_transform)))
   }
 
-  ## TODO : use _OU or _OU_cons ?
   get_lambda_error_OU <- function(phyfit) {
     tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
                                                  parameters = list(alpha = phyfit$optpar))$tree
@@ -284,13 +296,14 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
     return(lambda_ou_error)
   }
 
-  get_lambda_error_OU_cons <- function(phyfit) {
-    tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
-                                                 parameters = list(alpha = alpha_mean))$tree
-    tilde_t <- tree_height(tree_model) / (2 * alpha_mean)
-    lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
-    return(lambda_ou_error)
-  }
+  ## Use _OU or _OU_cons ? -> cons does not make sense : sigma2 / 2 alpha* t(alpha) is better estimated
+  # get_lambda_error_OU_cons <- function(phyfit) {
+  #   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
+  #                                                parameters = list(alpha = alpha_mean))$tree
+  #   tilde_t <- tree_height(tree_model) / (2 * alpha_mean)
+  #   lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+  #   return(lambda_ou_error)
+  # }
 
   ## consensus lambda error
   all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
