@@ -155,12 +155,17 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
   starting_values <- get_starting_values(alpha_bounds, ...)
   dots_args <- get_dots_args(...)
 
-  cl <- parallel::makeCluster(ncores) # , outfile = ""
-  doParallel::registerDoParallel(cl)
-  on.exit(parallel::stopCluster(cl))
+  if (ncores > 1) {
+    cl <- parallel::makeCluster(ncores) # , outfile = ""
+    doParallel::registerDoParallel(cl)
+    on.exit(parallel::stopCluster(cl))
+    `%myinfix%` <- `%dopar%`
+  } else {
+    `%myinfix%` <- `%do%`
+  }
   reqpckg <- c("phylolm")
 
-  all_fits <- foreach::foreach(i = 1:nrow(y_data), .packages = reqpckg) %dopar% {
+  all_fits <- foreach::foreach(i = 1:nrow(y_data), .packages = reqpckg) %myinfix% {
     y <- y_data[i, ]
     # w <- weights[i, ]
 
