@@ -139,7 +139,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
 
   } else {
     ## one phylo model per gene
-    C_tree_params <- get_chol_tree(y_data,  design, phy, 1, model, measurement_error, REML, ddf_method, ...)
+    C_tree_params <- get_chol_tree(y_data,  design, phy, NULL, model, measurement_error, REML, ddf_method, ...)
     C_tree <- C_tree_params$C_tree
 
     ddf_fits <- C_tree_params$ddf
@@ -271,7 +271,7 @@ get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measuremen
       C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
     }
   } else {
-    if (!length(unique(phy_ind)) == 1) stop("Can only have one tree in the non BM case.")
+    if (!is.null(phy_ind)) stop("Can only have one tree in the non BM case.")
     C_tree_chol_and_params <- apply(y_data, 1,
                                     get_C_tree, design, phy, model, measurement_error, REML, ddf_method, ...)
     C_tree_chol_and_params <- format_list(C_tree_chol_and_params)

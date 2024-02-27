@@ -320,6 +320,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   }
 
   get_lambda_error_OU <- function(phyfit) {
+    if (is.na(phyfit$optpar)) return(NA)
     tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
                                                  parameters = list(alpha = phyfit$optpar))$tree
     tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
