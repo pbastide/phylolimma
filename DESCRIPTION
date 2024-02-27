@@ -18,7 +18,9 @@ Imports:
     phylolm,
     methods,
     pracma,
-    numDeriv
+    numDeriv,
+    foreach,
+    doParallel
 Suggests: 
     Rphylopars,
     phytools,

@@ -14,6 +14,7 @@ get_consensus_tree(
   trim,
   REML,
   ddf_method,
+  ncores,
   ...
 )
 }

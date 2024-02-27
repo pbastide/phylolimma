@@ -1,3 +1,7 @@
+#' @importFrom foreach %dopar%
+#' @importFrom foreach %do%
+NULL
+
 #' @title Phylogenetic COmparative Method using LIMMA
 #'
 #' @description
@@ -30,6 +34,7 @@
 #' If \code{ddf_method="Species"}, then the number of species is taken for the
 #' computation of the degrees of freedom,
 #' while if \code{ddf_method="Samples"} the total number of individuals is used.
+#' @param ncores number of cores to use for parallel computation. Default to 1 (no parallel computation).
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}}.
 #'
@@ -55,6 +60,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
                                      measurement_error = TRUE,
                                      trim = 0.15, weights = NULL, REML = TRUE,
                                      ddf_method = c("Satterthwaite", "Species", "Samples"),
+                                     ncores = 1,
                                      ...) {
 
   ##################################################################################################
@@ -110,7 +116,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 
   ##################################################################################################
 
-  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ...)
+  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ncores = ncores, ...)
 
   return(tree_model)
 }
@@ -126,7 +132,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 #'
 #' @keywords internal
 #'
-get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ...) {
+get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ncores, ...) {
   if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression (yet).")
 
   if (model == "BM" && !measurement_error) # no parameter to estimate
@@ -142,19 +148,24 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
   #   flag_BM_error <- TRUE
   # }
 
-  all_fits <- list()
-  for (i in 1:nrow(y_data)) {
+  alpha_bounds <- getBoundsSelectionStrength(phy, 0.0001, 10000)
+  min_error <- getMinError(phy)
+  lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
+  upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
+  starting_values <- get_starting_values(alpha_bounds, ...)
+  dots_args <- get_dots_args(...)
+
+  cl <- parallel::makeCluster(ncores) # , outfile = ""
+  doParallel::registerDoParallel(cl)
+  on.exit(parallel::stopCluster(cl))
+  reqpckg <- c("phylolm")
+
+  all_fits <- foreach::foreach(i = 1:nrow(y_data), .packages = reqpckg) %dopar% {
     y <- y_data[i, ]
     # w <- weights[i, ]
 
     data_phylolm <- as.data.frame(cbind(y, design))
     colnames(data_phylolm)[1] <- "expr"
-    alpha_bounds <- getBoundsSelectionStrength(phy, 0.0001, 100)
-    min_error <- getMinError(phy)
-    lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
-    upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
-    starting_values <- get_starting_values(alpha_bounds, ...)
-    dots_args <- get_dots_args(...)
 
     nafun <- function(e) {
       if (grepl("distinguishable", e)) stop(e)
@@ -176,7 +187,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                       error = nafun))
       # error_weight = weights, ...))
     }
-    all_fits[[i]] <- do.call(tmp_fun, dots_args)
+   return(do.call(tmp_fun, dots_args))
 
   }
 

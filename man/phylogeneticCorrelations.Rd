@@ -15,6 +15,7 @@ phylogeneticCorrelations(
   weights = NULL,
   REML = TRUE,
   ddf_method = c("Satterthwaite", "Species", "Samples"),
+  ncores = 1,
   ...
 )
 }
@@ -53,6 +54,8 @@ Default to \code{ddf_method="Satterthwaite"}.
 If \code{ddf_method="Species"}, then the number of species is taken for the
 computation of the degrees of freedom,
 while if \code{ddf_method="Samples"} the total number of individuals is used.}
+
+\item{ncores}{number of cores to use for parallel computation. Default to 1 (no parallel computation).}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}}.}
