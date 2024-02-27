@@ -39,7 +39,7 @@
 #' \item \code{tree} the transformed consensus tree
 #' \item \code{params} the associated consensus parameters.
 #' }
-#' This consensus tree define a correlation structure, and can be passed on to \code{\link[limma]{lmFit}}.
+#' This consensus tree defines a correlation structure, and can be passed on to \code{\link[limma]{lmFit}}.
 #'
 #' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}}, \code{\link[limma]{duplicateCorrelation}}
 #'
@@ -149,7 +149,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
 
     data_phylolm <- as.data.frame(cbind(y, design))
     colnames(data_phylolm)[1] <- "expr"
-    alpha_bounds <- getBoundsSelectionStrength(phy)
+    alpha_bounds <- getBoundsSelectionStrength(phy, 0.0001, 100)
     min_error <- getMinError(phy)
     lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
     upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
@@ -190,7 +190,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
   params <- switch(model,
                    BM = get_consensus_tree_BM(phy, all_fits, measurement_error, trim),
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
-                   OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU),
+                   OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU, alpha_bounds),
                    OUrandomRoot = get_consensus_tree_OUrandomRoot(phy, all_fits, measurement_error, trim, medianOU),
                    delta = get_consensus_tree_delta(phy, all_fits, measurement_error, trim))
   params$ddf <- sapply(all_fits, get_ddf(ddf_method), phylo = phy)
@@ -272,20 +272,35 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
 #'
 #' @keywords internal
 #'
-get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim, median = FALSE) {
+get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim, median = FALSE, alpha_bounds) {
 
   all_alphas <- sapply(all_phyfit, function(x) x$optpar)
   all_alphas_transform <- log(all_alphas)
   # alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+  is_min_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[1], tolerance = (.Machine$double.eps)^(1/3))))
+  is_max_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[2], tolerance = (.Machine$double.eps)^(1/3))))
+  non_min_max <- rep(TRUE, length(is_max_alpha)) #!is_min_alpha # & !is_max_alpha
+  tree_ind <- rep("treecons", length(non_min_max))
+  tree_ind[is_min_alpha] <- "treemin"
+  # tree_ind[is_max_alpha] <- "treemax"
 
   if (!measurement_error) {
 
-    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
-    return(list(tree = phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree,
-                params = list(model = "OUfixedRoot",
-                              measurement_error = measurement_error,
-                              alpha = alpha_mean,
-                              log_alpha = all_alphas_transform)))
+    alpha_mean <- exp(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
+    return(list(
+      tree = list(
+        treecons = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree),
+        treemin = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha =  alpha_bounds[1]))$tree),
+        treemax = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha =  alpha_bounds[2]))$tree)
+      ),
+      params = list(model = "OUfixedRoot",
+                    measurement_error = measurement_error,
+                    alpha = alpha_mean,
+                    alpha_min = alpha_bounds[1],
+                    alpha_max = alpha_bounds[2],
+                    log_alpha = all_alphas_transform,
+                    tree_ind = tree_ind))
+    )
   }
 
   get_lambda_error_OU <- function(phyfit) {
@@ -311,7 +326,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
   if (!median) {
-    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+    alpha_mean <- exp(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
     lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
   } else {
     ## Geometric median
@@ -327,13 +342,31 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
   tree_model <- rescale_tree(tree_model)
 
-  return(list(tree = tree_model,
-              params = list(model = "OUfixedRoot",
-                            measurement_error = measurement_error,
-                            alpha = alpha_mean,
-                            lambda_error = lambda_error_mean,
-                            log_alpha = all_alphas_transform,
-                            atanh_lambda_error = all_lambda_error_transform)))
+  # tree_min <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_bounds[1] * 1/10))$tree
+  tree_min <- phy # keep BM tree
+  tree_min <- phylolm::transf.branch.lengths(tree_min, "lambda", parameters = list(lambda = lambda_error_mean))$tree
+  tree_min <- rescale_tree(tree_min)
+
+  tree_max <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_bounds[2]))$tree
+  tree_max <- phylolm::transf.branch.lengths(tree_max, "lambda", parameters = list(lambda = lambda_error_mean))$tree
+  tree_max <- rescale_tree(tree_max)
+
+  return(list(
+    tree = list(
+      treecons = tree_model,
+      treemin = tree_min,
+      treemax = tree_max
+    ),
+    params = list(model = "OUfixedRoot",
+                  measurement_error = measurement_error,
+                  alpha = alpha_mean,
+                  alpha_min = alpha_bounds[1],
+                  alpha_max = alpha_bounds[2],
+                  log_alpha = all_alphas_transform,
+                  lambda_error = lambda_error_mean,
+                  atanh_lambda_error = all_lambda_error_transform,
+                  tree_ind = tree_ind))
+  )
 }
 
 #' @title Get OU transformed tree

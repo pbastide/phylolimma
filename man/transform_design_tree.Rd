@@ -4,7 +4,7 @@
 \alias{transform_design_tree}
 \title{Transform design matrix}
 \usage{
-transform_design_tree(C_tree, design)
+transform_design_tree(C_tree, design, phy_ind = NULL)
 }
 \arguments{
 \item{C_tree}{Cholesky of the tree structure obtained through \code{\link{get_chol_tree}}}

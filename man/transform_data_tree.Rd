@@ -4,7 +4,7 @@
 \alias{transform_data_tree}
 \title{Transform data matrix}
 \usage{
-transform_data_tree(C_tree, y_data)
+transform_data_tree(C_tree, y_data, phy_ind = NULL)
 }
 \arguments{
 \item{C_tree}{Cholesky of the tree structure obtained through \code{\link{get_chol_tree}}}

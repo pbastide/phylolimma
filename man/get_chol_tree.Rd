@@ -8,6 +8,7 @@ get_chol_tree(
   y_data,
   design,
   phy,
+  phy_ind = NULL,
   model,
   measurement_error,
   REML,

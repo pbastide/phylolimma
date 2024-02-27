@@ -9,7 +9,8 @@ get_consensus_tree_OUfixedRoot(
   all_phyfit,
   measurement_error,
   trim,
-  median = FALSE
+  median = FALSE,
+  alpha_bounds
 )
 }
 \arguments{

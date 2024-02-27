@@ -64,7 +64,7 @@ with list components:
 \item \code{tree} the transformed consensus tree
 \item \code{params} the associated consensus parameters.
 }
-This consensus tree define a correlation structure, and can be passed on to \code{\link[limma]{lmFit}}.
+This consensus tree defines a correlation structure, and can be passed on to \code{\link[limma]{lmFit}}.
 }
 \description{
 This function applies \code{\link[limma]{lmFit}} to the normalized data,
