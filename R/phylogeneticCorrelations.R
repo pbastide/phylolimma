@@ -166,10 +166,8 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
   reqpckg <- c("phylolm")
 
   all_fits <- foreach::foreach(i = 1:nrow(y_data), .packages = reqpckg) %myinfix% {
-    y <- y_data[i, ]
-    # w <- weights[i, ]
 
-    data_phylolm <- as.data.frame(cbind(y, design))
+    data_phylolm <- as.data.frame(cbind(y_data[i, ], design))
     colnames(data_phylolm)[1] <- "expr"
 
     nafun <- function(e) {
@@ -192,7 +190,10 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                       error = nafun))
       # error_weight = weights, ...))
     }
-   return(do.call(tmp_fun, dots_args))
+   res <- do.call(tmp_fun, dots_args)
+   if(ddf_method != "Satterthwaite") res <- light_phylolm(res)
+   rm(data_phylolm)
+   return(res)
 
   }
 
@@ -215,6 +216,15 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
   #   params$measurement_error <- TRUE
   # }
   return(params)
+}
+
+light_phylolm <- function(res) {
+  return(list(sigma2 = res$sigma2,
+              sigma2_error = res$sigma2_error,
+              optpar = res$optpar,
+              model = res$model,
+              n = res$n,
+              d = res$d))
 }
 
 #' @title Get lambda transformed tree
