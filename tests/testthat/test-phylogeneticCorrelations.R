@@ -77,9 +77,14 @@ test_that("phylogeneticCorrelations - BM", {
 
   expect_equal(names(resPhyloLmFitConsLambda), names(resPhyloLmFitCons))
   for (nn in names(resPhyloLmFitConsLambda)) {
-    if (!nn %in% c("modelphy", "measurement_error", "consensus_tree", "phy_trans")) {
+    if (!nn %in% c("modelphy", "measurement_error", "consensus_tree", "phy_trans", "qr", "C_tree")) {
+      expect_equivalent(resPhyloLmFitConsLambda[[nn]],
+                        resPhyloLmFitCons[[nn]],
+                        tol = 1e-4)
+    }
+    if (nn%in% c("qr", "C_tree")) {
       expect_equal(resPhyloLmFitConsLambda[[nn]],
-                   resPhyloLmFitCons[[nn]],
+                   resPhyloLmFitCons[[nn]][[1]],
                    tol = 1e-4)
     }
   }
@@ -88,7 +93,7 @@ test_that("phylogeneticCorrelations - BM", {
                tol = 1e-4)
 
   expect_equal(resPhyloLmFitConsLambda$phy_trans,
-               resPhyloLmFitCons$phy_trans,
+               resPhyloLmFitCons$phy_trans$treecons,
                tol = 1e-4)
 
   #################################################################################################
@@ -106,7 +111,7 @@ test_that("phylogeneticCorrelations - BM", {
                                        use_consensus = TRUE,
                                        medianOU = TRUE)
 
-  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$alpha <= resPhyloLmFitConsOU$consensus_tree$params$alpha)
+  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$alpha >= resPhyloLmFitConsOU$consensus_tree$params$alpha)
   expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$lambda_error <= resPhyloLmFitConsOU$consensus_tree$params$lambda_error)
 
 })

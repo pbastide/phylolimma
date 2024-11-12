@@ -53,7 +53,7 @@ NULL
 #' @export
 #'
 #' @importFrom graphics lines title
-#' @importFrom stats approxfun lowess model.matrix
+#' @importFrom stats approxfun lowess model.matrix uniroot
 #'
 phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
                                      model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
@@ -165,6 +165,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
   }
   reqpckg <- c("phylolm")
 
+  i <- NULL
   all_fits <- foreach::foreach(i = 1:nrow(y_data), .packages = reqpckg) %myinfix% {
 
     data_phylolm <- as.data.frame(cbind(y_data[i, ], design))
@@ -251,6 +252,7 @@ get_consensus_tree_lambda <- function(phy, all_phyfit, measurement_error, trim) 
               params = list(model = "lambda",
                             measurement_error = measurement_error,
                             lambda = lambda_mean,
+                            lambda_error = lambda_mean,
                             atanh_lambda = all_lambdas_transform)))
 }
 
@@ -328,7 +330,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
     atanh(pmax(-1, rho_prime(alp, t_original_tree)))
   }
   trans_inv_alpha <- function(tt) {
-    rho_prime_inv(tanh(tt), t_original_tree)
+    rho_prime_inv(tanh(tt), t_original_tree, alpha_bounds)
   }
 
   all_alphas <- sapply(all_phyfit, function(x) x$optpar)
@@ -462,13 +464,14 @@ rho_prime <- function(alpha, t_tree, tol = .Machine$double.eps) {
 #'
 #' @param y the rhoprime value
 #' @param t_tree the total height of the tree
+#' @param alpha_bounds lower and upper bounds on alpha values
 #'
 #' @return Value of alpha
 #'
 #' @keywords internal
 #'
-rho_prime_inv <- function(y, t_tree) {
-  uniroot((function(x) rho_prime(x, t_tree) - y), interval = c(.Machine$double.eps, 1), tol = .Machine$double.eps^0.5)$root
+rho_prime_inv <- function(y, t_tree, alpha_bounds) {
+  uniroot((function(x) rho_prime(x, t_tree) - y), interval = alpha_bounds, tol = .Machine$double.eps^0.5)$root
 }
 
 #' @title Get OU transformed tree

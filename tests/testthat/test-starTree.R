@@ -84,6 +84,6 @@ test_that("phylogeneticCorrelations - Convergence issues", {
                                        block = sub("_[1-9]", "", tree_rep$tip.label))
 
   expect_equal(phycor$params$lambda, ducor$cor, tolerance = 1e-2)
-  expect_equal(phycor2$params$lambda, phycor$params$lambda, tolerance = 1e-2)
+  expect_equal(phycor2$params$lambda_error, phycor$params$lambda, tolerance = 1e-2)
 
 })

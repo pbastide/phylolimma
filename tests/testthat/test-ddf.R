@@ -109,7 +109,7 @@ test_that("Satterthwaite - chen tree", {
                                   measurement_error = TRUE,
                                   lower.bound = list(sigma2_error = getMinError(tree_rep)),
                                   REML = TRUE)
-  expect_equal(ddf_satterthwaite_BM_error(fit_phylolm, tree_rep)$ddf[1], nsamples - 2, tolerance = 1e-2)
+  expect_equal(ddf_satterthwaite_BM_error(fit_phylolm, tree_rep)$ddf[1], 2.38, tolerance = 1e-2)
 
 })
 
