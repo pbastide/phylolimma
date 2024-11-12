@@ -2,8 +2,8 @@ phylolimma
 ===============
 
 <!-- badges: start -->
-[![R build status](https://github.com/pbastide/phylolimma/workflows/R-CMD-check/badge.svg)](https://github.com/pbastide/phylolimma/actions)
-[![codecov](https://codecov.io/gh/pbastide/phylolimma/branch/main/graph/badge.svg)](https://codecov.io/gh/pbastide/main)
+[![R-CMD-check](https://github.com/pbastide/phylolimma/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pbastide/phylolimma/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/pbastide/phylolimma/graph/badge.svg)](https://app.codecov.io/gh/pbastide/phylolimma)
 <!-- badges: end -->
 
 Helper functions to correct for the phylogeny before
