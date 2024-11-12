@@ -66,6 +66,18 @@ hessianMinusLogLik <- function(pars, y, yhat, X, K, Kd, REML) {
   return(matrix(c(dspsp, dspse, dspse, dsese), 2, 2) / 2)
 }
 
+bind_star_trees <- function(trees_rep) {
+  bind_text <- "("
+  tree_text <- sub(";", "", write.tree(trees_rep[1]))
+  bind_text <- paste0(bind_text, tree_text)
+  for (tt in trees_rep[-1]) {
+    tree_text <- sub(";", "", write.tree(tt))
+    bind_text <- paste0(bind_text, ",", tree_text)
+  }
+  bind_text <- paste0(bind_text, ");")
+  return(read.tree(text = bind_text))
+}
+
 ################################################################################
 ## Test
 ################################################################################

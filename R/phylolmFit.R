@@ -132,8 +132,8 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
 
     C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, phy_ind = consensus_tree$params$tree_ind, model = "BM", measurement_error = FALSE, REML, ddf_method, ...) ## BM on the consensus tree
     C_tree <- C_tree_params$C_tree
-    C_tree_params$optpar <- consensus_tree$alpha
-    C_tree_params$lambda_error <- consensus_tree$lambda_error
+    C_tree_params$optpar <- consensus_tree$params$alpha
+    C_tree_params$lambda_error <- consensus_tree$params$lambda_error
 
     ddf_fits <- consensus_tree$ddf
 

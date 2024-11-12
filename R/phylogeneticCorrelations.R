@@ -271,18 +271,37 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
 
   h_tree <- tree_height(phy)
   all_lambda_error <- sapply(all_phyfit, function(phyfit) get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, h_tree))
+  all_lambda_transform <- atanh(all_lambda_error)
+  # all_lambda_transform <- pracma::logit(all_lambda_error)
 
-  all_lambdas_transform <- atanh(pmax(-1, all_lambda_error))
-  lambda_mean <- tanh(mean(all_lambdas_transform, trim = trim, na.rm = TRUE))
+  # is_min_lambda <- sapply(all_lambda_transform, function(xx) xx <= 1e-8)
+  tree_ind <- rep("treecons", length(all_lambda_transform))
+  # tree_ind[is_min_lambda] <- "treemin"
+
+  # all_lambdas_transform <- atanh(pmax(-1, all_lambda_error))
+  lambda_mean <- tanh(mean(all_lambda_transform, trim = trim, na.rm = TRUE))
+  # lambda_mean <- pracma::sigmoid(mean(all_lambda_transform[!is_min_lambda], trim = trim, na.rm = TRUE))
 
   tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree
   tree_model <- rescale_tree(tree_model)
 
-  return(list(tree = tree_model,
-              params = list(model = "BM",
-                            measurement_error = measurement_error,
-                            lambda_error = lambda_mean,
-                            atanh_lambda_error = all_lambdas_transform)))
+  # # star tree
+  # tree_min <- ape::stree(length(phy$tip.label))
+  # tree_min$edge.length <- rep(1.0, nrow(tree_min$edge))
+  # tree_min$tip.label <- phy$tip.label
+
+  return(list(
+    tree = list(
+      treecons = tree_model
+      # treemin = tree_min
+    ),
+    params = list(model = "BM",
+                  measurement_error = measurement_error,
+                  lambda_min = pracma::sigmoid(-10),
+                  lambda_error = lambda_mean,
+                  atanh_lambda_error = all_lambda_transform,
+                  tree_ind = tree_ind))
+  )
 }
 
 #' @title Get OU transformed tree
@@ -300,19 +319,32 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
 #'
 get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim, median = FALSE, alpha_bounds) {
 
+  # trans_alpha <- function(x) return(atanh(exp(-x)))
+  # trans_inv_alpha <- function(x) return(-log(tanh(x)))
+  # trans_alpha <- function(x) return(log(x))
+  # trans_inv_alpha <- function(x) return(exp(x))
+  t_original_tree <- tree_height(phy)
+  trans_alpha <- function(alp) {
+    atanh(pmax(-1, rho_prime(alp, t_original_tree)))
+  }
+  trans_inv_alpha <- function(tt) {
+    rho_prime_inv(tanh(tt), t_original_tree)
+  }
+
   all_alphas <- sapply(all_phyfit, function(x) x$optpar)
-  all_alphas_transform <- log(all_alphas)
+  all_alphas_transform <- trans_alpha(all_alphas)
+
   # alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
-  is_min_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[1], tolerance = (.Machine$double.eps)^(1/3))))
-  is_max_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[2], tolerance = (.Machine$double.eps)^(1/3))))
-  non_min_max <- rep(TRUE, length(is_max_alpha)) #!is_min_alpha # & !is_max_alpha
+  # is_min_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[1], tolerance = (.Machine$double.eps)^(1/3))))
+  # is_max_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[2], tolerance = (.Machine$double.eps)^(1/3))))
+  non_min_max <- rep(TRUE, length(all_alphas)) #!is_min_alpha # & !is_max_alpha
   tree_ind <- rep("treecons", length(non_min_max))
-  tree_ind[is_min_alpha] <- "treemin"
+  # tree_ind[is_min_alpha] <- "treemin"
   # tree_ind[is_max_alpha] <- "treemax"
 
   if (!measurement_error) {
 
-    alpha_mean <- exp(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
+    alpha_mean <- trans_inv_alpha(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
     return(list(
       tree = list(
         treecons = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree),
@@ -324,7 +356,9 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
                     alpha = alpha_mean,
                     alpha_min = alpha_bounds[1],
                     alpha_max = alpha_bounds[2],
-                    log_alpha = all_alphas_transform,
+                    log_alpha = log(all_alphas),
+                    trans_alpha = all_alphas_transform,
+                    trans_alpha_fun = "atanh(1-rho)",
                     tree_ind = tree_ind))
     )
   }
@@ -350,10 +384,9 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   ## consensus lambda error
   all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
-  lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
   if (!median) {
-    alpha_mean <- exp(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
+    alpha_mean <- trans_inv_alpha(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
     lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
   } else {
     ## Geometric median
@@ -389,11 +422,53 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
                   alpha = alpha_mean,
                   alpha_min = alpha_bounds[1],
                   alpha_max = alpha_bounds[2],
-                  log_alpha = all_alphas_transform,
+                  trans_alpha = all_alphas_transform,
+                  log_alpha = log(all_alphas),
+                  trans_alpha_fun = "atanh(1-rho)",
                   lambda_error = lambda_error_mean,
                   atanh_lambda_error = all_lambda_error_transform,
                   tree_ind = tree_ind))
   )
+}
+
+#' @title Compute 1 - rho
+#'
+#' @description
+#' rhoprime = 1 - rho = (1 - exp(-2*alpha*t_H)) / (2 * alpha * t_H) is the variance of the OU over the variance of the BM.
+#' Taken from Cornuault, 2023, Syst. Biol.
+#' It is the fraction of the variance that can be explained by "neutral" BM evolution.
+#' When alpha goes to 0, rhoprime goes to 1: trait can be explained by "neutral" BM process.
+#' When alpha goes to Inf, rhoprime goes to 0: trait is deterministic.
+#'
+#' @param alpha the selection strength of the process
+#' @param t_tree the total height of the tree
+#' @param tol tolerence value for calling alpha = 0.
+#'
+#' @return Value of rhoprime
+#'
+#' @keywords internal
+#'
+rho_prime <- function(alpha, t_tree, tol = .Machine$double.eps) {
+  zeros <- alpha <= tol
+  res <- rep(1, length(alpha))
+  res[!zeros] <- -expm1(-2 * alpha[!zeros] * t_tree) / (2 * alpha[!zeros] * t_tree)
+  return(res)
+}
+
+#' @title Compute alpha from rhoprime
+#'
+#' @description
+#' Inverse the rho_prime function.
+#'
+#' @param y the rhoprime value
+#' @param t_tree the total height of the tree
+#'
+#' @return Value of alpha
+#'
+#' @keywords internal
+#'
+rho_prime_inv <- function(y, t_tree) {
+  uniroot((function(x) rho_prime(x, t_tree) - y), interval = c(.Machine$double.eps, 1), tol = .Machine$double.eps^0.5)$root
 }
 
 #' @title Get OU transformed tree
