@@ -56,7 +56,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                        measurement_error = FALSE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
-                       ddf_method = c("Satterthwaite", "Species", "Samples"),
+                       ddf_method = c("Samples", "Species", "Satterthwaite"),
                        REML = TRUE, ...) {
 
   ##################################################################################################

@@ -59,7 +59,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
                                      model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
                                      measurement_error = TRUE,
                                      trim = 0.15, weights = NULL, REML = TRUE,
-                                     ddf_method = c("Satterthwaite", "Species", "Samples"),
+                                     ddf_method = c("Samples", "Species", "Satterthwaite"),
                                      ncores = 1,
                                      ...) {
 

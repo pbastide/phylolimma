@@ -14,7 +14,7 @@ phylogeneticCorrelations(
   trim = 0.15,
   weights = NULL,
   REML = TRUE,
-  ddf_method = c("Satterthwaite", "Species", "Samples"),
+  ddf_method = c("Samples", "Species", "Satterthwaite"),
   ncores = 1,
   ...
 )

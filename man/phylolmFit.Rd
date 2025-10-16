@@ -13,7 +13,7 @@ phylolmFit(
   measurement_error = FALSE,
   use_consensus = TRUE,
   consensus_tree = NULL,
-  ddf_method = c("Satterthwaite", "Species", "Samples"),
+  ddf_method = c("Samples", "Species", "Satterthwaite"),
   REML = TRUE,
   ...
 )

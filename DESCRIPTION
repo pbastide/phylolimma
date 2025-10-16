@@ -31,4 +31,4 @@ Suggests:
     lme4,
     lmerTest
 Remotes: lamho86/phylolm
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
