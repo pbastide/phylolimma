@@ -53,7 +53,7 @@ NULL
 #' @export
 #'
 #' @importFrom graphics lines title
-#' @importFrom stats approxfun lowess model.matrix uniroot
+#' @importFrom stats approxfun lowess model.matrix uniroot complete.cases
 #'
 phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
                                      model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),

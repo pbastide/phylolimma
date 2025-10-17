@@ -41,7 +41,8 @@ getBoundsSelectionStrength <- function(phy,
   alpha_min <- log(2) / (relative_half_life_max * h_tree)
   ## alpha max
   alpha_max <- log(2) / (relative_half_life_min * h_tree)
-  alpha_max_machine <- log(.Machine$double.xmax^0.975) / (2 * h_tree)
+  # alpha_max_machine <- log(.Machine$double.xmax^0.975) / (2 * h_tree)
+  alpha_max_machine <- -log(.Machine$double.xmin^0.75) / (2 * h_tree)
   if (alpha_max > alpha_max_machine) alpha_max <- alpha_max_machine
   return(c(alpha_min, alpha_max))
 }
