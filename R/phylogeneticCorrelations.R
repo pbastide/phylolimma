@@ -173,9 +173,12 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
 
     nafun <- function(e) {
       if (grepl("distinguishable", e)) stop(e)
-      return(list(optpar = NA,
-                  sigma2 = NA,
-                  sigma2_error = NA))
+      return(list(sigma2 = NA,
+                  sigma2_error = NA,
+                  optpar = NA,
+                  model = model,
+                  n = nrow(data_phylolm),
+                  d = ncol(data_phylolm) - 1))
     }
     tmp_fun <- function(...) {
       return(tryCatch(withCallingHandlers(phylolm::phylolm(expr ~ -1 + .,
