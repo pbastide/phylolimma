@@ -334,6 +334,13 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   }
 
   all_alphas <- sapply(all_phyfit, function(x) x$optpar)
+  alpha_na <- !is.finite(all_alphas)
+  if (any(alpha_na)) {
+    message(paste0("The estimation of the selection strength alpha failed for the following genes, ",
+                   "returning a non finite value:\n",
+                   paste(which(alpha_na), collapse = ", "),
+                   "\nThese genes are excluded from the pool of genes used to build the consensus tree."))
+  }
   all_alphas_transform <- trans_alpha(all_alphas)
 
   # alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
@@ -346,7 +353,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
 
   if (!measurement_error) {
 
-    alpha_mean <- trans_inv_alpha(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
+    alpha_mean <- trans_inv_alpha(mean(all_alphas_transform[non_min_max & !alpha_na], trim = trim, na.rm = TRUE))
     return(list(
       tree = list(
         treecons = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree),
@@ -393,7 +400,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   } else {
     ## Geometric median
     all_pars_OU_transform <- cbind(all_alphas_transform, all_lambda_error_transform)
-    gmed <- pracma::geo_median(all_pars_OU_transform)
+    gmed <- pracma::geo_median(all_pars_OU_transform[complete.cases(all_pars_OU_transform), ])
     gmed <- unname(gmed$p)
     alpha_mean <- exp(gmed[1])
     lambda_error_mean <- tanh(gmed[2])
@@ -452,8 +459,10 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
 #'
 rho_prime <- function(alpha, t_tree, tol = .Machine$double.eps) {
   zeros <- alpha <= tol
+  nas <- is.na(alpha)
   res <- rep(1, length(alpha))
-  res[!zeros] <- -expm1(-2 * alpha[!zeros] * t_tree) / (2 * alpha[!zeros] * t_tree)
+  res[!zeros & !nas] <- -expm1(-2 * alpha[!zeros & !nas] * t_tree) / (2 * alpha[!zeros & !nas] * t_tree)
+  res[nas] <- NA
   return(res)
 }
 
