@@ -39,6 +39,25 @@ test_that("phylogeneticCorrelations - star tree", {
   expect_equal(phycor$params$lambda_error, ducor$cor, tolerance = 1e-2)
   expect_equal(phycor2$params$lambda, ducor$cor, tolerance = 1e-2)
 
+  ## Fits
+  fitlimma <- limma::lmFit(y_data, design = design,
+                           correlation = ducor$consensus,
+                           block = sub("_[1-9]", "", tree_rep$tip.label))
+  fitphylolimma <- phylolmFit(y_data, design = design,
+                              phy = tree_rep, model = 'BM',
+                              measurement_error = TRUE,
+                              use_consensus = TRUE, consensus_tree = phycor,
+                              ddf_method = "Samples")
+
+  expect_equal(fitlimma$sigma, fitphylolimma$sigma, tolerance = 1e-2)
+  expect_equal(fitlimma$coefficients, fitphylolimma$coefficients, tolerance = 1e-2)
+
+  fitbayes <- limma::eBayes(fitlimma, trend = FALSE)
+  fitphylobayes <- limma::eBayes(fitphylolimma, trend = FALSE)
+
+  expect_equal(fitbayes$t, fitphylobayes$t, tolerance = 1e-2)
+  expect_equal(fitbayes$p.value, fitphylobayes$p.value, tolerance = 1e-2)
+
 })
 
 test_that("phylogeneticCorrelations - Convergence issues", {
