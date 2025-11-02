@@ -325,3 +325,48 @@ rescale_tree <- function(tree) {
   tree$edge.length <- tree$edge.length / tree_height(tree)
   return(tree)
 }
+
+#' @title Trimmed mean
+#'
+#' @description
+#' Trimmed mean, with asymetric trim up and down.
+#' Code adapted from `mean.default`, with a different
+#' trim value for the lower and upper ends.
+#'
+#' @param x a numeric vector.
+#' @param trim a vector of size two, with the proportion of lower and upper values to trim.
+#' If a single value is provided, it will be used for lower and upper trim.
+#' @param na.rm whether to remove `NA`s before the computation.
+#' @param ... further arguments passed to or from other methods.
+#'
+#' @return The trimmed arithmetic mean.
+#'
+#' @keywords internal
+#'
+#'
+mean_trim <- function(x, trim = 0.15, na.rm = FALSE, ...) {
+  if (!is.numeric(x) && !is.complex(x) && !is.logical(x)) {
+    warning("argument is not numeric or logical: returning NA")
+    return(NA_real_)
+  }
+  if (isTRUE(na.rm))
+    x <- x[!is.na(x)]
+  if (!is.numeric(trim) || length(trim) > 2)
+    stop("'trim' must be numeric of length one or two")
+  if (length(trim) == 1L) trim <- c(trim, trim)
+  n <- length(x)
+  if (any(trim > 0) && n) {
+    if (is.complex(x))
+      stop("trimmed means are not defined for complex data")
+    if (anyNA(x))
+      return(NA_real_)
+    if (any(trim >= 0.5))
+      return(stats::median(x, na.rm = FALSE))
+    # BEGIN CHANGE
+    lo <- floor(n * trim[1]) + 1  # trim lower values
+    hi <- n - floor(n * trim[2])  # trim upper values
+    # END CHANGE
+    x <- sort.int(x, partial = unique(c(lo, hi)))[lo:hi]
+  }
+  mean.default(x)
+}

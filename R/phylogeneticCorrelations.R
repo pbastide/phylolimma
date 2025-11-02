@@ -25,7 +25,7 @@ NULL
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
 #' See \code{\link[phylolm]{phylolm}} for more details.
-#' @param trim the fraction of observations to be trimmed from each end when computing the trimmed mean. Default to 0.15, as in \code{\link[limma]{duplicateCorrelation}}.
+#' @param trim a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `tanh(all.lambdas)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.15, 0.0)`. See also \code{\link[limma]{duplicateCorrelation}}.
 #' @param weights a named vector or matrix with weights to be applied on the measurement error term.
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param REML Use REML (default) or ML for estimating the parameters.
@@ -247,7 +247,7 @@ get_consensus_tree_lambda <- function(phy, all_phyfit, measurement_error, trim) 
 
   all_lambdas <- sapply(all_phyfit, function(x) x$optpar)
   all_lambdas_transform <- atanh(pmax(-1, all_lambdas))
-  lambda_mean <- tanh(mean(all_lambdas_transform, trim = trim, na.rm = TRUE))
+  lambda_mean <- tanh(mean_trim(all_lambdas_transform, trim = trim, na.rm = TRUE))
   tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree
   tree_model <- rescale_tree(tree_model)
 
@@ -284,8 +284,8 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
   # tree_ind[is_min_lambda] <- "treemin"
 
   # all_lambdas_transform <- atanh(pmax(-1, all_lambda_error))
-  lambda_mean <- tanh(mean(all_lambda_transform, trim = trim, na.rm = TRUE))
-  # lambda_mean <- pracma::sigmoid(mean(all_lambda_transform[!is_min_lambda], trim = trim, na.rm = TRUE))
+  lambda_mean <- tanh(mean_trim(all_lambda_transform, trim = trim, na.rm = TRUE))
+  # lambda_mean <- pracma::sigmoid(mean_trim(all_lambda_transform[!is_min_lambda], trim = trim, na.rm = TRUE))
 
   tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree
   tree_model <- rescale_tree(tree_model)
@@ -346,7 +346,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   }
   all_alphas_transform <- trans_alpha(all_alphas)
 
-  # alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+  # alpha_mean <- exp(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
   # is_min_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[1], tolerance = (.Machine$double.eps)^(1/3))))
   # is_max_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[2], tolerance = (.Machine$double.eps)^(1/3))))
   non_min_max <- rep(TRUE, length(all_alphas)) #!is_min_alpha # & !is_max_alpha
@@ -356,7 +356,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
 
   if (!measurement_error) {
 
-    alpha_mean <- trans_inv_alpha(mean(all_alphas_transform[non_min_max & !alpha_na], trim = trim, na.rm = TRUE))
+    alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[non_min_max & !alpha_na], trim = trim, na.rm = TRUE))
     return(list(
       tree = list(
         treecons = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree),
@@ -398,8 +398,8 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
 
   if (!median) {
-    alpha_mean <- trans_inv_alpha(mean(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
-    lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+    alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
+    lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
   } else {
     ## Geometric median
     all_pars_OU_transform <- cbind(all_alphas_transform, all_lambda_error_transform)
@@ -503,11 +503,11 @@ get_consensus_tree_OUrandomRoot <- function(phy, all_phyfit, measurement_error, 
 
   all_alphas <- sapply(all_phyfit, function(x) x$optpar)
   all_alphas_transform <- log(all_alphas)
-  # alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+  # alpha_mean <- exp(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
 
   if (!measurement_error) {
 
-    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
+    alpha_mean <- exp(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
     return(list(tree = phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = alpha_mean))$tree,
                 params = list(model = "OUrandomRoot",
                               measurement_error = measurement_error,
@@ -526,11 +526,11 @@ get_consensus_tree_OUrandomRoot <- function(phy, all_phyfit, measurement_error, 
   ## consensus lambda error
   all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
-  lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+  lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
   if (!median) {
-    alpha_mean <- exp(mean(all_alphas_transform, trim = trim, na.rm = TRUE))
-    lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+    alpha_mean <- exp(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
+    lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
   } else {
     ## Geometric median
     all_pars_OU_transform <- cbind(all_alphas_transform, all_lambda_error_transform)
@@ -570,7 +570,7 @@ get_consensus_tree_delta <- function(phy, all_phyfit, measurement_error, trim) {
 
   all_deltas <- sapply(all_phyfit, function(x) x$optpar)
   all_deltas_transform <- log(all_deltas)
-  delta_mean <- exp(mean(all_deltas_transform, trim = trim, na.rm = TRUE))
+  delta_mean <- exp(mean_trim(all_deltas_transform, trim = trim, na.rm = TRUE))
 
   if (!measurement_error) {
 
@@ -590,7 +590,7 @@ get_consensus_tree_delta <- function(phy, all_phyfit, measurement_error, trim) {
 
   all_lambda_error <- sapply(all_phyfit, get_lambda_error_delta)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
-  lambda_error_mean <- tanh(mean(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+  lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
   ## transform tree
   tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = delta_mean))$tree

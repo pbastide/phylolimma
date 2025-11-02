@@ -42,7 +42,7 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
-\item{trim}{the fraction of observations to be trimmed from each end when computing the trimmed mean. Default to 0.15, as in \code{\link[limma]{duplicateCorrelation}}.}
+\item{trim}{a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `tanh(all.lambdas)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.15, 0.0)`. See also \code{\link[limma]{duplicateCorrelation}}.}
 
 \item{weights}{a named vector or matrix with weights to be applied on the measurement error term.
 See \code{\link[phylolm]{phylolm}} for more details.}
