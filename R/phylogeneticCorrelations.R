@@ -25,7 +25,7 @@ NULL
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
 #' See \code{\link[phylolm]{phylolm}} for more details.
-#' @param trim a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `tanh(all.lambdas)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.15, 0.0)`. See also \code{\link[limma]{duplicateCorrelation}}.
+#' @param trim a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.
 #' @param weights a named vector or matrix with weights to be applied on the measurement error term.
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param REML Use REML (default) or ML for estimating the parameters.
@@ -58,7 +58,7 @@ NULL
 phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
                                      model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
                                      measurement_error = TRUE,
-                                     trim = 0.15, weights = NULL, REML = TRUE,
+                                     trim = c(0.25, 0.05), weights = NULL, REML = TRUE,
                                      ddf_method = c("Samples", "Species", "Satterthwaite"),
                                      ncores = 1,
                                      ...) {
@@ -330,10 +330,10 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   # trans_inv_alpha <- function(x) return(exp(x))
   t_original_tree <- tree_height(phy)
   trans_alpha <- function(alp) {
-    atanh(pmax(-1, rho_prime(alp, t_original_tree)))
+    atanh(pmax(-1, 1 - rho_prime(alp, t_original_tree)))
   }
   trans_inv_alpha <- function(tt) {
-    rho_prime_inv(tanh(tt), t_original_tree, alpha_bounds)
+    rho_prime_inv(1 - tanh(tt), t_original_tree, alpha_bounds)
   }
 
   all_alphas <- sapply(all_phyfit, function(x) x$optpar)

@@ -48,7 +48,8 @@ test_that("phylogeneticCorrelations - BM", {
                                   model = model,
                                   measurement_error = measurement_error,
                                   use_consensus = TRUE,
-                                  ddf_method = "Samples")
+                                  ddf_method = "Samples",
+                                  trim = 0.15)
 
   ## Test names and dimensions
   expect_equal(colnames(resPhyloLmFit$coefficients), colnames(resPhyloLmFitCons$coefficients))
@@ -73,7 +74,8 @@ test_that("phylogeneticCorrelations - BM", {
   resPhyloLmFitConsLambda <- phylolmFit(y_data, design = design, phy = tree,
                                         model = "lambda",
                                         measurement_error = FALSE,
-                                        use_consensus = TRUE)
+                                        use_consensus = TRUE,
+                                        trim = 0.15)
 
   expect_equal(names(resPhyloLmFitConsLambda), names(resPhyloLmFitCons))
   for (nn in names(resPhyloLmFitConsLambda)) {

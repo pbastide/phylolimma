@@ -26,11 +26,13 @@ test_that("phylogeneticCorrelations - star tree", {
   ## Phylogenetic Correlations
   phycor <- phylogeneticCorrelations(y_data, design = design, phy = tree_rep,
                                      model = "BM",
-                                     measurement_error = TRUE)
+                                     measurement_error = TRUE,
+                                     trim = 0.15)
 
   phycor2 <- phylogeneticCorrelations(y_data, design = design, phy = tree_rep,
                                       model = "lambda",
-                                      measurement_error = FALSE)
+                                      measurement_error = FALSE,
+                                      trim = 0.15)
 
   ## Duplicated Correlations
   ducor <- limma::duplicateCorrelation(y_data, design = design, ndups = 1,
@@ -91,12 +93,14 @@ test_that("phylogeneticCorrelations - Convergence issues", {
   ## Phylogenetic Correlations
   phycor <- phylogeneticCorrelations(y_data, design = design, phy = tree_rep,
                                      model = "lambda",
-                                     measurement_error = FALSE)
+                                     measurement_error = FALSE,
+                                     trim = 0.15)
 
   phycor2 <- phylogeneticCorrelations(y_data, design = design, phy = tree_rep,
                                       lower.bound = list(sigma2_error = 1e-20),
                                       model = "BM",
-                                      measurement_error = TRUE)
+                                      measurement_error = TRUE,
+                                      trim = 0.15)
 
   ## Duplicated Correlations
   ducor <- limma::duplicateCorrelation(y_data, design = design, ndups = 1,
