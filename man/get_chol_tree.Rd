@@ -28,7 +28,7 @@ It must be either a tree with tips having the same names as the columns of \code
 or a tree such that tip labels match with species names in `col_species`.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
+Must be one of "BM", "lambda", "OUfixedRoot" or "OUrandomRoot".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.

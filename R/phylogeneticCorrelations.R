@@ -20,7 +20,7 @@ NULL
 #' @param col_species a character vector with same length as columns in the expression matrix,
 #' specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.
 #' @param model the phylogenetic model used to correct for the phylogeny.
-#' Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
+#' Must be one of "BM", "lambda", "OUfixedRoot" or "OUrandomRoot".
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
@@ -51,7 +51,7 @@ NULL
 #' @importFrom stats approxfun lowess model.matrix uniroot complete.cases
 #'
 phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
-                                     model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
+                                     model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot"),
                                      measurement_error = TRUE,
                                      trim = c(0.25, 0.05), weights = NULL, REML = TRUE,
                                      ncores = 1,
@@ -203,8 +203,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                    BM = get_consensus_tree_BM(phy, all_fits, measurement_error, trim),
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
                    OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU, alpha_bounds),
-                   OUrandomRoot = get_consensus_tree_OUrandomRoot(phy, all_fits, measurement_error, trim, medianOU),
-                   delta = get_consensus_tree_delta(phy, all_fits, measurement_error, trim))
+                   OUrandomRoot = get_consensus_tree_OUrandomRoot(phy, all_fits, measurement_error, trim, medianOU))
   params$ddf <- sapply(all_fits, ddf_samples, phylo = phy)
   # if (flag_BM_error) {
   #   params$model <- "BM"
@@ -546,56 +545,56 @@ get_consensus_tree_OUrandomRoot <- function(phy, all_phyfit, measurement_error, 
                             atanh_lambda_error = all_lambda_error_transform)))
 }
 
-#' @title Get delta transformed tree
-#'
-#' @description
-#' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
-#'
-#' @inheritParams get_C_tree
-#'
-#' @return The transformed tree.
-#'
-#' @keywords internal
-#'
-get_consensus_tree_delta <- function(phy, all_phyfit, measurement_error, trim) {
-
-  all_deltas <- sapply(all_phyfit, function(x) x$optpar)
-  all_deltas_transform <- log(all_deltas)
-  delta_mean <- exp(mean_trim(all_deltas_transform, trim = trim, na.rm = TRUE))
-
-  if (!measurement_error) {
-
-    return(list(tree = phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = delta_mean))$tree,
-                params = list(model = "delta",
-                              measurement_error = measurement_error,
-                              delta = delta_mean,
-                              log_delta = all_deltas_transform)))
-  }
-
-  get_lambda_error_delta <- function(phyfit) {
-    tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = phyfit$optpar))$tree
-    tilde_t <- tree_height(tree_model)
-    lambda_delta_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
-    return(lambda_delta_error)
-  }
-
-  all_lambda_error <- sapply(all_phyfit, get_lambda_error_delta)
-  all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
-  lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
-
-  ## transform tree
-  tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = delta_mean))$tree
-  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
-  tree_model <- rescale_tree(tree_model)
-
-  return(list(tree = tree_model,
-              params = list(model = "delta",
-                            measurement_error = measurement_error,
-                            delta = delta_mean,
-                            lambda_error = lambda_error_mean,
-                            log_delta = all_deltas_transform,
-                            atanh_lambda_error = all_lambda_error_transform)))
-}
+# #' @title Get delta transformed tree
+# #'
+# #' @description
+# #' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
+# #'
+# #' @inheritParams get_C_tree
+# #'
+# #' @return The transformed tree.
+# #'
+# #' @keywords internal
+# #'
+# get_consensus_tree_delta <- function(phy, all_phyfit, measurement_error, trim) {
+#
+#   all_deltas <- sapply(all_phyfit, function(x) x$optpar)
+#   all_deltas_transform <- log(all_deltas)
+#   delta_mean <- exp(mean_trim(all_deltas_transform, trim = trim, na.rm = TRUE))
+#
+#   if (!measurement_error) {
+#
+#     return(list(tree = phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = delta_mean))$tree,
+#                 params = list(model = "delta",
+#                               measurement_error = measurement_error,
+#                               delta = delta_mean,
+#                               log_delta = all_deltas_transform)))
+#   }
+#
+#   get_lambda_error_delta <- function(phyfit) {
+#     tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = phyfit$optpar))$tree
+#     tilde_t <- tree_height(tree_model)
+#     lambda_delta_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+#     return(lambda_delta_error)
+#   }
+#
+#   all_lambda_error <- sapply(all_phyfit, get_lambda_error_delta)
+#   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
+#   lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
+#
+#   ## transform tree
+#   tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = delta_mean))$tree
+#   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
+#   tree_model <- rescale_tree(tree_model)
+#
+#   return(list(tree = tree_model,
+#               params = list(model = "delta",
+#                             measurement_error = measurement_error,
+#                             delta = delta_mean,
+#                             lambda_error = lambda_error_mean,
+#                             log_delta = all_deltas_transform,
+#                             atanh_lambda_error = all_lambda_error_transform)))
+# }
 
 check.consensus_tree <- function(consensus_tree, model, measurement_error) {
   if (consensus_tree$params$model != model) {

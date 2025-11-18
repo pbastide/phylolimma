@@ -132,7 +132,7 @@ test_that("phylogeneticCorrelations - separate call", {
   rownames(design) <- tree$tip.label
 
   ## checks same fit
-  for(model in c("BM", "lambda", "OUfixedRoot", "delta")) {
+  for(model in c("BM", "lambda", "OUfixedRoot")) {
     for (measurement_error in c(FALSE, TRUE)) {
       if (model == "lambda" && measurement_error) {
         expect_error(

@@ -9,7 +9,7 @@ phylogeneticCorrelations(
   design = NULL,
   phy,
   col_species = NULL,
-  model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
+  model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot"),
   measurement_error = TRUE,
   trim = c(0.25, 0.05),
   weights = NULL,
@@ -34,7 +34,7 @@ or a tree such that tip labels match with species names in `col_species`.}
 specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
+Must be one of "BM", "lambda", "OUfixedRoot" or "OUrandomRoot".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.

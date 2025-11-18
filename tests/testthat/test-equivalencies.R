@@ -101,16 +101,16 @@ test_that("phylolmFit - equivalencies", {
   test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
 
 
-  model <- "delta"
-  measurement_error <- FALSE
-  REML <- FALSE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
-  REML <- TRUE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
-  measurement_error <- TRUE
-  REML <- FALSE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
-  REML <- TRUE
-  test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  # model <- "delta"
+  # measurement_error <- FALSE
+  # REML <- FALSE
+  # test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  # REML <- TRUE
+  # test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  # measurement_error <- TRUE
+  # REML <- FALSE
+  # test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
+  # REML <- TRUE
+  # test_lmFit_phylolm(y_data, design, tree, model, measurement_error, REML)
 
 })
