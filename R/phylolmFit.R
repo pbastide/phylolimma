@@ -16,7 +16,7 @@
 #' @param col_species a character vector with same length as columns in the expression matrix,
 #' specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.
 #' @param model the phylogenetic model used to correct for the phylogeny.
-#' Must be one of "BM", "lambda", "OUfixedRoot" or "OUrandomRoot".
+#' Must be one of "BM", "lambda" or "OUfixedRoot".
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
@@ -47,7 +47,7 @@
 #' @export
 #'
 phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
-                       model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot"),
+                       model = c("BM", "lambda", "OUfixedRoot"),
                        measurement_error = FALSE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
@@ -343,8 +343,7 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REM
   phy_trans_params <- switch(model,
                              BM = transform_tree_model_BM(phy, fplm, measurement_error),
                              lambda = transform_tree_model_lambda(phy, fplm, measurement_error),
-                             OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
-                             OUrandomRoot = transform_tree_model_OUrandomRoot(phy, fplm, measurement_error))
+                             OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error))
   phy_trans_params$ddf <- ddf_samples(fplm, phy)
   return(phy_trans_params)
 }
@@ -424,37 +423,37 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
               sigma2_error = phyfit$sigma2_error))
 }
 
-#' @title Get OU transformed tree
-#'
-#' @description
-#' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
-#'
-#' @inheritParams get_C_tree
-#'
-#' @return The transformed tree.
-#'
-#' @keywords internal
-#'
-transform_tree_model_OUrandomRoot <- function(phy, phyfit, measurement_error) {
-  tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = phyfit$optpar))$tree
-  tree_model$root.edge <- 0
-  if (!measurement_error) {
-    return(list(tree_model = tree_model,
-                optpar = NA,
-                lambda_error = 1,
-                sigma2_phy = phyfit$sigma2,
-                sigma2_error = 0))
-  }
-  tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
-  lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
-  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
-  tree_model <- rescale_tree(tree_model)
-  return(list(tree_model = tree_model,
-              optpar = phyfit$optpar,
-              lambda_error = lambda_ou_error,
-              sigma2_phy = phyfit$sigma2,
-              sigma2_error = phyfit$sigma2_error))
-}
+# #' @title Get OU transformed tree
+# #'
+# #' @description
+# #' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
+# #'
+# #' @inheritParams get_C_tree
+# #'
+# #' @return The transformed tree.
+# #'
+# #' @keywords internal
+# #'
+# transform_tree_model_OUrandomRoot <- function(phy, phyfit, measurement_error) {
+#   tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = phyfit$optpar))$tree
+#   tree_model$root.edge <- 0
+#   if (!measurement_error) {
+#     return(list(tree_model = tree_model,
+#                 optpar = NA,
+#                 lambda_error = 1,
+#                 sigma2_phy = phyfit$sigma2,
+#                 sigma2_error = 0))
+#   }
+#   tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
+#   lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+#   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
+#   tree_model <- rescale_tree(tree_model)
+#   return(list(tree_model = tree_model,
+#               optpar = phyfit$optpar,
+#               lambda_error = lambda_ou_error,
+#               sigma2_phy = phyfit$sigma2,
+#               sigma2_error = phyfit$sigma2_error))
+# }
 
 # #' @title Get delta transformed tree
 # #'
