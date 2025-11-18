@@ -261,10 +261,6 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
   all_lambda_transform <- atanh(all_lambda_error)
   # all_lambda_transform <- pracma::logit(all_lambda_error)
 
-  # is_min_lambda <- sapply(all_lambda_transform, function(xx) xx <= 1e-8)
-  tree_ind <- rep("treecons", length(all_lambda_transform))
-  # tree_ind[is_min_lambda] <- "treemin"
-
   # all_lambdas_transform <- atanh(pmax(-1, all_lambda_error))
   lambda_mean <- tanh(mean_trim(all_lambda_transform, trim = trim, na.rm = TRUE))
   # lambda_mean <- pracma::sigmoid(mean_trim(all_lambda_transform[!is_min_lambda], trim = trim, na.rm = TRUE))
@@ -272,22 +268,12 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
   tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree
   tree_model <- rescale_tree(tree_model)
 
-  # # star tree
-  # tree_min <- ape::stree(length(phy$tip.label))
-  # tree_min$edge.length <- rep(1.0, nrow(tree_min$edge))
-  # tree_min$tip.label <- phy$tip.label
-
   return(list(
-    tree = list(
-      treecons = tree_model
-      # treemin = tree_min
-    ),
+    tree = tree_model,
     params = list(model = "BM",
                   measurement_error = measurement_error,
-                  lambda_min = pracma::sigmoid(-10),
                   lambda_error = lambda_mean,
-                  atanh_lambda_error = all_lambda_transform,
-                  tree_ind = tree_ind))
+                  atanh_lambda_error = all_lambda_transform))
   )
 }
 
@@ -326,32 +312,17 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   }
   all_alphas_transform <- trans_alpha(all_alphas)
 
-  # alpha_mean <- exp(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
-  # is_min_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[1], tolerance = (.Machine$double.eps)^(1/3))))
-  # is_max_alpha <- sapply(all_alphas, function(xx) isTRUE(all.equal(xx, alpha_bounds[2], tolerance = (.Machine$double.eps)^(1/3))))
-  non_min_max <- rep(TRUE, length(all_alphas)) #!is_min_alpha # & !is_max_alpha
-  tree_ind <- rep("treecons", length(non_min_max))
-  # tree_ind[is_min_alpha] <- "treemin"
-  # tree_ind[is_max_alpha] <- "treemax"
-
   if (!measurement_error) {
 
-    alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[non_min_max & !alpha_na], trim = trim, na.rm = TRUE))
+    alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[!alpha_na], trim = trim, na.rm = TRUE))
     return(list(
-      tree = list(
-        treecons = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree),
-        treemin = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha =  alpha_bounds[1]))$tree),
-        treemax = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha =  alpha_bounds[2]))$tree)
-      ),
+      tree = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree),
       params = list(model = "OUfixedRoot",
                     measurement_error = measurement_error,
                     alpha = alpha_mean,
-                    alpha_min = alpha_bounds[1],
-                    alpha_max = alpha_bounds[2],
                     log_alpha = log(all_alphas),
                     trans_alpha = all_alphas_transform,
-                    trans_alpha_fun = "atanh(1-rho)",
-                    tree_ind = tree_ind))
+                    trans_alpha_fun = "atanh(1-rho)"))
     )
   }
 
@@ -377,7 +348,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
 
-  alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
+  alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
   lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
   ## transform tree
@@ -385,21 +356,8 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_error_mean))$tree
   tree_model <- rescale_tree(tree_model)
 
-  # tree_min <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_bounds[1] * 1/10))$tree
-  tree_min <- phy # keep BM tree
-  tree_min <- phylolm::transf.branch.lengths(tree_min, "lambda", parameters = list(lambda = lambda_error_mean))$tree
-  tree_min <- rescale_tree(tree_min)
-
-  tree_max <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_bounds[2]))$tree
-  tree_max <- phylolm::transf.branch.lengths(tree_max, "lambda", parameters = list(lambda = lambda_error_mean))$tree
-  tree_max <- rescale_tree(tree_max)
-
   return(list(
-    tree = list(
-      treecons = tree_model,
-      treemin = tree_min,
-      treemax = tree_max
-    ),
+    tree = tree_model,
     params = list(model = "OUfixedRoot",
                   measurement_error = measurement_error,
                   alpha = alpha_mean,
@@ -409,8 +367,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
                   log_alpha = log(all_alphas),
                   trans_alpha_fun = "atanh(1-rho)",
                   lambda_error = lambda_error_mean,
-                  atanh_lambda_error = all_lambda_error_transform,
-                  tree_ind = tree_ind))
+                  atanh_lambda_error = all_lambda_error_transform))
   )
 }
 

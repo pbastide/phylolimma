@@ -4,16 +4,7 @@
 \alias{get_chol_tree}
 \title{Get Tree Normalizing Inverse Cholesky}
 \usage{
-get_chol_tree(
-  y_data,
-  design,
-  phy,
-  phy_ind = NULL,
-  model,
-  measurement_error,
-  REML,
-  ...
-)
+get_chol_tree(y_data, design, phy, model, measurement_error, REML, ...)
 }
 \arguments{
 \item{y_data}{A matrix data object containing normalized expression values,

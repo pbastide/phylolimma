@@ -84,7 +84,7 @@ test_that("phylogeneticCorrelations - BM", {
     }
     if (nn%in% c("qr", "C_tree")) {
       expect_equal(resPhyloLmFitConsLambda[[nn]],
-                   resPhyloLmFitCons[[nn]][[1]],
+                   resPhyloLmFitCons[[nn]],
                    tol = 1e-4)
     }
   }
@@ -93,7 +93,7 @@ test_that("phylogeneticCorrelations - BM", {
                tol = 1e-4)
 
   expect_equal(resPhyloLmFitConsLambda$phy_trans,
-               resPhyloLmFitCons$phy_trans$treecons,
+               resPhyloLmFitCons$phy_trans,
                tol = 1e-4)
 
   #################################################################################################

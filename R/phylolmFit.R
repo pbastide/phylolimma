@@ -120,7 +120,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                                                  weights = NULL, ...)
     }
 
-    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, phy_ind = consensus_tree$params$tree_ind, model = "BM", measurement_error = FALSE, REML, ...) ## BM on the consensus tree
+    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, REML, ...) ## BM on the consensus tree
     C_tree <- C_tree_params$C_tree
     C_tree_params$optpar <- consensus_tree$params$alpha
     C_tree_params$lambda_error <- consensus_tree$params$lambda_error
@@ -129,7 +129,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
 
   } else {
     ## one phylo model per gene
-    C_tree_params <- get_chol_tree(y_data,  design, phy, NULL, model, measurement_error, REML, ...)
+    C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, REML, ...)
     C_tree <- C_tree_params$C_tree
 
     ddf_fits <- C_tree_params$ddf
@@ -138,17 +138,15 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   ##################################################################################################
 
   ## Transform design and data
-  phy_ind <- NULL
-  if (use_consensus) phy_ind <- consensus_tree$params$tree_ind
-  design_trans <- transform_design_tree(C_tree, design, phy_ind)
-  y_trans <- t(transform_data_tree(C_tree, y_data, phy_ind))
+  design_trans <- transform_design_tree(C_tree, design)
+  y_trans <- t(transform_data_tree(C_tree, y_data))
 
   ## Apply lmFit
   resLmFit <- lmFitLimma(y_trans, design_trans, ...)
 
 
   ## Format
-  if (use_consensus & is.null(consensus_tree$params$tree_ind)) {
+  if (use_consensus) {
     resFitFormat <- new("PhyloMArrayLM",
                         list(coefficients = resLmFit$coefficients,
                              sigma = resLmFit$sigma,
@@ -242,7 +240,7 @@ lmFitLimma <- function(y_trans, design_trans, ...) {
 #'
 #' @keywords internal
 #'
-get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measurement_error, REML, ...) {
+get_chol_tree <- function(y_data, design, phy, model, measurement_error, REML, ...) {
   if (!measurement_error && model == "BM") { ## Easy case, not fit necessary
     get_C_tree_BM <- function(tree) {
       C_tree <- ape::vcv(tree)
@@ -254,14 +252,8 @@ get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measuremen
                   sigma2_phy = NA,
                   sigma2_error = 0))
     }
-    if (is.null(phy_ind)) {
-      return(get_C_tree_BM(phy))
-    } else {
-      C_tree_chol_and_params <- lapply(phy, function(ppp) get_C_tree_BM(ppp))
-      C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
-    }
+    return(get_C_tree_BM(phy))
   } else {
-    if (!is.null(phy_ind)) stop("Can only have one tree in the non BM case.")
     C_tree_chol_and_params <- apply(y_data, 1,
                                     get_C_tree, design, phy, model, measurement_error, REML, ...)
     C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
@@ -498,10 +490,9 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
 #'
 #' @keywords internal
 #'
-transform_design_tree <- function(C_tree, design, phy_ind = NULL) {
+transform_design_tree <- function(C_tree, design) {
   if (!is.list(C_tree)) return(transform_design_one_tree(C_tree, design))
-  if (is.null(phy_ind)) return(lapply(C_tree, transform_design_one_tree, design))
-  return(lapply(phy_ind, function(tt) transform_design_one_tree(C_tree[[tt]], design)))
+  return(lapply(C_tree, transform_design_one_tree, design))
 }
 
 transform_design_one_tree <- function(C_tree, design, transpose = FALSE) {
@@ -523,12 +514,11 @@ transform_design_one_tree <- function(C_tree, design, transpose = FALSE) {
 #'
 #' @keywords internal
 #'
-transform_data_tree <- function(C_tree, y_data, phy_ind = NULL) {
+transform_data_tree <- function(C_tree, y_data) {
   if (!is.list(C_tree)) return(transform_design_one_tree(C_tree, t(y_data)))
-  if (is.null(phy_ind)) return(mapply(transform_design_one_tree,
-                                       C_tree,
-                                       lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
-  return(sapply(seq_along(phy_ind), function(i) transform_design_one_tree(C_tree[[phy_ind[i]]], y_data[i,])))
+  return(mapply(transform_design_one_tree,
+                C_tree,
+                lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
 }
 
 setGeneric("log_likelihood", function(object) standardGeneric("log_likelihood"))
