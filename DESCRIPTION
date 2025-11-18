@@ -15,10 +15,8 @@ Depends:
 Imports:
     limma,
     ape,
-    phylolm,
+    phylolm (>= 2.6.5),
     methods,
-    pracma,
-    numDeriv,
     foreach,
     doParallel
 Suggests: 
@@ -27,8 +25,5 @@ Suggests:
     edgeR,
     statmod,
     testthat,
-    covr,
-    lme4,
-    lmerTest
-Remotes: lamho86/phylolm
+    covr
 RoxygenNote: 7.3.3
