@@ -331,3 +331,17 @@ mean_trim <- function(x, trim = 0.15, na.rm = FALSE, ...) {
 ddf_samples <- function(fitlm, phylo) {
   return(fitlm$n - fitlm$d)
 }
+
+#' @title Capture dot arguments
+#'
+#' @description http://adv-r.had.co.nz/Computing-on-the-language.html#capturing-dots
+#'
+#' @param ... dots arguments to be captured
+#'
+#' @return a named list of the arguments in ...
+#'
+#' @keywords internal
+#'
+dots <- function(...) {
+  eval(substitute(alist(...)))
+}

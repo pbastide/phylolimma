@@ -184,20 +184,6 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   return(resFitFormat)
 }
 
-#' @title Capture dot arguments
-#'
-#' @description http://adv-r.had.co.nz/Computing-on-the-language.html#capturing-dots
-#'
-#' @param ... dots arguments to be captured
-#'
-#' @return a named list of the arguments in ...
-#'
-#' @keywords internal
-#'
-dots <- function(...) {
-  eval(substitute(alist(...)))
-}
-
 #' @title Fit using limma
 #'
 #' @description Fit using limma
