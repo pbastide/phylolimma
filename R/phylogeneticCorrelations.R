@@ -132,13 +132,6 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                               measurement_error = FALSE),
                 ddf = rep(nrow(design) - ncol(design), nrow(y_data))))
 
-  # flag_BM_error <- FALSE
-  # if (model == "BM" && measurement_error) {
-  #   model <- "lambda"
-  #   measurement_error <- FALSE
-  #   flag_BM_error <- TRUE
-  # }
-
   alpha_bounds <- getBoundsSelectionStrength(phy, 0.0001, 10000)
   min_error <- getMinError(phy)
   lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
@@ -197,10 +190,6 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
                    OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, alpha_bounds))
   params$ddf <- sapply(all_fits, ddf_samples, phylo = phy)
-  # if (flag_BM_error) {
-  #   params$model <- "BM"
-  #   params$measurement_error <- TRUE
-  # }
   return(params)
 }
 
