@@ -206,21 +206,3 @@ test_that("phylolmFit - mammals", {
   expect_true(all(pp$sigma2_error >= min_sig_err * pp$sigma2_phy / (2 * pp$optpar)))
 
 })
-# test_that("phylolmFit - BM - error", {
-#   set.seed(12891026)
-#   ## Tree
-#   ntips <- 50
-#   tree <- ape::rphylo(ntips, 0.1, 0)
-#   ## data
-#   ngenes <- 100
-#   y_data <- matrix(rnorm(ngenes * ntips, 0, 1), ncol = ntips)
-#   design <- matrix(1, nrow = ntips, ncol = 2)
-#   design[sample(1:ntips, floor(ntips / 2)), 2] <- 0
-#   colnames(y_data) <- rownames(design) <- tree$tip.label
-#   ## Fit
-#   fit <- phylolmFit(y_data, design = design, phy = tree,
-#                     model = "BM", measurement_error = TRUE,
-#                     ndups = 1, spacing = 1, block = NULL, weights = NULL, method = "ls")
-#   ## ebayes
-#   fitb <- limma::eBayes(fit)
-# })
