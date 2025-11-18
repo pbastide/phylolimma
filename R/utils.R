@@ -370,3 +370,16 @@ mean_trim <- function(x, trim = 0.15, na.rm = FALSE, ...) {
   }
   mean.default(x)
 }
+
+#' @title Function for vanilla ddf
+#'
+#' @param fitlm a phylolm fit
+#' @param phylo the corresponding phylogenetic tree
+#'
+#' @return nsamples - nvariables
+#'
+#' @keywords internal
+#'
+ddf_samples <- function(fitlm, phylo) {
+  return(fitlm$n - fitlm$d)
+}

@@ -29,11 +29,6 @@ NULL
 #' @param weights a named vector or matrix with weights to be applied on the measurement error term.
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param REML Use REML (default) or ML for estimating the parameters.
-#' @param ddf_method the method for the computation of the degrees of freedom of the t statistics (before moderation).
-#' Default to \code{ddf_method="Satterthwaite"}.
-#' If \code{ddf_method="Species"}, then the number of species is taken for the
-#' computation of the degrees of freedom,
-#' while if \code{ddf_method="Samples"} the total number of individuals is used.
 #' @param ncores number of cores to use for parallel computation. Default to 1 (no parallel computation).
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}}.
@@ -59,7 +54,6 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
                                      model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
                                      measurement_error = TRUE,
                                      trim = c(0.25, 0.05), weights = NULL, REML = TRUE,
-                                     ddf_method = c("Samples", "Species", "Satterthwaite"),
                                      ncores = 1,
                                      ...) {
 
@@ -111,12 +105,9 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
   y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 
-  ## ddf
-  ddf_method <- match.arg(ddf_method)
-
   ##################################################################################################
 
-  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ncores = ncores, ...)
+  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores = ncores, ...)
 
   return(tree_model)
 }
@@ -132,7 +123,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 #'
 #' @keywords internal
 #'
-get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ddf_method, ncores, ...) {
+get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores, ...) {
   if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression (yet).")
 
   if (model == "BM" && !measurement_error) # no parameter to estimate
@@ -195,7 +186,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
       # error_weight = weights, ...))
     }
    res <- do.call(tmp_fun, dots_args)
-   if(ddf_method != "Satterthwaite") res <- light_phylolm(res)
+   res <- light_phylolm(res)
    rm(data_phylolm)
    return(res)
 
@@ -214,7 +205,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                    OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU, alpha_bounds),
                    OUrandomRoot = get_consensus_tree_OUrandomRoot(phy, all_fits, measurement_error, trim, medianOU),
                    delta = get_consensus_tree_delta(phy, all_fits, measurement_error, trim))
-  params$ddf <- sapply(all_fits, get_ddf(ddf_method), phylo = phy)
+  params$ddf <- sapply(all_fits, ddf_samples, phylo = phy)
   # if (flag_BM_error) {
   #   params$model <- "BM"
   #   params$measurement_error <- TRUE

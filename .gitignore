@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+*debugging_phylolimma*
+*.DS_Store

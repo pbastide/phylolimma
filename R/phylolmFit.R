@@ -27,11 +27,6 @@
 #' @param consensus_tree If not \code{NULL}, the consensus tree containing the correlation structure,
 #' result of function \code{\link{phylogeneticCorrelations}}.
 #' If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.
-#' @param ddf_method the method for the computation of the degrees of freedom of the t statistics (before moderation).
-#' Default to \code{ddf_method="Satterthwaite"}.
-#' If \code{ddf_method="Species"}, then the number of species is taken for the
-#' computation of the degrees of freedom,
-#' while if \code{ddf_method="Samples"} the total number of individuals is used.
 #' @param REML Use REML (default) or ML for estimating the parameters.
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.
@@ -56,7 +51,6 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                        measurement_error = FALSE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
-                       ddf_method = c("Samples", "Species", "Satterthwaite"),
                        REML = TRUE, ...) {
 
   ##################################################################################################
@@ -106,9 +100,6 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
   design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 
-  ## ddf
-  ddf_method <- match.arg(ddf_method)
-
   ##################################################################################################
   ## Consensus tree
 
@@ -126,11 +117,10 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                                                  model = model,
                                                  measurement_error = measurement_error,
                                                  REML = REML,
-                                                 ddf_method = ddf_method,
                                                  weights = NULL, ...)
     }
 
-    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, phy_ind = consensus_tree$params$tree_ind, model = "BM", measurement_error = FALSE, REML, ddf_method, ...) ## BM on the consensus tree
+    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, phy_ind = consensus_tree$params$tree_ind, model = "BM", measurement_error = FALSE, REML, ...) ## BM on the consensus tree
     C_tree <- C_tree_params$C_tree
     C_tree_params$optpar <- consensus_tree$params$alpha
     C_tree_params$lambda_error <- consensus_tree$params$lambda_error
@@ -139,7 +129,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
 
   } else {
     ## one phylo model per gene
-    C_tree_params <- get_chol_tree(y_data,  design, phy, NULL, model, measurement_error, REML, ddf_method, ...)
+    C_tree_params <- get_chol_tree(y_data,  design, phy, NULL, model, measurement_error, REML, ...)
     C_tree <- C_tree_params$C_tree
 
     ddf_fits <- C_tree_params$ddf
@@ -252,7 +242,7 @@ lmFitLimma <- function(y_trans, design_trans, ...) {
 #'
 #' @keywords internal
 #'
-get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measurement_error, REML, ddf_method, ...) {
+get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measurement_error, REML, ...) {
   if (!measurement_error && model == "BM") { ## Easy case, not fit necessary
     get_C_tree_BM <- function(tree) {
       C_tree <- ape::vcv(tree)
@@ -273,7 +263,7 @@ get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measuremen
   } else {
     if (!is.null(phy_ind)) stop("Can only have one tree in the non BM case.")
     C_tree_chol_and_params <- apply(y_data, 1,
-                                    get_C_tree, design, phy, model, measurement_error, REML, ddf_method, ...)
+                                    get_C_tree, design, phy, model, measurement_error, REML, ...)
     C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
     return(C_tree_chol_and_params)
   }
@@ -301,8 +291,8 @@ format_list <- function(C_tree_chol_and_params) {
 #'
 #' @keywords internal
 #'
-get_C_tree <- function(y, design, phy, model, measurement_error, REML, ddf_method, ...) {
-  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, REML, ddf_method, ...)
+get_C_tree <- function(y, design, phy, model, measurement_error, REML, ...) {
+  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, REML, ...)
   tree_model <- trans_tree_params$tree_model
   C_tree <- ape::vcv(tree_model)
   C_tree_chol <- chol(C_tree)
@@ -326,7 +316,7 @@ get_C_tree <- function(y, design, phy, model, measurement_error, REML, ddf_metho
 #'
 #' @keywords internal
 #'
-transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REML, ddf_method, ...) {
+transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REML, ...) {
   if (model == "BM" && !measurement_error) return(phy) # no transformation needed
   data_phylolm <- as.data.frame(cbind(y, design))
   colnames(data_phylolm)[1] <- "expr"
@@ -356,7 +346,7 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REM
                              OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
                              OUrandomRoot = transform_tree_model_OUrandomRoot(phy, fplm, measurement_error),
                              delta = transform_tree_model_delta(phy, fplm, measurement_error))
-  phy_trans_params$ddf <- get_ddf(ddf_method)(fplm, phy)
+  phy_trans_params$ddf <- ddf_samples(fplm, phy)
   return(phy_trans_params)
 }
 

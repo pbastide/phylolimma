@@ -40,8 +40,7 @@ test_that("phylolmFit - BM", {
   resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
                               model = model,
                               measurement_error = measurement_error,
-                              use_consensus = FALSE,
-                              ddf_method = "Samples")
+                              use_consensus = FALSE)
   ## Fit
   resLmFit <- limma::lmFit(y_data, design = design)
 
@@ -185,8 +184,7 @@ test_that("phylolmFit - mammals", {
                    model = "BM",
                    lower.bound = list(sigma2_error = 0.001),
                    measurement_error = TRUE,
-                   use_consensus = FALSE,
-                   ddf_method = "Samples")
+                   use_consensus = FALSE)
   expect_true(all(pp$sigma2_error >= 0.001 * pp$sigma2_phy))
 
   expect_equal(getSpeciesNumber(tree), length(unique(sub("\\.[0-9]", "", tree$tip.label))))
@@ -194,8 +192,7 @@ test_that("phylolmFit - mammals", {
   pp <- phylolmFit(y_data, design = design, phy = tree,
                    model = "BM",
                    measurement_error = TRUE,
-                   use_consensus = FALSE,
-                   ddf_method = "Samples")
+                   use_consensus = FALSE)
   expect_true(all(pp$sigma2_error >= min_sig_err * pp$sigma2_phy))
 
   pp <- phylolmFit(y_data, design = design, phy = tree,

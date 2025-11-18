@@ -20,8 +20,7 @@ test_that("phylolmFit - equivalencies", {
                            model = model,
                            measurement_error = measurement_error,
                            use_consensus = FALSE,
-                           REML = REML,
-                           ddf_method = "Samples")
+                           REML = REML)
 
     ## phylolm fit
     bounds_alpha <- getBoundsSelectionStrength(tree)

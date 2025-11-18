@@ -48,8 +48,7 @@ test_that("phylogeneticCorrelations - star tree", {
   fitphylolimma <- phylolmFit(y_data, design = design,
                               phy = tree_rep, model = 'BM',
                               measurement_error = TRUE,
-                              use_consensus = TRUE, consensus_tree = phycor,
-                              ddf_method = "Samples")
+                              use_consensus = TRUE, consensus_tree = phycor)
 
   expect_equal(fitlimma$sigma, fitphylolimma$sigma, tolerance = 1e-2)
   expect_equal(fitlimma$coefficients, fitphylolimma$coefficients, tolerance = 1e-2)

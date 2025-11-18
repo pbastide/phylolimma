@@ -4,7 +4,7 @@
 \alias{get_C_tree}
 \title{Get Tree Normalizing Inverse Cholesky}
 \usage{
-get_C_tree(y, design, phy, model, measurement_error, REML, ddf_method, ...)
+get_C_tree(y, design, phy, model, measurement_error, REML, ...)
 }
 \arguments{
 \item{y}{A vector data containing normalized expression values for one gene.}
@@ -26,12 +26,6 @@ Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
-
-\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
-Default to \code{ddf_method="Satterthwaite"}.
-If \code{ddf_method="Species"}, then the number of species is taken for the
-computation of the degrees of freedom,
-while if \code{ddf_method="Samples"} the total number of individuals is used.}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}

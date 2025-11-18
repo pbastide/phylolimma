@@ -13,7 +13,6 @@ phylolmFit(
   measurement_error = FALSE,
   use_consensus = TRUE,
   consensus_tree = NULL,
-  ddf_method = c("Samples", "Species", "Satterthwaite"),
   REML = TRUE,
   ...
 )
@@ -48,12 +47,6 @@ Default to TRUE.}
 \item{consensus_tree}{If not \code{NULL}, the consensus tree containing the correlation structure,
 result of function \code{\link{phylogeneticCorrelations}}.
 If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.}
-
-\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
-Default to \code{ddf_method="Satterthwaite"}.
-If \code{ddf_method="Species"}, then the number of species is taken for the
-computation of the degrees of freedom,
-while if \code{ddf_method="Samples"} the total number of individuals is used.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
 

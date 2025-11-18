@@ -14,7 +14,6 @@ phylogeneticCorrelations(
   trim = c(0.25, 0.05),
   weights = NULL,
   REML = TRUE,
-  ddf_method = c("Samples", "Species", "Satterthwaite"),
   ncores = 1,
   ...
 )
@@ -48,12 +47,6 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
-
-\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
-Default to \code{ddf_method="Satterthwaite"}.
-If \code{ddf_method="Species"}, then the number of species is taken for the
-computation of the degrees of freedom,
-while if \code{ddf_method="Samples"} the total number of individuals is used.}
 
 \item{ncores}{number of cores to use for parallel computation. Default to 1 (no parallel computation).}
 
