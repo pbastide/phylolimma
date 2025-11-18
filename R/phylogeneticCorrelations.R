@@ -185,24 +185,17 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                       error = nafun))
       # error_weight = weights, ...))
     }
-   res <- do.call(tmp_fun, dots_args)
-   res <- light_phylolm(res)
-   rm(data_phylolm)
-   return(res)
+    res <- do.call(tmp_fun, dots_args)
+    res <- light_phylolm(res)
+    rm(data_phylolm)
+    return(res)
 
-  }
-
-  dot_args <- dots(...)
-  if (!"medianOU" %in% names(dot_args)) {
-    medianOU <- FALSE
-  } else {
-    medianOU <- dot_args$medianOU
   }
 
   params <- switch(model,
                    BM = get_consensus_tree_BM(phy, all_fits, measurement_error, trim),
                    lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
-                   OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, medianOU, alpha_bounds))
+                   OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, alpha_bounds))
   params$ddf <- sapply(all_fits, ddf_samples, phylo = phy)
   # if (flag_BM_error) {
   #   params$model <- "BM"
@@ -304,14 +297,12 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
 #' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
 #'
 #' @inheritParams get_C_tree
-#' @param median if TRUE, the \code{pracma::geo_median} function is used to take
-#' the geometric median.
 #'
 #' @return The transformed tree.
 #'
 #' @keywords internal
 #'
-get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim, median = FALSE, alpha_bounds) {
+get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim, alpha_bounds) {
 
   # trans_alpha <- function(x) return(atanh(exp(-x)))
   # trans_inv_alpha <- function(x) return(-log(tanh(x)))
@@ -386,17 +377,8 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
 
-  if (!median) {
-    alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
-    lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
-  } else {
-    ## Geometric median
-    all_pars_OU_transform <- cbind(all_alphas_transform, all_lambda_error_transform)
-    gmed <- pracma::geo_median(all_pars_OU_transform[complete.cases(all_pars_OU_transform), ])
-    gmed <- unname(gmed$p)
-    alpha_mean <- exp(gmed[1])
-    lambda_error_mean <- tanh(gmed[2])
-  }
+  alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[non_min_max], trim = trim, na.rm = TRUE))
+  lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 
   ## transform tree
   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree
@@ -481,14 +463,12 @@ rho_prime_inv <- function(y, t_tree, alpha_bounds) {
 # #' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
 # #'
 # #' @inheritParams get_C_tree
-# #' @param median if TRUE, the \code{pracma::geo_median} function is used to take
-# #' the geometric median.
 # #'
 # #' @return The transformed tree.
 # #'
 # #' @keywords internal
 # #'
-# get_consensus_tree_OUrandomRoot <- function(phy, all_phyfit, measurement_error, trim, median = FALSE) {
+# get_consensus_tree_OUrandomRoot <- function(phy, all_phyfit, measurement_error, trim) {
 #
 #   all_alphas <- sapply(all_phyfit, function(x) x$optpar)
 #   all_alphas_transform <- log(all_alphas)
@@ -517,17 +497,8 @@ rho_prime_inv <- function(y, t_tree, alpha_bounds) {
 #   all_lambda_error_transform <- atanh(pmax(-1, all_lambda_error))
 #   lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 #
-#   if (!median) {
-#     alpha_mean <- exp(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
-#     lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
-#   } else {
-#     ## Geometric median
-#     all_pars_OU_transform <- cbind(all_alphas_transform, all_lambda_error_transform)
-#     gmed <- pracma::geo_median(all_pars_OU_transform)
-#     gmed <- unname(gmed$p)
-#     alpha_mean <- exp(gmed[1])
-#     lambda_error_mean <- tanh(gmed[2])
-#   }
+#   alpha_mean <- exp(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
+#   lambda_error_mean <- tanh(mean_trim(all_lambda_error_transform, trim = trim, na.rm = TRUE))
 #
 #   ## transform tree
 #   tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = alpha_mean))$tree

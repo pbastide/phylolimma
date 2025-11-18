@@ -108,8 +108,7 @@ test_that("phylogeneticCorrelations - BM", {
   resPhyloLmFitConsOUmed <- phylolmFit(y_data, design = design, phy = tree,
                                        model = "OUfixedRoot",
                                        measurement_error = TRUE,
-                                       use_consensus = TRUE,
-                                       medianOU = TRUE)
+                                       use_consensus = TRUE)
 
   expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$alpha >= resPhyloLmFitConsOU$consensus_tree$params$alpha)
   expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$lambda_error <= resPhyloLmFitConsOU$consensus_tree$params$lambda_error)

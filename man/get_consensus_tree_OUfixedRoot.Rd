@@ -9,7 +9,6 @@ get_consensus_tree_OUfixedRoot(
   all_phyfit,
   measurement_error,
   trim,
-  median = FALSE,
   alpha_bounds
 )
 }
@@ -21,9 +20,6 @@ or a tree such that tip labels match with species names in `col_species`.}
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
-
-\item{median}{if TRUE, the \code{pracma::geo_median} function is used to take
-the geometric median.}
 }
 \value{
 The transformed tree.
