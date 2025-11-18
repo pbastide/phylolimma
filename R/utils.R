@@ -234,29 +234,6 @@ getSpeciesNumber <- function(phy, tol = .Machine$double.eps^(1/2)) {
   return(nspecies)
 }
 
-#' @title Generalized positive inverse
-#'
-#' @description
-#' Inverse as a positive definite matrix
-#'
-#' @param h a symmetric matrix
-#' @param tol for positive numbers
-#'
-#' @return Generalized inverse
-#'
-#' @keywords internal
-#'
-#'
-pos_inv <- function(h, tol = 1e-8) {
-  eig_h <- eigen(h, symmetric = TRUE)
-  pos <- eig_h$values > tol
-  q <- sum(pos)
-  h_inv <- with(eig_h, {
-    vectors[, pos, drop=FALSE] %*% diag(1/values[pos], nrow=q) %*%
-      t(vectors[, pos, drop=FALSE]) })
-  return(h_inv)
-}
-
 #' @title Scale tree to unit height
 #'
 #' @description
