@@ -58,12 +58,12 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   ##################################################################################################
   ## Check unused parameters
   dot_args <- dots(...)
-  if ("ndups" %in% names(dot_args) && dot_args$ndups != 1) stop("'ndups' can only be '1' in 'phylolmFit' (for now).")
-  if ("spacing" %in% names(dot_args) && dot_args$spacing != 1) stop("'spacing' can only be '1' in 'phylolmFit' (for now).")
-  if ("weights" %in% names(dot_args) && !is.null(dot_args$weights)) stop("'weights' can only be 'null' in 'phylolmFit' (for now).")
-  if ("method" %in% names(dot_args) && dot_args$method != "ls") stop("'method' can only be 'ls' in 'phylolmFit' (for now).")
-  if ("correlation" %in% names(dot_args)) stop("'correlation' is not used in 'phylolmFit' (for now).")
-  if ("block" %in% names(dot_args) && !is.null(dot_args$block)) stop("'block' can only be 'null' in 'phylolmFit' (for now).")
+  if ("ndups" %in% names(dot_args) && dot_args$ndups != 1) stop("'ndups' can only be '1' in 'phylolmFit'.")
+  if ("spacing" %in% names(dot_args) && dot_args$spacing != 1) stop("'spacing' can only be '1' in 'phylolmFit'.")
+  if ("weights" %in% names(dot_args) && !is.null(dot_args$weights)) stop("'weights' can only be 'null' in 'phylolmFit'.")
+  if ("method" %in% names(dot_args) && dot_args$method != "ls") stop("'method' can only be 'ls' in 'phylolmFit'.")
+  if ("correlation" %in% names(dot_args)) stop("'correlation' is not used in 'phylolmFit'.")
+  if ("block" %in% names(dot_args) && !is.null(dot_args$block)) stop("'block' can only be 'null' in 'phylolmFit'.")
 
   ## Expression Matrix
   if (!is.matrix(object)) stop("'object' must be a matrix.")
