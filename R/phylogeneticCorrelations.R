@@ -132,7 +132,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                               measurement_error = FALSE),
                 ddf = rep(nrow(design) - ncol(design), nrow(y_data))))
 
-  all_fits <- fit_all_phylolm(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores, ...)
+  all_fits <- fit_all_phylolm(y_data, design, phy, model, measurement_error, weights, REML, ncores, ...)
 
   get_consensus_tree_model <- switch(model,
                                      BM = get_consensus_tree_BM,
@@ -155,7 +155,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
 #'
 #' @keywords internal
 #'
-fit_all_phylolm <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores, ...) {
+fit_all_phylolm <- function(y_data, design, phy, model, measurement_error, weights, REML, ncores, ...) {
 
   if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression.")
 

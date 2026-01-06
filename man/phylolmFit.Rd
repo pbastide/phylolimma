@@ -14,6 +14,7 @@ phylolmFit(
   use_consensus = TRUE,
   consensus_tree = NULL,
   REML = TRUE,
+  ncores = 1,
   ...
 )
 }
@@ -49,6 +50,8 @@ result of function \code{\link{phylogeneticCorrelations}}.
 If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
+
+\item{ncores}{number of cores to use for parallel computation. Default to 1 (no parallel computation).}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}

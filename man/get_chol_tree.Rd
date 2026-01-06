@@ -4,7 +4,7 @@
 \alias{get_chol_tree}
 \title{Get Tree Normalizing Inverse Cholesky}
 \usage{
-get_chol_tree(y_data, design, phy, model, measurement_error, REML, ...)
+get_chol_tree(y_data, design, phy, model, measurement_error, REML, ncores, ...)
 }
 \arguments{
 \item{y_data}{A matrix data object containing normalized expression values,
@@ -27,6 +27,8 @@ Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
+
+\item{ncores}{number of cores to use for parallel computation. Default to 1 (no parallel computation).}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}

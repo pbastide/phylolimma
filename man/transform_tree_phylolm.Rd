@@ -4,14 +4,10 @@
 \alias{transform_tree_phylolm}
 \title{Get transformed tree}
 \usage{
-transform_tree_phylolm(y, design, phy, model, measurement_error, REML, ...)
+transform_tree_phylolm(fplm, phy, model, measurement_error)
 }
 \arguments{
-\item{y}{A vector data containing normalized expression values for one gene.}
-
-\item{design}{the design matrix of the experiment,
-with rows corresponding to samples and columns to coefficients to be estimated.
-Defaults to the unit vector (intercept).}
+\item{fplm}{a phylolm fit object}
 
 \item{phy}{an object of class \code{\link[ape]{phylo}}.
 It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
@@ -24,11 +20,6 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
-
-\item{REML}{Use REML (default) or ML for estimating the parameters.}
-
-\item{...}{further parameters to be passed
-to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}
 }
 \value{
 The transformed tree.

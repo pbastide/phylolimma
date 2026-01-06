@@ -28,6 +28,7 @@
 #' result of function \code{\link{phylogeneticCorrelations}}.
 #' If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.
 #' @param REML Use REML (default) or ML for estimating the parameters.
+#' @param ncores number of cores to use for parallel computation. Default to 1 (no parallel computation).
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.
 #'
@@ -51,7 +52,8 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                        measurement_error = FALSE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
-                       REML = TRUE, ...) {
+                       REML = TRUE,
+                       ncores = 1, ...) {
 
   ##################################################################################################
   ## Check unused parameters
@@ -117,7 +119,8 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                                                  model = model,
                                                  measurement_error = measurement_error,
                                                  REML = REML,
-                                                 weights = NULL, ...)
+                                                 weights = NULL,
+                                                 ncores = ncores, ...)
     }
 
     C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, REML, ...) ## BM on the consensus tree
@@ -129,7 +132,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
 
   } else {
     ## one phylo model per gene
-    C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, REML, ...)
+    C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, REML, ncores, ...)
     C_tree <- C_tree_params$C_tree
 
     ddf_fits <- C_tree_params$ddf
@@ -226,7 +229,7 @@ lmFitLimma <- function(y_trans, design_trans, ...) {
 #'
 #' @keywords internal
 #'
-get_chol_tree <- function(y_data, design, phy, model, measurement_error, REML, ...) {
+get_chol_tree <- function(y_data, design, phy, model, measurement_error, REML, ncores, ...) {
   if (!measurement_error && model == "BM") { ## Easy case, not fit necessary
     get_C_tree_BM <- function(tree) {
       C_tree <- ape::vcv(tree)
@@ -240,8 +243,9 @@ get_chol_tree <- function(y_data, design, phy, model, measurement_error, REML, .
     }
     return(get_C_tree_BM(phy))
   } else {
-    C_tree_chol_and_params <- apply(y_data, 1,
-                                    get_C_tree, design, phy, model, measurement_error, REML, ...)
+    all_fits <- fit_all_phylolm(y_data, design, phy, model, measurement_error, weights = NULL, REML, ncores, ...)
+    C_tree_chol_and_params <- lapply(all_fits,
+                                     get_C_tree, phy, model, measurement_error)
     C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
     return(C_tree_chol_and_params)
   }
@@ -262,15 +266,15 @@ format_list <- function(C_tree_chol_and_params) {
 #' @description
 #' Compute the whitening cholesky matrix.
 #'
-#' @param y 	A vector data containing normalized expression values for one gene.
+#' @param fplm a phylolm fit object
 #' @inheritParams phylolmFit
 #'
 #' @return The cholesky matrix of the tree structure.
 #'
 #' @keywords internal
 #'
-get_C_tree <- function(y, design, phy, model, measurement_error, REML, ...) {
-  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, REML, ...)
+get_C_tree <- function(fplm, phy, model, measurement_error) {
+  trans_tree_params <- transform_tree_phylolm(fplm, phy, model, measurement_error)
   tree_model <- trans_tree_params$tree_model
   C_tree <- ape::vcv(tree_model)
   C_tree_chol <- chol(C_tree)
@@ -294,30 +298,7 @@ get_C_tree <- function(y, design, phy, model, measurement_error, REML, ...) {
 #'
 #' @keywords internal
 #'
-transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REML, ...) {
-  if (model == "BM" && !measurement_error) return(phy) # no transformation needed
-  data_phylolm <- as.data.frame(cbind(y, design))
-  colnames(data_phylolm)[1] <- "expr"
-  alpha_bounds <- getBoundsSelectionStrength(phy)
-  min_error <- getMinError(phy)
-  lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
-  upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
-  starting_values <- get_starting_values(alpha_bounds, ...)
-  dots_args <- get_dots_args(...)
-  tmp_fun <- function(...) {
-    return(withCallingHandlers(phylolm::phylolm(expr ~ -1 + .,
-                                                data = data_phylolm, phy = phy, model = model,
-                                                measurement_error = measurement_error,
-                                                lower.bound = lower_bounds,
-                                                upper.bound = upper_bounds,
-                                                starting.value = starting_values,
-                                                REML = REML,
-                                                ...),
-                               warning = function(cond) {
-                                 if (grepl(pattern="upper/lower", x = conditionMessage(cond)) && "warning" %in% class(cond)) invokeRestart("muffleWarning")
-                               }))
-  }
-  fplm <- do.call(tmp_fun, dots_args)
+transform_tree_phylolm <- function(fplm, phy, model, measurement_error) {
   phy_trans_params <- switch(model,
                              BM = transform_tree_model_BM(phy, fplm, measurement_error),
                              lambda = transform_tree_model_lambda(phy, fplm, measurement_error),
