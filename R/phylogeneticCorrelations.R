@@ -67,7 +67,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 
   #	Check weights
   if(!is.null(weights)) {
-    stop("weights are not allowed with the phylogenetic regression (yet).")
+    stop("weights are not allowed with the phylogenetic regression.")
     # message("'weights' will be used in the independent errors.")
     # weights <- limma::asMatrixWeights(weights, dim(y))
     # weights[weights <= 0] <- NA
@@ -124,7 +124,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 #' @keywords internal
 #'
 get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores, ...) {
-  if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression (yet).")
+  if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression.")
 
   if (model == "BM" && !measurement_error) # no parameter to estimate
     return(list(tree = phy,
@@ -132,7 +132,34 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                               measurement_error = FALSE),
                 ddf = rep(nrow(design) - ncol(design), nrow(y_data))))
 
-  alpha_bounds <- getBoundsSelectionStrength(phy, 0.0001, 10000)
+  all_fits <- fit_all_phylolm(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores, ...)
+
+  get_consensus_tree_model <- switch(model,
+                                     BM = get_consensus_tree_BM,
+                                     lambda = get_consensus_tree_lambda,
+                                     OUfixedRoot = get_consensus_tree_OUfixedRoot)
+  params <- get_consensus_tree_model(phy, all_fits, measurement_error, trim)
+  params$ddf <- sapply(all_fits, ddf_samples, phylo = phy)
+
+  return(params)
+}
+
+#' @title Fit phylolm on all genes
+#'
+#' @description
+#' Fit \code{\link[phylolm]{phylolm}} on all genes.
+#'
+#' @inheritParams get_C_tree
+#'
+#' @return A list with all phylolm fits.
+#'
+#' @keywords internal
+#'
+fit_all_phylolm <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores, ...) {
+
+  if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression.")
+
+  alpha_bounds <- getBoundsSelectionStrength(phy)
   min_error <- getMinError(phy)
   lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
   upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
@@ -185,12 +212,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
 
   }
 
-  params <- switch(model,
-                   BM = get_consensus_tree_BM(phy, all_fits, measurement_error, trim),
-                   lambda = get_consensus_tree_lambda(phy, all_fits, measurement_error, trim),
-                   OUfixedRoot = get_consensus_tree_OUfixedRoot(phy, all_fits, measurement_error, trim, alpha_bounds))
-  params$ddf <- sapply(all_fits, ddf_samples, phylo = phy)
-  return(params)
+  return(all_fits)
 }
 
 light_phylolm <- function(res) {
@@ -277,12 +299,13 @@ get_consensus_tree_BM <- function(phy, all_phyfit, measurement_error, trim) {
 #'
 #' @keywords internal
 #'
-get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim, alpha_bounds) {
+get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, trim) {
 
   # trans_alpha <- function(x) return(atanh(exp(-x)))
   # trans_inv_alpha <- function(x) return(-log(tanh(x)))
   # trans_alpha <- function(x) return(log(x))
   # trans_inv_alpha <- function(x) return(exp(x))
+  alpha_bounds <- getBoundsSelectionStrength(phy)
   t_original_tree <- tree_height(phy)
   trans_alpha <- function(alp) {
     atanh(pmax(-1, 1 - rho_prime(alp, t_original_tree)))

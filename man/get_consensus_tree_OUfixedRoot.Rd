@@ -4,13 +4,7 @@
 \alias{get_consensus_tree_OUfixedRoot}
 \title{Get OU transformed tree}
 \usage{
-get_consensus_tree_OUfixedRoot(
-  phy,
-  all_phyfit,
-  measurement_error,
-  trim,
-  alpha_bounds
-)
+get_consensus_tree_OUfixedRoot(phy, all_phyfit, measurement_error, trim)
 }
 \arguments{
 \item{phy}{an object of class \code{\link[ape]{phylo}}.
