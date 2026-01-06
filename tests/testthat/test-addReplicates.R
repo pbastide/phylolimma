@@ -156,6 +156,23 @@ test_that("phylolmFit - rep", {
 
   expect_equal(resPhyloLmFit, resPhyloLmFitSpecies, tolerance = 1e-7)
 
+  ## ommited design
+  ## Fit with rep
+  resPhyloLmFitOmit <- phylolmFit(dat,
+                                  phy = tree_rep,
+                                  model = "BM",
+                                  measurement_error = TRUE,
+                                  use_consensus = FALSE)
+
+  ## Fit species tree - automatic
+  resPhyloLmFitSpeciesOmit <- phylolmFit(dat,
+                                         phy = tree,
+                                         model = "BM",
+                                         measurement_error = TRUE,
+                                         use_consensus = FALSE)
+
+  expect_equal(resPhyloLmFitOmit, resPhyloLmFitSpeciesOmit, tolerance = 1e-7)
+
   ## Fit species tree - col_species
   colnames(dat) <- sub("t", "s", colnames(dat))
   rownames(design) <- sub("t", "s", rownames(design))

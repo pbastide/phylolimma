@@ -26,8 +26,6 @@ NULL
 #' Default to \code{TRUE}.
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param trim a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.
-#' @param weights a named vector or matrix with weights to be applied on the measurement error term.
-#' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param REML Use REML (default) or ML for estimating the parameters.
 #' @param ncores number of cores to use for parallel computation. Default to 1 (no parallel computation).
 #' @param ... further parameters to be passed
@@ -53,7 +51,7 @@ NULL
 phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
                                      model = c("BM", "lambda", "OUfixedRoot"),
                                      measurement_error = TRUE,
-                                     trim = c(0.25, 0.05), weights = NULL, REML = TRUE,
+                                     trim = c(0.25, 0.05), REML = TRUE,
                                      ncores = 1,
                                      ...) {
 
@@ -61,53 +59,21 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
   ## Checks
 
   ## Expression Matrix
-  if (!is.matrix(object)) stop("'object' must be a matrix.")
-  y <- limma::getEAWP(object)
-  if (!nrow(y$exprs)) stop("expression matrix has zero rows")
+  y <- check_expression_matrix(object)
 
-  #	Check weights
-  if(!is.null(weights)) {
-    stop("weights are not allowed with the phylogenetic regression.")
-    # message("'weights' will be used in the independent errors.")
-    # weights <- limma::asMatrixWeights(weights, dim(y))
-    # weights[weights <= 0] <- NA
-    # y[!is.finite(weights)] <- NA
-  }
+  ## check tree
+  phy <- check_tree(phy, y, col_species)
+  y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
 
   ##	Check design matrix
-  if(is.null(design)) design <- y$design
-  if(is.null(design)) {
-    design <- matrix(1, ncol(y$exprs), 1)
-    rownames(design) <- phy$tip.label
-  } else {
-    design <- as.matrix(design)
-    if(mode(design) != "numeric") stop("design must be a numeric matrix")
-    if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
-  }
-  ne <- limma::nonEstimable(design)
-  if(!is.null(ne)) stop("Coefficients not estimable: ", paste(ne, collapse = " "), "\n")
+  design <- check_design_matrix(design, y, phy)
 
   ## phylo model
   model <- match.arg(model)
 
-  ## tree
-  if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
-  if (length(phy$tip.label) == ncol(y$exprs)) {
-    tree_rep <- phy
-  } else {
-    if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
-    tt <- data.frame(species = col_species,
-                     id = colnames(y$exprs))
-    tree_rep <- addReplicatesOnTree(phy, tt)
-    tree_norep <- phy
-    phy <- tree_rep
-  }
-  y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
-  design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
-
   ##################################################################################################
 
-  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores = ncores, ...)
+  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, trim, REML, ncores = ncores, ...)
 
   return(tree_model)
 }
@@ -123,8 +89,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 #'
 #' @keywords internal
 #'
-get_consensus_tree <- function(y_data, design, phy, model, measurement_error, weights, trim, REML, ncores, ...) {
-  if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression.")
+get_consensus_tree <- function(y_data, design, phy, model, measurement_error, trim, REML, ncores, ...) {
 
   if (model == "BM" && !measurement_error) # no parameter to estimate
     return(list(tree = phy,
@@ -132,7 +97,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
                               measurement_error = FALSE),
                 ddf = rep(nrow(design) - ncol(design), nrow(y_data))))
 
-  all_fits <- fit_all_phylolm(y_data, design, phy, model, measurement_error, weights, REML, ncores, ...)
+  all_fits <- fit_all_phylolm(y_data, design, phy, model, measurement_error, REML, ncores, ...)
 
   get_consensus_tree_model <- switch(model,
                                      BM = get_consensus_tree_BM,
@@ -155,9 +120,7 @@ get_consensus_tree <- function(y_data, design, phy, model, measurement_error, we
 #'
 #' @keywords internal
 #'
-fit_all_phylolm <- function(y_data, design, phy, model, measurement_error, weights, REML, ncores, ...) {
-
-  if(!is.null(weights)) stop("weights are not allowed with the phylogenetic regression.")
+fit_all_phylolm <- function(y_data, design, phy, model, measurement_error, REML, ncores, ...) {
 
   alpha_bounds <- getBoundsSelectionStrength(phy)
   min_error <- getMinError(phy)
@@ -203,7 +166,6 @@ fit_all_phylolm <- function(y_data, design, phy, model, measurement_error, weigh
                                             if (grepl(pattern="upper/lower", x = conditionMessage(cond)) && "warning" %in% class(cond)) invokeRestart("muffleWarning")
                                           }),
                       error = nafun))
-      # error_weight = weights, ...))
     }
     res <- do.call(tmp_fun, dots_args)
     res <- light_phylolm(res)
@@ -377,7 +339,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
                   alpha_max = alpha_bounds[2],
                   trans_alpha = all_alphas_transform,
                   log_alpha = log(all_alphas),
-                  trans_alpha_fun = "atanh(1-rho)",
+                  trans_alpha_fun = "atanh(rho)",
                   lambda_error = lambda_error_mean,
                   atanh_lambda_error = all_lambda_error_transform))
   )

@@ -258,11 +258,6 @@ test_that("phylogeneticCorrelations - Errors", {
                "must be a matrix.")
 
   # no weights
-  expect_error(phylogeneticCorrelations(y_data, design = design, phy = tree,
-                                        model = model,
-                                        measurement_error = TRUE,
-                                        trim = 0.25, weights = 1:ntips / sum(1:ntips)),
-               "weights are not allowed with the phylogenetic regression")
   expect_error(phylolmFit(y_data[1, ], design = design, phy = tree,
                           model = model,
                           measurement_error = TRUE,

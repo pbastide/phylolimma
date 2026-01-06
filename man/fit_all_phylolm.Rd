@@ -10,7 +10,6 @@ fit_all_phylolm(
   phy,
   model,
   measurement_error,
-  weights,
   REML,
   ncores,
   ...

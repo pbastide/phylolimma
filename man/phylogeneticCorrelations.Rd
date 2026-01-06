@@ -12,7 +12,6 @@ phylogeneticCorrelations(
   model = c("BM", "lambda", "OUfixedRoot"),
   measurement_error = TRUE,
   trim = c(0.25, 0.05),
-  weights = NULL,
   REML = TRUE,
   ncores = 1,
   ...
@@ -42,9 +41,6 @@ Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{trim}{a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.}
-
-\item{weights}{a named vector or matrix with weights to be applied on the measurement error term.
-See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
 

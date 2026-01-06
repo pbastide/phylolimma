@@ -322,3 +322,60 @@ ddf_samples <- function(fitlm, phylo) {
 dots <- function(...) {
   eval(substitute(alist(...)))
 }
+
+#' @title Check the design matrix
+#'
+#' @inheritParams phylolmFit
+#'
+#' @return the correctly formatted design matrix
+#'
+#' @keywords internal
+#'
+check_expression_matrix <- function(object) {
+  if (!is.matrix(object)) stop("'object' must be a matrix.")
+  if (is.null(colnames(object))) stop("'object' must be a matrix with named columns.")
+  y <- limma::getEAWP(object)
+  if (!nrow(y$exprs)) stop("expression matrix has zero rows")
+  return(y)
+}
+
+#' @title Check the design matrix
+#'
+#' @inheritParams phylolmFit
+#'
+#' @return the correctly formatted design matrix
+#'
+#' @keywords internal
+#'
+check_design_matrix <- function(design, y, phy) {
+  if(is.null(design)) design <- y$design
+  if(is.null(design)) {
+    design <- matrix(1, ncol(y$exprs), 1)
+    rownames(design) <- phy$tip.label
+  } else {
+    design <- as.matrix(design)
+    if(mode(design) != "numeric") stop("design must be a numeric matrix")
+    if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
+  }
+  ne <- limma::nonEstimable(design)
+  if(!is.null(ne)) stop("Coefficients not estimable: ", paste(ne, collapse = " "), "\n")
+  design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
+  return(design)
+}
+
+#' @title Check the tree
+#'
+#' @inheritParams phylolmFit
+#'
+#' @return the correctly formatted tree
+#'
+#' @keywords internal
+#'
+check_tree <- function(phy, y, col_species) {
+  if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
+  if (length(phy$tip.label) == ncol(y$exprs)) return(phy)
+  if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
+  tt <- data.frame(species = col_species,
+                   id = colnames(y$exprs))
+  return(addReplicatesOnTree(phy, tt))
+}

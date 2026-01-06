@@ -10,7 +10,6 @@ get_consensus_tree(
   phy,
   model,
   measurement_error,
-  weights,
   trim,
   REML,
   ncores,

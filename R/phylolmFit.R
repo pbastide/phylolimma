@@ -66,41 +66,17 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   if ("block" %in% names(dot_args) && !is.null(dot_args$block)) stop("'block' can only be 'null' in 'phylolmFit'.")
 
   ## Expression Matrix
-  if (!is.matrix(object)) stop("'object' must be a matrix.")
-  y <- limma::getEAWP(object)
-  if (!nrow(y$exprs)) stop("expression matrix has zero rows")
+  y <- check_expression_matrix(object)
+
+  ## check tree
+  phy <- check_tree(phy, y, col_species)
+  y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
 
   ##	Check design matrix
-  if(is.null(design)) design <- y$design
-  if(is.null(design)) {
-    design <- matrix(1, ncol(y$exprs), 1)
-    rownames(design) <- phy$tip.label
-  } else {
-    design <- as.matrix(design)
-    if(mode(design) != "numeric") stop("design must be a numeric matrix")
-    if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
-  }
-  ne <- limma::nonEstimable(design)
-  if(!is.null(ne)) stop("Coefficients not estimable: ", paste(ne, collapse = " "), "\n")
+  design <- check_design_matrix(design, y, phy)
 
   ## phylo model
-  # if (model != "BM") stop("'modelphy' can only be 'BM' (for now).")
   model <- match.arg(model)
-
-  ## tree
-  if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
-  if (length(phy$tip.label) == ncol(y$exprs)) {
-    tree_rep <- phy
-  } else {
-    if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
-    tt <- data.frame(species = col_species,
-                     id = colnames(y$exprs))
-    tree_rep <- addReplicatesOnTree(phy, tt)
-    tree_norep <- phy
-    phy <- tree_rep
-  }
-  y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
-  design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
 
   ##################################################################################################
   ## Consensus tree
