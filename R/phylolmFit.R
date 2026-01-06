@@ -91,12 +91,13 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
       check.consensus_tree(consensus_tree, model, measurement_error)
 
     } else {
-      consensus_tree <- phylogeneticCorrelations(object = object, design = design, phy = phy,
-                                                 model = model,
-                                                 measurement_error = measurement_error,
-                                                 REML = REML,
-                                                 weights = NULL,
-                                                 ncores = ncores, ...)
+      consensus_tree <- get_consensus_tree(y_data = y_data,
+                                           design = design,
+                                           phy = phy,
+                                           model = model,
+                                           measurement_error = measurement_error,
+                                           REML = REML,
+                                           ncores = ncores, ...)
     }
 
     C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, REML, ...) ## BM on the consensus tree

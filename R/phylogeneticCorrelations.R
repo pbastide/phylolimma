@@ -73,7 +73,14 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 
   ##################################################################################################
 
-  tree_model <- get_consensus_tree(y_data, design, phy, model, measurement_error, trim, REML, ncores = ncores, ...)
+  tree_model <- get_consensus_tree(y_data = y_data,
+                                   design = design,
+                                   phy = phy,
+                                   model = model,
+                                   measurement_error = measurement_error,
+                                   trim = trim,
+                                   REML = REML,
+                                   ncores = ncores, ...)
 
   return(tree_model)
 }
@@ -89,7 +96,8 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
 #'
 #' @keywords internal
 #'
-get_consensus_tree <- function(y_data, design, phy, model, measurement_error, trim, REML, ncores, ...) {
+get_consensus_tree <- function(y_data, design, phy, model, measurement_error,
+                               trim = c(0.25, 0.05), REML = TRUE, ncores = 1, ...) {
 
   if (model == "BM" && !measurement_error) # no parameter to estimate
     return(list(tree = phy,

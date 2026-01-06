@@ -10,9 +10,9 @@ get_consensus_tree(
   phy,
   model,
   measurement_error,
-  trim,
-  REML,
-  ncores,
+  trim = c(0.25, 0.05),
+  REML = TRUE,
+  ncores = 1,
   ...
 )
 }
