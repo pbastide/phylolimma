@@ -298,8 +298,8 @@ transform_tree_phylolm <- function(fplm, phy, model, measurement_error) {
 transform_tree_model_lambda <- function(phy, phyfit, measurement_error) {
   if (measurement_error) stop("Measurement error is not allowed with lambda model.")
   return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = phyfit$optpar))$tree,
-              optpar = NA,
-              lambda_error = 1,
+              optpar = phyfit$optpar,
+              lambda_error = phyfit$optpar,
               sigma2_phy = phyfit$sigma2,
               sigma2_error = 0))
 }
@@ -342,7 +342,7 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = phyfit$optpar))$tree
   if (!measurement_error) {
     return(list(tree_model = tree_model,
-                optpar = NA,
+                optpar = phyfit$optpar,
                 lambda_error = 1,
                 sigma2_phy = phyfit$sigma2,
                 sigma2_error = 0))
@@ -465,8 +465,18 @@ transform_data_tree <- function(C_tree, y_data) {
                 lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
 }
 
+#' @title Log likelihood of a `PhyloMArrayLM` object
+#'
+#' @param object an object of class \code{\linkS4class{PhyloMArrayLM}}.
+#'
+#' @return log likelihood of the fitted linear model on all the genes
+#'
+#' @rdname log_likelihood
+#'
+#' @export
+#'
 setGeneric("log_likelihood", function(object) standardGeneric("log_likelihood"))
-setMethod("log_likelihood", "MArrayLM", function(object) NULL)
+#' @rdname log_likelihood
 setMethod("log_likelihood", "PhyloMArrayLM", function(object) log_likelihood_internal(object))
 
 log_likelihood_internal <- function (object) {
@@ -497,3 +507,30 @@ log_likelihood_internal <- function (object) {
   class(val) <- "logLik"
   val
 }
+
+
+#' @title Consensus tree of a `PhyloMArrayLM` object
+#'
+#' @param object an object of class \code{\linkS4class{PhyloMArrayLM}}.
+#'
+#' @return the consensus tree used in the linear fit
+#'
+#' @rdname consensus_tree
+#'
+#' @export
+#'
+setGeneric("consensus_tree", function(object) standardGeneric("consensus_tree"))
+#' @rdname consensus_tree
+setMethod("consensus_tree", "PhyloMArrayLM", function(object) consensus_tree_internal(object))
+
+consensus_tree_internal <- function (object) {
+  if (!object$use_consensus) {
+    warning("The fitted object did not use a consensus tree.")
+    return(NULL)
+  }
+  return(object$consensus_tree$tree)
+}
+
+## TODO: create a special class for a consensus tree
+## (tree with the associated parameters ?)
+

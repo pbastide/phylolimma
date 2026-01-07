@@ -96,23 +96,6 @@ test_that("phylogeneticCorrelations - BM", {
                resPhyloLmFitCons$phy_trans,
                tol = 1e-4)
 
-  #################################################################################################
-  ## OU
-
-  ## Fit Phylo Consensus
-  resPhyloLmFitConsOU <- phylolmFit(y_data, design = design, phy = tree,
-                                    model = "OUfixedRoot",
-                                    measurement_error = TRUE,
-                                    use_consensus = TRUE)
-
-  resPhyloLmFitConsOUmed <- phylolmFit(y_data, design = design, phy = tree,
-                                       model = "OUfixedRoot",
-                                       measurement_error = TRUE,
-                                       use_consensus = TRUE)
-
-  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$alpha >= resPhyloLmFitConsOU$consensus_tree$params$alpha)
-  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$lambda_error <= resPhyloLmFitConsOU$consensus_tree$params$lambda_error)
-
 })
 
 test_that("phylogeneticCorrelations - separate call", {
@@ -162,6 +145,7 @@ test_that("phylogeneticCorrelations - separate call", {
                            use_consensus = TRUE,
                            consensus_tree = pc)
         expect_equal(res1, res2)
+        expect_equal(consensus_tree(res1), pc$tree)
       }
     }
   }

@@ -211,6 +211,7 @@ get_consensus_tree_lambda <- function(phy, all_phyfit, measurement_error, trim) 
   all_lambdas <- sapply(all_phyfit, function(x) x$optpar)
   all_lambdas_transform <- atanh(pmax(-1, all_lambdas))
   lambda_mean <- tanh(mean_trim(all_lambdas_transform, trim = trim, na.rm = TRUE))
+
   tree_model <- phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = lambda_mean))$tree
   tree_model <- rescale_tree(tree_model)
 
@@ -296,7 +297,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
 
   if (!measurement_error) {
 
-    alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform[!alpha_na], trim = trim, na.rm = TRUE))
+    alpha_mean <- trans_inv_alpha(mean_trim(all_alphas_transform, trim = trim, na.rm = TRUE))
     return(list(
       tree = rescale_tree(phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = alpha_mean))$tree),
       params = list(model = "OUfixedRoot",
@@ -311,20 +312,11 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
   get_lambda_error_OU <- function(phyfit) {
     if (is.na(phyfit$optpar)) return(NA)
     tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
-                                                 parameters = list(alpha = phyfit$optpar))$tree
+                                                 parameters = list(alpha = phyfit$optpar))$tree # NOT alpha_mean here ("consensus")
     tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
     lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
     return(lambda_ou_error)
   }
-
-  ## Use _OU or _OU_cons ? -> cons does not make sense : sigma2 / 2 alpha* t(alpha) is better estimated
-  # get_lambda_error_OU_cons <- function(phyfit) {
-  #   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot",
-  #                                                parameters = list(alpha = alpha_mean))$tree
-  #   tilde_t <- tree_height(tree_model) / (2 * alpha_mean)
-  #   lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
-  #   return(lambda_ou_error)
-  # }
 
   ## consensus lambda error
   all_lambda_error <- sapply(all_phyfit, get_lambda_error_OU)
