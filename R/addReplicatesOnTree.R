@@ -40,16 +40,20 @@ addReplicatesOnTree <- function(tree, traits, species = "species", id = "id", ep
   }
   ## Make tree
   tree_rep <- tree
+  ## create unique labels for original tips to avoid confusion
+  tmpname <- paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
+  tip_labels_original <- paste(tree$tip.label, tmpname, sep = "_")
+  tree_rep$tip.label <- tip_labels_original
   # Add replicates
-  for (tip_label in tree$tip.label) {
-    all_rep_ids <- traits[[id]][traits[[species]] == tip_label]
+  for (tip_index in seq_along(tree$tip.label)) {
+    all_rep_ids <- traits[[id]][traits[[species]] == tree$tip.label[tip_index]]
     for (rep_id in rev(all_rep_ids)) {
       tree_rep <- phytools::bind.tip(tree_rep, tip.label = rep_id,
-                                     where = which(tree_rep$tip.label == tip_label))
+                                     where = which(tree_rep$tip.label == tip_labels_original[tip_index]))
     }
   }
   # Remove original tips
-  tree_rep <- ape::drop.tip(tree_rep, tree$tip.label)
+  tree_rep <- ape::drop.tip(tree_rep, tip_labels_original)
   # No true zeros
   tree_rep$edge.length[tree_rep$edge[, 2] %in% 1:length(tree_rep$tip.label)] <- tree_rep$edge.length[tree_rep$edge[, 2] %in% 1:length(tree_rep$tip.label)] + eps
   # relabel to initial order

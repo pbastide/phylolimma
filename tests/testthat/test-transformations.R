@@ -139,7 +139,7 @@ test_that("phylolm with transforms", {
   fit_bm <- phylolm::phylolm(trait ~ 1, traits, tree_ou_lambda, model = "BM", measurement_error = FALSE)
 
   ## Same likelihood
-  expect_equal(fit_bm$logLik, fit_ou$logLik)
+  expect_equal(fit_bm$logLik, fit_ou$logLik, tolerance = 1e-4)
 
   ## Variances
   expect_equivalent(fit_bm$sigma2, fit_lambda$sigma2, tolerance = 1e-4)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/phylolmFit.R
 \name{phylolmFit}
 \alias{phylolmFit}
-\title{Phylogenetic COmparative Method using LIMMA}
+\title{Phylogenetic Comparative Method using LIMMA}
 \usage{
 phylolmFit(
   object,
@@ -57,11 +57,11 @@ If provided, arguments \code{phy}, \code{model} and \code{measurement_error} wil
 to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}
 }
 \value{
-An object of class \code{\link[limma]{MArrayLM-class}},
+An object of class \code{\link{PhyloMArrayLM-class}},
 with list components \code{coefficients}, \code{stdev.unscaled},
 \code{sigma} and \code{df.residual}.
 These quantities take the phylogenetic model into account.
-The object can be passed to \code{\link[limma]{eBayes}}.
+The object can be passed to \code{\link{eBayes}}.
 }
 \description{
 This function applies \code{\link[limma]{lmFit}} to the normalized data,
@@ -71,4 +71,47 @@ TODO: explain more.
 \details{
 The default bounds on the phylogenetic parameters are the same as in
 \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU.
+}
+\examples{
+## Simulate a tree
+set.seed(1289)
+ntips <- 20
+tree <- ape::rphylo(ntips, 0.1, 0)
+condition <- sample(c(0, 1), ntips, replace = TRUE)
+
+## Simulate data with replicates
+reps <- sample(1:5, ntips, replace = TRUE)
+rep_ids <- make.unique(rep(tree$tip.label, times = reps), sep = "_")
+ngenes <- 20
+dat <- matrix(rnorm(sum(reps) * ngenes, 1, 0.5), nrow = ngenes)
+rownames(dat) <- paste0("g", 1:ngenes)
+colnames(dat) <- rep_ids
+
+## Add differentially expressed genes
+condition_reps <- rep(condition, times = reps)
+ndiff <- 5
+dat[1:ndiff, ] <- dat[1:ndiff, ] + rexp(ndiff, 1/2) \%*\% t(condition_reps)
+
+## Design matrix
+design <- cbind(rep(1, ncol(dat)), condition_reps)
+colnames(design) <- c("(Intercept)", "condition")
+rownames(design) <- rep_ids
+
+## linear model fit
+pfit <- phylolmFit(dat,
+                   design = design,
+                   phy = tree,
+                   model = "OUfixedRoot",
+                   measurement_error = TRUE,
+                   use_consensus = TRUE)
+
+## eBayes correction
+pfit <- eBayes(pfit, trend = TRUE)
+topTable(pfit, coef = 2)
+
+
+}
+\seealso{
+\code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}},
+\code{\link{phylogeneticCorrelations}}, \code{\link{eBayes}}
 }

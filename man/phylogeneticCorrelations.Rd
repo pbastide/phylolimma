@@ -2,7 +2,7 @@
 % Please edit documentation in R/phylogeneticCorrelations.R
 \name{phylogeneticCorrelations}
 \alias{phylogeneticCorrelations}
-\title{Phylogenetic COmparative Method using LIMMA}
+\title{Phylogenetic correlation using a consensus tree}
 \usage{
 phylogeneticCorrelations(
   object,
@@ -46,8 +46,7 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{ncores}{number of cores to use for parallel computation. Default to 1 (no parallel computation).}
 
-\item{...}{further parameters to be passed
-to \code{\link[limma]{lmFit}}.}
+\item{...}{further parameters to be passed to \code{\link[phylolm]{phylolm}}.}
 }
 \value{
 An object of class \code{TransTree-class},
@@ -65,4 +64,7 @@ TODO: explain more.
 }
 \seealso{
 \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}}, \code{\link[limma]{duplicateCorrelation}}
+
+\code{\link[limma]{lmFit}}, \code{\link{phylolmFit}},
+\code{\link[phylolm]{phylolm}}, \code{\link{eBayes}}
 }

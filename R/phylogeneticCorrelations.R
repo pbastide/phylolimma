@@ -2,34 +2,16 @@
 #' @importFrom foreach %do%
 NULL
 
-#' @title Phylogenetic COmparative Method using LIMMA
+#' @title Phylogenetic correlation using a consensus tree
 #'
 #' @description
 #' This function applies \code{\link[limma]{lmFit}} to the normalized data,
 #' in order to take the phylogeny into account.
 #' TODO: explain more.
 #'
-#' @param object 	A matrix data object containing normalized expression values,
-#' with rows corresponding to genes and columns to samples (species).
-#' @param design the design matrix of the experiment,
-#' with rows corresponding to samples and columns to coefficients to be estimated.
-#' Defaults to the unit vector (intercept).
-#' @param phy an object of class \code{\link[ape]{phylo}}.
-#' It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-#' or a tree such that tip labels match with species names in `col_species`.
-#' @param col_species a character vector with same length as columns in the expression matrix,
-#' specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.
-#' @param model the phylogenetic model used to correct for the phylogeny.
-#' Must be one of "BM", "lambda" or "OUfixedRoot".
-#' See \code{\link[phylolm]{phylolm}} for more details.
-#' @param measurement_error a logical value indicating whether there is measurement error.
-#' Default to \code{TRUE}.
-#' See \code{\link[phylolm]{phylolm}} for more details.
+#' @inheritParams phylolmFit
 #' @param trim a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.
-#' @param REML Use REML (default) or ML for estimating the parameters.
-#' @param ncores number of cores to use for parallel computation. Default to 1 (no parallel computation).
-#' @param ... further parameters to be passed
-#' to \code{\link[limma]{lmFit}}.
+#' @param ... further parameters to be passed to \code{\link[phylolm]{phylolm}}.
 #'
 #' @return An object of class \code{TransTree-class},
 #' with list components:
@@ -42,6 +24,9 @@ NULL
 #' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}}, \code{\link[limma]{duplicateCorrelation}}
 #'
 #' @importFrom methods new
+#'
+#' @seealso \code{\link[limma]{lmFit}}, \code{\link{phylolmFit}},
+#' \code{\link[phylolm]{phylolm}}, \code{\link{eBayes}}
 #'
 #' @export
 #'
