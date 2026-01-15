@@ -77,7 +77,7 @@
 #'
 #' ## eBayes correction
 #' pfit <- eBayes(pfit, trend = TRUE)
-#' topTable(pfit, coef = 2)
+#' limma::topTable(pfit, coef = 2)
 #'
 #'
 #' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}},

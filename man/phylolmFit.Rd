@@ -107,7 +107,7 @@ pfit <- phylolmFit(dat,
 
 ## eBayes correction
 pfit <- eBayes(pfit, trend = TRUE)
-topTable(pfit, coef = 2)
+limma::topTable(pfit, coef = 2)
 
 
 }

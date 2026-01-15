@@ -1,19 +1,20 @@
-Package: phylolimma
+Package: phyloDE
 Type: Package
-Title: Phylogenetic Linear Model with Moderated variance for Gene Expression Analysis
-Version: 0.1.0
+Title: Phylogenetic gene Differential Expression analysis
+Version: 0.0.1
 Authors@R: c(
     person("Paul", "Bastide", email = "paul.bastide@cnrs.fr", role = c("aut", "cre")),
-    person("Mélina", "Gallopin", role = "aut"))
-Description: Helper functions to correct for the phylogeny before using the empirical Bayes procedure of limma.
+    person("Mélina", "Gallopin", role = "aut"),
+    person("Arnaud", "Liehrmann", role = "aut"))
+Description: Functions to test for differential expression between conditions at the tip of a phylogeny, combining Phylogenetic Comparative Methods implemented in `phylolm` with moderated statistics tailored for gene expression implemented in `limma`. 
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 biocViews:
 Depends:
-    R (>= 4.0),
-    limma
+    R (>= 4.0)
 Imports:
+    limma,
     ape,
     phytools,
     phylolm (>= 2.6.5),

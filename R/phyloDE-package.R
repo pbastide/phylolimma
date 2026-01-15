@@ -1,7 +1,7 @@
 #' TODO: write
 #'
-#' @name phylolimma-package
-#' @aliases phylolimma
+#' @name phyloDE-package
+#' @aliases phyloDE
 #' @import limma
 #' @title TODO
 #' @author Paul Bastide, Mélina Gallopin

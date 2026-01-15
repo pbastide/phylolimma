@@ -56,16 +56,16 @@ test_that("phylolmFit - equivalencies", {
     }
     # t.value
     phylolm_tvalue <- t(sapply(fplm, function(z) summary(z)$coefficients[, "t.value"]))
-    phylolimma_tvalue <- resLmFit$coef / resLmFit$stdev.unscaled / resLmFit$sigma
-    expect_equivalent(phylolm_tvalue, phylolimma_tvalue, 1e-7)
+    phyloDE_tvalue <- resLmFit$coef / resLmFit$stdev.unscaled / resLmFit$sigma
+    expect_equivalent(phylolm_tvalue, phyloDE_tvalue, 1e-7)
     # p.value
     phylolm_pvalue <- t(sapply(fplm, function(z) summary(z)$coefficients[, "p.value"]))
-    phylolimma_pvalue <- 2 * pt(-abs(phylolimma_tvalue), df = resLmFit$df.residual)
-    expect_equivalent(phylolm_pvalue, phylolimma_pvalue, 1e-7)
+    phyloDE_pvalue <- 2 * pt(-abs(phyloDE_tvalue), df = resLmFit$df.residual)
+    expect_equivalent(phylolm_pvalue, phyloDE_pvalue, 1e-7)
     # likelihood
     phylolm_ll <- sapply(fplm, function(z) z$logLik)
-    phylolimma_ll <- log_likelihood(resLmFit)
-    expect_equivalent(phylolm_ll, as.vector(phylolimma_ll), 1e-8)
+    phyloDE_ll <- log_likelihood(resLmFit)
+    expect_equivalent(phylolm_ll, as.vector(phyloDE_ll), 1e-8)
   }
 
   ## Tests

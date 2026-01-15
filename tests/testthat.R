@@ -1,4 +1,4 @@
 library(testthat)
-library(phylolimma)
+library(phyloDE)
 
-test_check("phylolimma")
+test_check("phyloDE")

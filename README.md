@@ -1,10 +1,13 @@
-phylolimma
+phyloDE
 ===============
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/pbastide/phylolimma/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pbastide/phylolimma/actions/workflows/R-CMD-check.yaml)
-[![Codecov test coverage](https://codecov.io/gh/pbastide/phylolimma/graph/badge.svg)](https://app.codecov.io/gh/pbastide/phylolimma)
+[![R-CMD-check](https://github.com/pbastide/phyloDE/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pbastide/phyloDE/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/pbastide/phyloDE/graph/badge.svg)](https://app.codecov.io/gh/pbastide/phyloDE)
 <!-- badges: end -->
 
-Helper functions to correct for the phylogeny before
-using the empirical Bayes procedure of [limma](https://bioconductor.org/packages/limma/).
+Functions to test for differential expression between conditions at the tip of a phylogeny, 
+combining Phylogenetic Comparative Methods implemented in 
+[`phylolm`](https://CRAN.R-project.org/package=phylolm)
+with moderated statistics tailored for gene expression implemented in. 
+[`limma`](https://bioconductor.org/packages/limma/).
