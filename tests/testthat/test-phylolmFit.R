@@ -5,7 +5,7 @@ test_that("transformation is correct", {
   tree <- ape::rphylo(ntips, 0.1, 0)
   mat_tree <- ape::vcv(tree)
   ## Chol
-  C_tree <- get_chol_tree(NULL, NULL, tree, NULL, "BM", FALSE)$C_tree
+  C_tree <- get_chol_tree(NULL, NULL, tree, "BM", FALSE)$C_tree
   expect_equal(t(C_tree) %*% C_tree, mat_tree)
   ## data
   ngenes <- 100
@@ -40,8 +40,7 @@ test_that("phylolmFit - BM", {
   resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
                               model = model,
                               measurement_error = measurement_error,
-                              use_consensus = FALSE,
-                              ddf_method = "Samples")
+                              use_consensus = FALSE)
   ## Fit
   resLmFit <- limma::lmFit(y_data, design = design)
 
@@ -185,8 +184,7 @@ test_that("phylolmFit - mammals", {
                    model = "BM",
                    lower.bound = list(sigma2_error = 0.001),
                    measurement_error = TRUE,
-                   use_consensus = FALSE,
-                   ddf_method = "Samples")
+                   use_consensus = FALSE)
   expect_true(all(pp$sigma2_error >= 0.001 * pp$sigma2_phy))
 
   expect_equal(getSpeciesNumber(tree), length(unique(sub("\\.[0-9]", "", tree$tip.label))))
@@ -194,8 +192,7 @@ test_that("phylolmFit - mammals", {
   pp <- phylolmFit(y_data, design = design, phy = tree,
                    model = "BM",
                    measurement_error = TRUE,
-                   use_consensus = FALSE,
-                   ddf_method = "Samples")
+                   use_consensus = FALSE)
   expect_true(all(pp$sigma2_error >= min_sig_err * pp$sigma2_phy))
 
   pp <- phylolmFit(y_data, design = design, phy = tree,
@@ -209,21 +206,3 @@ test_that("phylolmFit - mammals", {
   expect_true(all(pp$sigma2_error >= min_sig_err * pp$sigma2_phy / (2 * pp$optpar)))
 
 })
-# test_that("phylolmFit - BM - error", {
-#   set.seed(12891026)
-#   ## Tree
-#   ntips <- 50
-#   tree <- ape::rphylo(ntips, 0.1, 0)
-#   ## data
-#   ngenes <- 100
-#   y_data <- matrix(rnorm(ngenes * ntips, 0, 1), ncol = ntips)
-#   design <- matrix(1, nrow = ntips, ncol = 2)
-#   design[sample(1:ntips, floor(ntips / 2)), 2] <- 0
-#   colnames(y_data) <- rownames(design) <- tree$tip.label
-#   ## Fit
-#   fit <- phylolmFit(y_data, design = design, phy = tree,
-#                     model = "BM", measurement_error = TRUE,
-#                     ndups = 1, spacing = 1, block = NULL, weights = NULL, method = "ls")
-#   ## ebayes
-#   fitb <- limma::eBayes(fit)
-# })

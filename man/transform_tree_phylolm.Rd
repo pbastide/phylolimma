@@ -4,46 +4,22 @@
 \alias{transform_tree_phylolm}
 \title{Get transformed tree}
 \usage{
-transform_tree_phylolm(
-  y,
-  design,
-  phy,
-  model,
-  measurement_error,
-  REML,
-  ddf_method,
-  ...
-)
+transform_tree_phylolm(fplm, phy, model, measurement_error)
 }
 \arguments{
-\item{y}{A vector data containing normalized expression values for one gene.}
-
-\item{design}{the design matrix of the experiment,
-with rows corresponding to samples and columns to coefficients to be estimated.
-Defaults to the unit vector (intercept).}
+\item{fplm}{a phylolm fit object}
 
 \item{phy}{an object of class \code{\link[ape]{phylo}}.
 It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
 or a tree such that tip labels match with species names in `col_species`.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
+Must be one of "BM", "lambda" or "OUfixedRoot".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
-
-\item{REML}{Use REML (default) or ML for estimating the parameters.}
-
-\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
-Default to \code{ddf_method="Satterthwaite"}.
-If \code{ddf_method="Species"}, then the number of species is taken for the
-computation of the degrees of freedom,
-while if \code{ddf_method="Samples"} the total number of individuals is used.}
-
-\item{...}{further parameters to be passed
-to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}
 }
 \value{
 The transformed tree.

@@ -4,14 +4,7 @@
 \alias{get_consensus_tree_OUfixedRoot}
 \title{Get OU transformed tree}
 \usage{
-get_consensus_tree_OUfixedRoot(
-  phy,
-  all_phyfit,
-  measurement_error,
-  trim,
-  median = FALSE,
-  alpha_bounds
-)
+get_consensus_tree_OUfixedRoot(phy, all_phyfit, measurement_error, trim)
 }
 \arguments{
 \item{phy}{an object of class \code{\link[ape]{phylo}}.
@@ -21,9 +14,6 @@ or a tree such that tip labels match with species names in `col_species`.}
 \item{measurement_error}{a logical value indicating whether there is measurement error.
 Default to \code{TRUE}.
 See \code{\link[phylolm]{phylolm}} for more details.}
-
-\item{median}{if TRUE, the \code{pracma::geo_median} function is used to take
-the geometric median.}
 }
 \value{
 The transformed tree.

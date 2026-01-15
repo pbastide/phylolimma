@@ -144,8 +144,7 @@ test_that("phylolmFit - rep", {
                               phy = tree_rep,
                               model = "BM",
                               measurement_error = TRUE,
-                              use_consensus = FALSE,
-                              ddf_method = "Samples")
+                              use_consensus = FALSE)
 
   ## Fit species tree - automatic
   resPhyloLmFitSpecies <- phylolmFit(dat,
@@ -153,10 +152,26 @@ test_that("phylolmFit - rep", {
                                      phy = tree,
                                      model = "BM",
                                      measurement_error = TRUE,
-                                     use_consensus = FALSE,
-                                     ddf_method = "Samples")
+                                     use_consensus = FALSE)
 
   expect_equal(resPhyloLmFit, resPhyloLmFitSpecies, tolerance = 1e-7)
+
+  ## ommited design
+  ## Fit with rep
+  resPhyloLmFitOmit <- phylolmFit(dat,
+                                  phy = tree_rep,
+                                  model = "BM",
+                                  measurement_error = TRUE,
+                                  use_consensus = FALSE)
+
+  ## Fit species tree - automatic
+  resPhyloLmFitSpeciesOmit <- phylolmFit(dat,
+                                         phy = tree,
+                                         model = "BM",
+                                         measurement_error = TRUE,
+                                         use_consensus = FALSE)
+
+  expect_equal(resPhyloLmFitOmit, resPhyloLmFitSpeciesOmit, tolerance = 1e-7)
 
   ## Fit species tree - col_species
   colnames(dat) <- sub("t", "s", colnames(dat))
@@ -166,8 +181,7 @@ test_that("phylolmFit - rep", {
                           phy = tree,
                           model = "BM",
                           measurement_error = TRUE,
-                          use_consensus = FALSE,
-                          ddf_method = "Samples"),
+                          use_consensus = FALSE),
                "Sample ids could not be automatically matched against the species")
 
   resPhyloLmFitSpecies <- phylolmFit(dat,
@@ -176,8 +190,7 @@ test_that("phylolmFit - rep", {
                                      col_species = traits$species,
                                      model = "BM",
                                      measurement_error = TRUE,
-                                     use_consensus = FALSE,
-                                     ddf_method = "Samples")
+                                     use_consensus = FALSE)
 
   expect_equal(resPhyloLmFit$coefficients, resPhyloLmFitSpecies$coefficients, tolerance = 1e-7)
   expect_equal(resPhyloLmFit$sigma, resPhyloLmFitSpecies$sigma, tolerance = 1e-7)

@@ -2,19 +2,17 @@
 % Please edit documentation in R/phylogeneticCorrelations.R
 \name{phylogeneticCorrelations}
 \alias{phylogeneticCorrelations}
-\title{Phylogenetic COmparative Method using LIMMA}
+\title{Phylogenetic correlation using a consensus tree}
 \usage{
 phylogeneticCorrelations(
   object,
   design = NULL,
   phy,
   col_species = NULL,
-  model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
+  model = c("BM", "lambda", "OUfixedRoot"),
   measurement_error = TRUE,
   trim = c(0.25, 0.05),
-  weights = NULL,
   REML = TRUE,
-  ddf_method = c("Samples", "Species", "Satterthwaite"),
   ncores = 1,
   ...
 )
@@ -35,7 +33,7 @@ or a tree such that tip labels match with species names in `col_species`.}
 specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
+Must be one of "BM", "lambda" or "OUfixedRoot".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
@@ -44,21 +42,11 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{trim}{a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.}
 
-\item{weights}{a named vector or matrix with weights to be applied on the measurement error term.
-See \code{\link[phylolm]{phylolm}} for more details.}
-
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
-
-\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
-Default to \code{ddf_method="Satterthwaite"}.
-If \code{ddf_method="Species"}, then the number of species is taken for the
-computation of the degrees of freedom,
-while if \code{ddf_method="Samples"} the total number of individuals is used.}
 
 \item{ncores}{number of cores to use for parallel computation. Default to 1 (no parallel computation).}
 
-\item{...}{further parameters to be passed
-to \code{\link[limma]{lmFit}}.}
+\item{...}{further parameters to be passed to \code{\link[phylolm]{phylolm}}.}
 }
 \value{
 An object of class \code{TransTree-class},
@@ -76,4 +64,7 @@ TODO: explain more.
 }
 \seealso{
 \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}}, \code{\link[limma]{duplicateCorrelation}}
+
+\code{\link[limma]{lmFit}}, \code{\link{phylolmFit}},
+\code{\link[phylolm]{phylolm}}, \code{\link{eBayes}}
 }

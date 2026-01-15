@@ -41,14 +41,12 @@ test_that("phylogeneticCorrelations - BM", {
   resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
                               model = model,
                               measurement_error = measurement_error,
-                              use_consensus = FALSE,
-                              ddf_method = "Samples")
+                              use_consensus = FALSE)
   ## Fit Phylo Consensus
   resPhyloLmFitCons <- phylolmFit(y_data, design = design, phy = tree,
                                   model = model,
                                   measurement_error = measurement_error,
                                   use_consensus = TRUE,
-                                  ddf_method = "Samples",
                                   trim = 0.15)
 
   ## Test names and dimensions
@@ -86,7 +84,7 @@ test_that("phylogeneticCorrelations - BM", {
     }
     if (nn%in% c("qr", "C_tree")) {
       expect_equal(resPhyloLmFitConsLambda[[nn]],
-                   resPhyloLmFitCons[[nn]][[1]],
+                   resPhyloLmFitCons[[nn]],
                    tol = 1e-4)
     }
   }
@@ -95,26 +93,8 @@ test_that("phylogeneticCorrelations - BM", {
                tol = 1e-4)
 
   expect_equal(resPhyloLmFitConsLambda$phy_trans,
-               resPhyloLmFitCons$phy_trans$treecons,
+               resPhyloLmFitCons$phy_trans,
                tol = 1e-4)
-
-  #################################################################################################
-  ## OU
-
-  ## Fit Phylo Consensus
-  resPhyloLmFitConsOU <- phylolmFit(y_data, design = design, phy = tree,
-                                    model = "OUfixedRoot",
-                                    measurement_error = TRUE,
-                                    use_consensus = TRUE)
-
-  resPhyloLmFitConsOUmed <- phylolmFit(y_data, design = design, phy = tree,
-                                       model = "OUfixedRoot",
-                                       measurement_error = TRUE,
-                                       use_consensus = TRUE,
-                                       medianOU = TRUE)
-
-  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$alpha >= resPhyloLmFitConsOU$consensus_tree$params$alpha)
-  expect_true(resPhyloLmFitConsOUmed$consensus_tree$params$lambda_error <= resPhyloLmFitConsOU$consensus_tree$params$lambda_error)
 
 })
 
@@ -134,7 +114,7 @@ test_that("phylogeneticCorrelations - separate call", {
   rownames(design) <- tree$tip.label
 
   ## checks same fit
-  for(model in c("BM", "lambda", "OUfixedRoot", "delta")) {
+  for(model in c("BM", "lambda", "OUfixedRoot")) {
     for (measurement_error in c(FALSE, TRUE)) {
       if (model == "lambda" && measurement_error) {
         expect_error(
@@ -165,6 +145,7 @@ test_that("phylogeneticCorrelations - separate call", {
                            use_consensus = TRUE,
                            consensus_tree = pc)
         expect_equal(res1, res2)
+        expect_equal(consensus_tree(res1), pc$tree)
       }
     }
   }
@@ -261,11 +242,6 @@ test_that("phylogeneticCorrelations - Errors", {
                "must be a matrix.")
 
   # no weights
-  expect_error(phylogeneticCorrelations(y_data, design = design, phy = tree,
-                                        model = model,
-                                        measurement_error = TRUE,
-                                        trim = 0.25, weights = 1:ntips / sum(1:ntips)),
-               "weights are not allowed with the phylogenetic regression")
   expect_error(phylolmFit(y_data[1, ], design = design, phy = tree,
                           model = model,
                           measurement_error = TRUE,

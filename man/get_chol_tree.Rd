@@ -4,17 +4,7 @@
 \alias{get_chol_tree}
 \title{Get Tree Normalizing Inverse Cholesky}
 \usage{
-get_chol_tree(
-  y_data,
-  design,
-  phy,
-  phy_ind = NULL,
-  model,
-  measurement_error,
-  REML,
-  ddf_method,
-  ...
-)
+get_chol_tree(y_data, design, phy, model, measurement_error, REML, ncores, ...)
 }
 \arguments{
 \item{y_data}{A matrix data object containing normalized expression values,
@@ -29,7 +19,7 @@ It must be either a tree with tips having the same names as the columns of \code
 or a tree such that tip labels match with species names in `col_species`.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
+Must be one of "BM", "lambda" or "OUfixedRoot".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{measurement_error}{a logical value indicating whether there is measurement error.
@@ -38,11 +28,7 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
 
-\item{ddf_method}{the method for the computation of the degrees of freedom of the t statistics (before moderation).
-Default to \code{ddf_method="Satterthwaite"}.
-If \code{ddf_method="Species"}, then the number of species is taken for the
-computation of the degrees of freedom,
-while if \code{ddf_method="Samples"} the total number of individuals is used.}
+\item{ncores}{number of cores to use for parallel computation. Default to 1 (no parallel computation).}
 
 \item{...}{further parameters to be passed
 to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.}

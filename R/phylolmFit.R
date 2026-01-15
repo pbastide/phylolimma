@@ -1,4 +1,4 @@
-#' @title Phylogenetic COmparative Method using LIMMA
+#' @title Phylogenetic Comparative Method using LIMMA
 #'
 #' @description
 #' This function applies \code{\link[limma]{lmFit}} to the normalized data,
@@ -16,7 +16,7 @@
 #' @param col_species a character vector with same length as columns in the expression matrix,
 #' specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.
 #' @param model the phylogenetic model used to correct for the phylogeny.
-#' Must be one of "BM", "lambda", "OUfixedRoot", "OUrandomRoot" or "delta".
+#' Must be one of "BM", "lambda" or "OUfixedRoot".
 #' See \code{\link[phylolm]{phylolm}} for more details.
 #' @param measurement_error a logical value indicating whether there is measurement error.
 #' Default to \code{TRUE}.
@@ -27,87 +27,96 @@
 #' @param consensus_tree If not \code{NULL}, the consensus tree containing the correlation structure,
 #' result of function \code{\link{phylogeneticCorrelations}}.
 #' If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.
-#' @param ddf_method the method for the computation of the degrees of freedom of the t statistics (before moderation).
-#' Default to \code{ddf_method="Satterthwaite"}.
-#' If \code{ddf_method="Species"}, then the number of species is taken for the
-#' computation of the degrees of freedom,
-#' while if \code{ddf_method="Samples"} the total number of individuals is used.
 #' @param REML Use REML (default) or ML for estimating the parameters.
+#' @param ncores number of cores to use for parallel computation. Default to 1 (no parallel computation).
 #' @param ... further parameters to be passed
 #' to \code{\link[limma]{lmFit}} or \code{\link[phylolm]{phylolm}}.
 #'
-#' @return An object of class \code{\link[limma]{MArrayLM-class}},
+#' @return An object of class \code{\link{PhyloMArrayLM-class}},
 #' with list components \code{coefficients}, \code{stdev.unscaled},
 #' \code{sigma} and \code{df.residual}.
 #' These quantities take the phylogenetic model into account.
-#' The object can be passed to \code{\link[limma]{eBayes}}.
+#' The object can be passed to \code{\link{eBayes}}.
 #'
 #' @details
 #' The default bounds on the phylogenetic parameters are the same as in
 #' \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU.
 #'
+#' @examples
+#' ## Simulate a tree
+#' set.seed(1289)
+#' ntips <- 20
+#' tree <- ape::rphylo(ntips, 0.1, 0)
+#' condition <- sample(c(0, 1), ntips, replace = TRUE)
+#'
+#' ## Simulate data with replicates
+#' reps <- sample(1:5, ntips, replace = TRUE)
+#' rep_ids <- make.unique(rep(tree$tip.label, times = reps), sep = "_")
+#' ngenes <- 20
+#' dat <- matrix(rnorm(sum(reps) * ngenes, 1, 0.5), nrow = ngenes)
+#' rownames(dat) <- paste0("g", 1:ngenes)
+#' colnames(dat) <- rep_ids
+#'
+#' ## Add differentially expressed genes
+#' condition_reps <- rep(condition, times = reps)
+#' ndiff <- 5
+#' dat[1:ndiff, ] <- dat[1:ndiff, ] + rexp(ndiff, 1/2) %*% t(condition_reps)
+#'
+#' ## Design matrix
+#' design <- cbind(rep(1, ncol(dat)), condition_reps)
+#' colnames(design) <- c("(Intercept)", "condition")
+#' rownames(design) <- rep_ids
+#'
+#' ## linear model fit
+#' pfit <- phylolmFit(dat,
+#'                    design = design,
+#'                    phy = tree,
+#'                    model = "OUfixedRoot",
+#'                    measurement_error = TRUE,
+#'                    use_consensus = TRUE)
+#'
+#' ## eBayes correction
+#' pfit <- eBayes(pfit, trend = TRUE)
+#' topTable(pfit, coef = 2)
+#'
+#'
+#' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}},
+#' \code{\link{phylogeneticCorrelations}}, \code{\link{eBayes}}
 #'
 #' @importFrom methods new
 #'
 #' @export
 #'
 phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
-                       model = c("BM", "lambda", "OUfixedRoot", "OUrandomRoot", "delta"),
+                       model = c("BM", "lambda", "OUfixedRoot"),
                        measurement_error = FALSE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
-                       ddf_method = c("Samples", "Species", "Satterthwaite"),
-                       REML = TRUE, ...) {
+                       REML = TRUE,
+                       ncores = 1, ...) {
 
   ##################################################################################################
   ## Check unused parameters
   dot_args <- dots(...)
-  if ("ndups" %in% names(dot_args) && dot_args$ndups != 1) stop("'ndups' can only be '1' in 'phylolmFit' (for now).")
-  if ("spacing" %in% names(dot_args) && dot_args$spacing != 1) stop("'spacing' can only be '1' in 'phylolmFit' (for now).")
-  if ("weights" %in% names(dot_args) && !is.null(dot_args$weights)) stop("'weights' can only be 'null' in 'phylolmFit' (for now).")
-  if ("method" %in% names(dot_args) && dot_args$method != "ls") stop("'method' can only be 'ls' in 'phylolmFit' (for now).")
-  if ("correlation" %in% names(dot_args)) stop("'correlation' is not used in 'phylolmFit' (for now).")
-  if ("block" %in% names(dot_args) && !is.null(dot_args$block)) stop("'block' can only be 'null' in 'phylolmFit' (for now).")
+  if ("ndups" %in% names(dot_args) && dot_args$ndups != 1) stop("'ndups' can only be '1' in 'phylolmFit'.")
+  if ("spacing" %in% names(dot_args) && dot_args$spacing != 1) stop("'spacing' can only be '1' in 'phylolmFit'.")
+  if ("weights" %in% names(dot_args) && !is.null(dot_args$weights)) stop("'weights' can only be 'null' in 'phylolmFit'.")
+  if ("method" %in% names(dot_args) && dot_args$method != "ls") stop("'method' can only be 'ls' in 'phylolmFit'.")
+  if ("correlation" %in% names(dot_args)) stop("'correlation' is not used in 'phylolmFit'.")
+  if ("block" %in% names(dot_args) && !is.null(dot_args$block)) stop("'block' can only be 'null' in 'phylolmFit'.")
 
   ## Expression Matrix
-  if (!is.matrix(object)) stop("'object' must be a matrix.")
-  y <- limma::getEAWP(object)
-  if (!nrow(y$exprs)) stop("expression matrix has zero rows")
+  y <- check_expression_matrix(object)
+
+  ## check tree
+  phy <- check_tree(phy, y, col_species)
+  y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
 
   ##	Check design matrix
-  if(is.null(design)) design <- y$design
-  if(is.null(design)) {
-    design <- matrix(1, ncol(y$exprs), 1)
-    rownames(design) <- phy$tip.label
-  } else {
-    design <- as.matrix(design)
-    if(mode(design) != "numeric") stop("design must be a numeric matrix")
-    if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
-  }
-  ne <- limma::nonEstimable(design)
-  if(!is.null(ne)) stop("Coefficients not estimable: ", paste(ne, collapse = " "), "\n")
+  design <- check_design_matrix(design, y, phy)
 
   ## phylo model
-  # if (model != "BM") stop("'modelphy' can only be 'BM' (for now).")
   model <- match.arg(model)
-
-  ## tree
-  if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
-  if (length(phy$tip.label) == ncol(y$exprs)) {
-    tree_rep <- phy
-  } else {
-    if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
-    tt <- data.frame(species = col_species,
-                     id = colnames(y$exprs))
-    tree_rep <- addReplicatesOnTree(phy, tt)
-    tree_norep <- phy
-    phy <- tree_rep
-  }
-  y_data <- checkParamMatrix(y$exprs, "expression matrix", phy)
-  design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
-
-  ## ddf
-  ddf_method <- match.arg(ddf_method)
 
   ##################################################################################################
   ## Consensus tree
@@ -122,15 +131,16 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
       check.consensus_tree(consensus_tree, model, measurement_error)
 
     } else {
-      consensus_tree <- phylogeneticCorrelations(object = object, design = design, phy = phy,
-                                                 model = model,
-                                                 measurement_error = measurement_error,
-                                                 REML = REML,
-                                                 ddf_method = ddf_method,
-                                                 weights = NULL, ...)
+      consensus_tree <- get_consensus_tree(y_data = y_data,
+                                           design = design,
+                                           phy = phy,
+                                           model = model,
+                                           measurement_error = measurement_error,
+                                           REML = REML,
+                                           ncores = ncores, ...)
     }
 
-    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, phy_ind = consensus_tree$params$tree_ind, model = "BM", measurement_error = FALSE, REML, ddf_method, ...) ## BM on the consensus tree
+    C_tree_params <- get_chol_tree(y_data, design, consensus_tree$tree, model = "BM", measurement_error = FALSE, REML, ...) ## BM on the consensus tree
     C_tree <- C_tree_params$C_tree
     C_tree_params$optpar <- consensus_tree$params$alpha
     C_tree_params$lambda_error <- consensus_tree$params$lambda_error
@@ -139,7 +149,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
 
   } else {
     ## one phylo model per gene
-    C_tree_params <- get_chol_tree(y_data,  design, phy, NULL, model, measurement_error, REML, ddf_method, ...)
+    C_tree_params <- get_chol_tree(y_data,  design, phy, model, measurement_error, REML, ncores, ...)
     C_tree <- C_tree_params$C_tree
 
     ddf_fits <- C_tree_params$ddf
@@ -148,17 +158,15 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   ##################################################################################################
 
   ## Transform design and data
-  phy_ind <- NULL
-  if (use_consensus) phy_ind <- consensus_tree$params$tree_ind
-  design_trans <- transform_design_tree(C_tree, design, phy_ind)
-  y_trans <- t(transform_data_tree(C_tree, y_data, phy_ind))
+  design_trans <- transform_design_tree(C_tree, design)
+  y_trans <- t(transform_data_tree(C_tree, y_data))
 
   ## Apply lmFit
   resLmFit <- lmFitLimma(y_trans, design_trans, ...)
 
 
   ## Format
-  if (use_consensus & is.null(consensus_tree$params$tree_ind)) {
+  if (use_consensus) {
     resFitFormat <- new("PhyloMArrayLM",
                         list(coefficients = resLmFit$coefficients,
                              sigma = resLmFit$sigma,
@@ -194,20 +202,6 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
 
   ## Result
   return(resFitFormat)
-}
-
-#' @title Capture dot arguments
-#'
-#' @description http://adv-r.had.co.nz/Computing-on-the-language.html#capturing-dots
-#'
-#' @param ... dots arguments to be captured
-#'
-#' @return a named list of the arguments in ...
-#'
-#' @keywords internal
-#'
-dots <- function(...) {
-  eval(substitute(alist(...)))
 }
 
 #' @title Fit using limma
@@ -252,7 +246,7 @@ lmFitLimma <- function(y_trans, design_trans, ...) {
 #'
 #' @keywords internal
 #'
-get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measurement_error, REML, ddf_method, ...) {
+get_chol_tree <- function(y_data, design, phy, model, measurement_error, REML, ncores, ...) {
   if (!measurement_error && model == "BM") { ## Easy case, not fit necessary
     get_C_tree_BM <- function(tree) {
       C_tree <- ape::vcv(tree)
@@ -264,16 +258,11 @@ get_chol_tree <- function(y_data, design, phy, phy_ind = NULL, model, measuremen
                   sigma2_phy = NA,
                   sigma2_error = 0))
     }
-    if (is.null(phy_ind)) {
-      return(get_C_tree_BM(phy))
-    } else {
-      C_tree_chol_and_params <- lapply(phy, function(ppp) get_C_tree_BM(ppp))
-      C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
-    }
+    return(get_C_tree_BM(phy))
   } else {
-    if (!is.null(phy_ind)) stop("Can only have one tree in the non BM case.")
-    C_tree_chol_and_params <- apply(y_data, 1,
-                                    get_C_tree, design, phy, model, measurement_error, REML, ddf_method, ...)
+    all_fits <- fit_all_phylolm(y_data, design, phy, model, measurement_error, weights = NULL, REML, ncores, ...)
+    C_tree_chol_and_params <- lapply(all_fits,
+                                     get_C_tree, phy, model, measurement_error)
     C_tree_chol_and_params <- format_list(C_tree_chol_and_params)
     return(C_tree_chol_and_params)
   }
@@ -294,15 +283,15 @@ format_list <- function(C_tree_chol_and_params) {
 #' @description
 #' Compute the whitening cholesky matrix.
 #'
-#' @param y 	A vector data containing normalized expression values for one gene.
+#' @param fplm a phylolm fit object
 #' @inheritParams phylolmFit
 #'
 #' @return The cholesky matrix of the tree structure.
 #'
 #' @keywords internal
 #'
-get_C_tree <- function(y, design, phy, model, measurement_error, REML, ddf_method, ...) {
-  trans_tree_params <- transform_tree_phylolm(y, design, phy, model, measurement_error, REML, ddf_method, ...)
+get_C_tree <- function(fplm, phy, model, measurement_error) {
+  trans_tree_params <- transform_tree_phylolm(fplm, phy, model, measurement_error)
   tree_model <- trans_tree_params$tree_model
   C_tree <- ape::vcv(tree_model)
   C_tree_chol <- chol(C_tree)
@@ -326,37 +315,12 @@ get_C_tree <- function(y, design, phy, model, measurement_error, REML, ddf_metho
 #'
 #' @keywords internal
 #'
-transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REML, ddf_method, ...) {
-  if (model == "BM" && !measurement_error) return(phy) # no transformation needed
-  data_phylolm <- as.data.frame(cbind(y, design))
-  colnames(data_phylolm)[1] <- "expr"
-  alpha_bounds <- getBoundsSelectionStrength(phy)
-  min_error <- getMinError(phy)
-  lower_bounds <- get_lower_bounds(alpha_bounds, min_error, ...)
-  upper_bounds <- get_upper_bounds(alpha_bounds, min_error, ...)
-  starting_values <- get_starting_values(alpha_bounds, ...)
-  dots_args <- get_dots_args(...)
-  tmp_fun <- function(...) {
-    return(withCallingHandlers(phylolm::phylolm(expr ~ -1 + .,
-                                                data = data_phylolm, phy = phy, model = model,
-                                                measurement_error = measurement_error,
-                                                lower.bound = lower_bounds,
-                                                upper.bound = upper_bounds,
-                                                starting.value = starting_values,
-                                                REML = REML,
-                                                ...),
-                               warning = function(cond) {
-                                 if (grepl(pattern="upper/lower", x = conditionMessage(cond)) && "warning" %in% class(cond)) invokeRestart("muffleWarning")
-                               }))
-  }
-  fplm <- do.call(tmp_fun, dots_args)
+transform_tree_phylolm <- function(fplm, phy, model, measurement_error) {
   phy_trans_params <- switch(model,
                              BM = transform_tree_model_BM(phy, fplm, measurement_error),
                              lambda = transform_tree_model_lambda(phy, fplm, measurement_error),
-                             OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error),
-                             OUrandomRoot = transform_tree_model_OUrandomRoot(phy, fplm, measurement_error),
-                             delta = transform_tree_model_delta(phy, fplm, measurement_error))
-  phy_trans_params$ddf <- get_ddf(ddf_method)(fplm, phy)
+                             OUfixedRoot = transform_tree_model_OUfixedRoot(phy, fplm, measurement_error))
+  phy_trans_params$ddf <- ddf_samples(fplm, phy)
   return(phy_trans_params)
 }
 
@@ -374,8 +338,8 @@ transform_tree_phylolm <- function(y, design, phy, model, measurement_error, REM
 transform_tree_model_lambda <- function(phy, phyfit, measurement_error) {
   if (measurement_error) stop("Measurement error is not allowed with lambda model.")
   return(list(tree_model = phylolm::transf.branch.lengths(phy, "lambda", parameters = list(lambda = phyfit$optpar))$tree,
-              optpar = NA,
-              lambda_error = 1,
+              optpar = phyfit$optpar,
+              lambda_error = phyfit$optpar,
               sigma2_phy = phyfit$sigma2,
               sigma2_error = 0))
 }
@@ -418,7 +382,7 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
   tree_model <- phylolm::transf.branch.lengths(phy, "OUfixedRoot", parameters = list(alpha = phyfit$optpar))$tree
   if (!measurement_error) {
     return(list(tree_model = tree_model,
-                optpar = NA,
+                optpar = phyfit$optpar,
                 lambda_error = 1,
                 sigma2_phy = phyfit$sigma2,
                 sigma2_error = 0))
@@ -435,68 +399,68 @@ transform_tree_model_OUfixedRoot <- function(phy, phyfit, measurement_error) {
               sigma2_error = phyfit$sigma2_error))
 }
 
-#' @title Get OU transformed tree
-#'
-#' @description
-#' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
-#'
-#' @inheritParams get_C_tree
-#'
-#' @return The transformed tree.
-#'
-#' @keywords internal
-#'
-transform_tree_model_OUrandomRoot <- function(phy, phyfit, measurement_error) {
-  tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = phyfit$optpar))$tree
-  tree_model$root.edge <- 0
-  if (!measurement_error) {
-    return(list(tree_model = tree_model,
-                optpar = NA,
-                lambda_error = 1,
-                sigma2_phy = phyfit$sigma2,
-                sigma2_error = 0))
-  }
-  tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
-  lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
-  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
-  tree_model <- rescale_tree(tree_model)
-  return(list(tree_model = tree_model,
-              optpar = phyfit$optpar,
-              lambda_error = lambda_ou_error,
-              sigma2_phy = phyfit$sigma2,
-              sigma2_error = phyfit$sigma2_error))
-}
+# #' @title Get OU transformed tree
+# #'
+# #' @description
+# #' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
+# #'
+# #' @inheritParams get_C_tree
+# #'
+# #' @return The transformed tree.
+# #'
+# #' @keywords internal
+# #'
+# transform_tree_model_OUrandomRoot <- function(phy, phyfit, measurement_error) {
+#   tree_model <- phylolm::transf.branch.lengths(phy, "OUrandomRoot", parameters = list(alpha = phyfit$optpar))$tree
+#   tree_model$root.edge <- 0
+#   if (!measurement_error) {
+#     return(list(tree_model = tree_model,
+#                 optpar = NA,
+#                 lambda_error = 1,
+#                 sigma2_phy = phyfit$sigma2,
+#                 sigma2_error = 0))
+#   }
+#   tilde_t <- tree_height(tree_model) / (2 * phyfit$optpar)
+#   lambda_ou_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+#   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_ou_error))$tree
+#   tree_model <- rescale_tree(tree_model)
+#   return(list(tree_model = tree_model,
+#               optpar = phyfit$optpar,
+#               lambda_error = lambda_ou_error,
+#               sigma2_phy = phyfit$sigma2,
+#               sigma2_error = phyfit$sigma2_error))
+# }
 
-#' @title Get delta transformed tree
-#'
-#' @description
-#' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
-#'
-#' @inheritParams get_C_tree
-#'
-#' @return The transformed tree.
-#'
-#' @keywords internal
-#'
-transform_tree_model_delta <- function(phy, phyfit, measurement_error) {
-  tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = phyfit$optpar))$tree
-  if (!measurement_error) {
-    return(list(tree_model = tree_model,
-                optpar = NA,
-                lambda_error = 1,
-                sigma2_phy = phyfit$sigma2,
-                sigma2_error = 0))
-  }
-  tilde_t <- tree_height(tree_model)
-  lambda_delta_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
-  tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_delta_error))$tree
-  tree_model <- rescale_tree(tree_model)
-  return(list(tree_model = tree_model,
-              optpar = phyfit$optpar,
-              lambda_error = lambda_delta_error,
-              sigma2_phy = phyfit$sigma2,
-              sigma2_error = phyfit$sigma2_error))
-}
+# #' @title Get delta transformed tree
+# #'
+# #' @description
+# #' Compute the transformed tree using \code{\link[phylolm]{transf.branch.lengths}}.
+# #'
+# #' @inheritParams get_C_tree
+# #'
+# #' @return The transformed tree.
+# #'
+# #' @keywords internal
+# #'
+# transform_tree_model_delta <- function(phy, phyfit, measurement_error) {
+#   tree_model <- phylolm::transf.branch.lengths(phy, "delta", parameters = list(delta = phyfit$optpar))$tree
+#   if (!measurement_error) {
+#     return(list(tree_model = tree_model,
+#                 optpar = NA,
+#                 lambda_error = 1,
+#                 sigma2_phy = phyfit$sigma2,
+#                 sigma2_error = 0))
+#   }
+#   tilde_t <- tree_height(tree_model)
+#   lambda_delta_error <- get_lambda_error(phyfit$sigma2, phyfit$sigma2_error, tilde_t)
+#   tree_model <- phylolm::transf.branch.lengths(tree_model, "lambda", parameters = list(lambda = lambda_delta_error))$tree
+#   tree_model <- rescale_tree(tree_model)
+#   return(list(tree_model = tree_model,
+#               optpar = phyfit$optpar,
+#               lambda_error = lambda_delta_error,
+#               sigma2_phy = phyfit$sigma2,
+#               sigma2_error = phyfit$sigma2_error))
+# }
 
 #' @title Transform design matrix
 #'
@@ -510,10 +474,9 @@ transform_tree_model_delta <- function(phy, phyfit, measurement_error) {
 #'
 #' @keywords internal
 #'
-transform_design_tree <- function(C_tree, design, phy_ind = NULL) {
+transform_design_tree <- function(C_tree, design) {
   if (!is.list(C_tree)) return(transform_design_one_tree(C_tree, design))
-  if (is.null(phy_ind)) return(lapply(C_tree, transform_design_one_tree, design))
-  return(lapply(phy_ind, function(tt) transform_design_one_tree(C_tree[[tt]], design)))
+  return(lapply(C_tree, transform_design_one_tree, design))
 }
 
 transform_design_one_tree <- function(C_tree, design, transpose = FALSE) {
@@ -535,16 +498,25 @@ transform_design_one_tree <- function(C_tree, design, transpose = FALSE) {
 #'
 #' @keywords internal
 #'
-transform_data_tree <- function(C_tree, y_data, phy_ind = NULL) {
+transform_data_tree <- function(C_tree, y_data) {
   if (!is.list(C_tree)) return(transform_design_one_tree(C_tree, t(y_data)))
-  if (is.null(phy_ind)) return(mapply(transform_design_one_tree,
-                                       C_tree,
-                                       lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
-  return(sapply(seq_along(phy_ind), function(i) transform_design_one_tree(C_tree[[phy_ind[i]]], y_data[i,])))
+  return(mapply(transform_design_one_tree,
+                C_tree,
+                lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
 }
 
+#' @title Log likelihood of a `PhyloMArrayLM` object
+#'
+#' @param object an object of class \code{\linkS4class{PhyloMArrayLM}}.
+#'
+#' @return log likelihood of the fitted linear model on all the genes
+#'
+#' @rdname log_likelihood
+#'
+#' @export
+#'
 setGeneric("log_likelihood", function(object) standardGeneric("log_likelihood"))
-setMethod("log_likelihood", "MArrayLM", function(object) NULL)
+#' @rdname log_likelihood
 setMethod("log_likelihood", "PhyloMArrayLM", function(object) log_likelihood_internal(object))
 
 log_likelihood_internal <- function (object) {
@@ -575,3 +547,30 @@ log_likelihood_internal <- function (object) {
   class(val) <- "logLik"
   val
 }
+
+
+#' @title Consensus tree of a `PhyloMArrayLM` object
+#'
+#' @param object an object of class \code{\linkS4class{PhyloMArrayLM}}.
+#'
+#' @return the consensus tree used in the linear fit
+#'
+#' @rdname consensus_tree
+#'
+#' @export
+#'
+setGeneric("consensus_tree", function(object) standardGeneric("consensus_tree"))
+#' @rdname consensus_tree
+setMethod("consensus_tree", "PhyloMArrayLM", function(object) consensus_tree_internal(object))
+
+consensus_tree_internal <- function (object) {
+  if (!object$use_consensus) {
+    warning("The fitted object did not use a consensus tree.")
+    return(NULL)
+  }
+  return(object$consensus_tree$tree)
+}
+
+## TODO: create a special class for a consensus tree
+## (tree with the associated parameters ?)
+

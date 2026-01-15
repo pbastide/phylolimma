@@ -234,81 +234,6 @@ getSpeciesNumber <- function(phy, tol = .Machine$double.eps^(1/2)) {
   return(nspecies)
 }
 
-#' @title Get Inverse Hessian
-#'
-#' @description
-#' Compute the inverse Hessian
-#'
-#' @details
-#' Code adapted from \code{lmerTest}, see
-#' \url{https://github.com/runehaubo/lmerTestR/blob/35dc5885205d709cdc395b369b08ca2b7273cb78/R/lmer.R#L173}
-#'
-#' @param optpars parameter vector around which to compute the Hessian
-#' @param fun function for which the Hessian neeeds to be computed
-#' @param grad_trans gradient vector for transformed parameters
-#' @param tol tolerence for calling zero eigenvalues
-#'
-#' @return The inverse hessian
-#'
-#' @keywords internal
-#'
-compute_inv_hessian <- function(optpars, fun, grad_trans, tol = 1e-8, ...) {
-  # Compute Hessian:
-  h <- numDeriv::hessian(func = fun, x = optpars, ...)
-  # back transformation of parameters
-  h <- t(grad_trans) %*% h %*% grad_trans
-  # Eigen decompose the Hessian:
-  eig_h <- eigen(h, symmetric=TRUE)
-  evals <- eig_h$values
-  neg <- evals < -tol
-  pos <- evals > tol
-  zero <- evals > -tol & evals < tol
-  if(sum(neg) > 0) { # negative eigenvalues
-    eval_chr <- if(sum(neg) > 1) "eigenvalues" else "eigenvalue"
-    evals_num <- paste(sprintf("%1.1e", evals[neg]), collapse = " ")
-    warning(sprintf("Model failed to converge with %d negative %s: %s",
-                    sum(neg), eval_chr, evals_num), call.=FALSE)
-  }
-  # Note: we warn about negative AND zero eigenvalues:
-  if(sum(zero) > 0) { # some eigenvalues are zero
-    eval_chr <- if(sum(zero) > 1) "eigenvalues" else "eigenvalue"
-    evals_num <- paste(sprintf("%1.1e", evals[zero]), collapse = " ")
-    warning(sprintf("Model may not have converged with %d %s close to zero: %s",
-                    sum(zero), eval_chr, evals_num))
-  }
-  # Compute vcov(varpar):
-  pos <- eig_h$values > tol
-  q <- sum(pos)
-  # Using the Moore-Penrose generalized inverse for h:
-  h_inv <- with(eig_h, {
-    vectors[, pos, drop=FALSE] %*% diag(1/values[pos], nrow=q) %*%
-      t(vectors[, pos, drop=FALSE]) })
-  return(h_inv)
-}
-
-#' @title Generalized positive inverse
-#'
-#' @description
-#' Inverse as a positive definite matrix
-#'
-#' @param h a symmetric matrix
-#' @param tol for positive numbers
-#'
-#' @return Generalized inverse
-#'
-#' @keywords internal
-#'
-#'
-pos_inv <- function(h, tol = 1e-8) {
-  eig_h <- eigen(h, symmetric = TRUE)
-  pos <- eig_h$values > tol
-  q <- sum(pos)
-  h_inv <- with(eig_h, {
-    vectors[, pos, drop=FALSE] %*% diag(1/values[pos], nrow=q) %*%
-      t(vectors[, pos, drop=FALSE]) })
-  return(h_inv)
-}
-
 #' @title Scale tree to unit height
 #'
 #' @description
@@ -369,4 +294,88 @@ mean_trim <- function(x, trim = 0.15, na.rm = FALSE, ...) {
     x <- sort.int(x, partial = unique(c(lo, hi)))[lo:hi]
   }
   mean.default(x)
+}
+
+#' @title Function for vanilla ddf
+#'
+#' @param fitlm a phylolm fit
+#' @param phylo the corresponding phylogenetic tree
+#'
+#' @return nsamples - nvariables
+#'
+#' @keywords internal
+#'
+ddf_samples <- function(fitlm, phylo) {
+  return(fitlm$n - fitlm$d)
+}
+
+#' @title Capture dot arguments
+#'
+#' @description http://adv-r.had.co.nz/Computing-on-the-language.html#capturing-dots
+#'
+#' @param ... dots arguments to be captured
+#'
+#' @return a named list of the arguments in ...
+#'
+#' @keywords internal
+#'
+dots <- function(...) {
+  eval(substitute(alist(...)))
+}
+
+#' @title Check the design matrix
+#'
+#' @inheritParams phylolmFit
+#'
+#' @return the correctly formatted design matrix
+#'
+#' @keywords internal
+#'
+check_expression_matrix <- function(object) {
+  if (!is.matrix(object)) stop("'object' must be a matrix.")
+  if (is.null(colnames(object))) stop("'object' must be a matrix with named columns.")
+  y <- limma::getEAWP(object)
+  if (!nrow(y$exprs)) stop("expression matrix has zero rows")
+  return(y)
+}
+
+#' @title Check the design matrix
+#'
+#' @inheritParams phylolmFit
+#'
+#' @return the correctly formatted design matrix
+#'
+#' @keywords internal
+#'
+check_design_matrix <- function(design, y, phy) {
+  if(is.null(design)) design <- y$design
+  if(is.null(design)) {
+    design <- matrix(1, ncol(y$exprs), 1)
+    rownames(design) <- phy$tip.label
+  } else {
+    design <- as.matrix(design)
+    if(mode(design) != "numeric") stop("design must be a numeric matrix")
+    if(nrow(design) != ncol(y$exprs)) stop("row dimension of design doesn't match column dimension of data object")
+  }
+  ne <- limma::nonEstimable(design)
+  if(!is.null(ne)) stop("Coefficients not estimable: ", paste(ne, collapse = " "), "\n")
+  design <- checkParamMatrix(design, "design matrix", phy, transpose = TRUE)
+  return(design)
+}
+
+#' @title Check the tree
+#'
+#' @inheritParams phylolmFit
+#'
+#' @return the correctly formatted tree
+#'
+#' @keywords internal
+#'
+check_tree <- function(phy, y, col_species) {
+  if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
+  if (length(phy$tip.label) == ncol(y$exprs)) return(phy)
+  if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
+  tt <- data.frame(species = col_species,
+                   id = colnames(y$exprs))
+  return(addReplicatesOnTree(phy, tt))
 }

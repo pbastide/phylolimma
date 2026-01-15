@@ -10,22 +10,22 @@ test_that("Errors with species names", {
   # wrong dimension
   y_data <- matrix(rnorm(ngenes*ntips), ncol = ngenes)
   expect_error(phylolmFit(y_data, phy = tree),
-               "not equal to array extent")
+               "'object' must be a matrix with named columns.")
   expect_error(phylogeneticCorrelations(y_data, phy = tree),
-               "not equal to array extent")
+               "'object' must be a matrix with named columns.")
   expect_error(checkParamMatrix(y_data, "data", tree),
                "`data` should have as many columns as the number of taxa in the tree.")
   # no names
   y_data <- matrix(rnorm(ngenes*ntips), nrow = ngenes)
   expect_error(phylolmFit(y_data, phy = tree),
-               "`expression matrix` and/or the tips of the phylogeny are not named.")
+               "'object' must be a matrix with named columns.")
   expect_error(phylogeneticCorrelations(y_data, phy = tree),
-               "`expression matrix` and/or the tips of the phylogeny are not named.")
+               "'object' must be a matrix with named columns.")
   # wrong order
   colnames(y_data) <- sample(tree$tip.label, ntips)
   expect_warning(res1 <- phylolmFit(y_data, phy = tree),
                  "expression matrix` was not sorted in the correct order")
-  expect_warning(phylogeneticCorrelations(y_data, phy = tree, ddf_method = "Samples"),
+  expect_warning(phylogeneticCorrelations(y_data, phy = tree),
                  "expression matrix` was not sorted in the correct order")
   y_data <- y_data[, match(tree$tip.label, colnames(y_data)), drop = FALSE]
   res2 <- phylolmFit(y_data, phy = tree)
