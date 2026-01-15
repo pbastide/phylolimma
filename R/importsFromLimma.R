@@ -85,6 +85,7 @@ decideTests <- function(fit, ...) {
 #' @param fit a \code{\linkS4class{PhyloMArrayLM}} object, fitted using \code{\link{phylolmFit}}.
 #' @param ... further parameters to be passed to \code{\link[limma]{classifyTestsF}}.
 #'
+#' @rdname decideTests
 #' @export
 #'
 classifyTestsF <- function(fit, ...) {

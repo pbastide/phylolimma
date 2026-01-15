@@ -8,6 +8,13 @@
 \description{
 TODO: write
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://pbastide.github.io/phyloDE/}
+}
+
+}
 \author{
 Paul Bastide, Mélina Gallopin
 }

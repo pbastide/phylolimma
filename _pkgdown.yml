@@ -1,0 +1,23 @@
+url: https://pbastide.github.io/phyloDE/
+template:
+  bootstrap: 5
+reference:
+- title: Phylogenetic Differential Expression
+  desc: Functions to test for differential expression using moderated phylogenetic linear regression.
+  contents:
+  - phyloDE-package
+  - phylolmFit
+  - phylogeneticCorrelations
+- title: PhyloMArrayLM Class
+  desc: Class containing the result of a fit and associated helper functions.
+  contents:
+  - PhyloMArrayLM-class
+  - consensus_tree
+  - eBayes
+  - log_likelihood
+  - decideTests
+- title: Helper Functions
+  desc: Function to pre-process the tree or the data.
+  contents:
+  - addReplicatesOnTree
+  - lengthNormalizeRNASeq

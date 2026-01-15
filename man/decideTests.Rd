@@ -2,16 +2,22 @@
 % Please edit documentation in R/importsFromLimma.R
 \name{decideTests}
 \alias{decideTests}
+\alias{classifyTestsF}
 \title{Multiple Testing Across Genes and Contrasts}
 \usage{
 decideTests(fit, ...)
+
+classifyTestsF(fit, ...)
 }
 \arguments{
 \item{fit}{a \code{\linkS4class{PhyloMArrayLM}} object, fitted using \code{\link{phylolmFit}}.}
 
-\item{...}{further parameters to be passed to \code{\link[limma]{decideTests}}.}
+\item{...}{further parameters to be passed to \code{\link[limma]{classifyTestsF}}.}
 }
 \description{
 Function \code{\link[limma]{decideTests}} is not supported yet for a \code{\linkS4class{PhyloMArrayLM}},
+and will throw an error.
+
+Function \code{\link[limma]{classifyTestsF}} is not supported yet for a \code{\linkS4class{PhyloMArrayLM}},
 and will throw an error.
 }

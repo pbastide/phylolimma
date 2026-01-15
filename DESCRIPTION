@@ -28,3 +28,4 @@ Suggests:
     testthat,
     covr
 RoxygenNote: 7.3.3
+URL: https://pbastide.github.io/phyloDE/
