@@ -16,13 +16,13 @@ addReplicatesOnTree(
 \item{tree}{A phylogenetic tree with n tips.}
 
 \item{traits}{A data frame containing at least two columns,
-one with sample ids, and on with species names for each samples.}
+one with sample ids, and one with species names for each samples.}
 
 \item{species}{Name of the column containing species names. Default to "species".}
 
 \item{id}{Name of the column containing samples ids. Default to "id".}
 
-\item{eps}{A small number to add to terminal branch lengths to avoid true zeros. Default to \code{.Machine$double.eps}.}
+\item{eps}{A small number to add to terminal branch lengths to avoid true zeros. Default to \code{.Machine$double.eps^2}.}
 }
 \value{
 A phylogenetic tree with as many tips as the number of rows in \code{traits},
