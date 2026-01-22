@@ -8,6 +8,7 @@ normalizeFromTximport(
   txi,
   colData,
   design,
+  removeBatch = NULL,
   dataTransformation = c("log2", "vst", "sqrt", "asin(sqrt)")
 )
 }
@@ -17,6 +18,8 @@ normalizeFromTximport(
 \item{colData}{A data.frame with sample information. Row names must match column names of \code{txi$counts}.}
 
 \item{design}{A formula specifying the design for DESeq2 (e.g., \code{~ condition}).}
+
+\item{removeBatch}{Optional column name in \code{colData} specifying a batch variable to remove using \code{\link[limma]{removeBatchEffect}}.}
 
 \item{dataTransformation}{One of "log2", "vst", "sqrt", or "asin(sqrt)". See details.}
 }
@@ -32,6 +35,9 @@ applying DESeq2's size factor estimation and variance stabilizing transformation
 This function uses DESeq2's \code{DESeqDataSetFromTximport} which properly handles
 the length-scaled counts from tximport. Size factors are estimated using DESeq2's
 median-of-ratios method.
+
+If \code{removeBatch} is specified, batch effects are removed using limma's
+\code{removeBatchEffect} while preserving the design effects.
 
 The data transformations are:
 \describe{

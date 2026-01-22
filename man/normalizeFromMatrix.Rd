@@ -8,6 +8,7 @@ normalizeFromMatrix(
   countMatrix,
   colData,
   design,
+  removeBatch = NULL,
   lengthMatrix = NULL,
   dataTransformation = c("log2", "vst", "sqrt", "asin(sqrt)")
 )
@@ -18,6 +19,8 @@ normalizeFromMatrix(
 \item{colData}{A data.frame with sample information. Row names must match column names of \code{countMatrix}.}
 
 \item{design}{A formula specifying the design for DESeq2 (e.g., \code{~ condition}).}
+
+\item{removeBatch}{Optional column name in \code{colData} specifying a batch variable to remove using \code{\link[limma]{removeBatchEffect}}.}
 
 \item{lengthMatrix}{Optional length matrix for length normalization. Should have the same dimensions and names as \code{countMatrix}.}
 
@@ -34,6 +37,9 @@ Optionally accounts for gene length using a length matrix.
 When \code{lengthMatrix} is provided, it is normalized by dividing each row by its
 geometric mean, then passed to DESeq2's \code{estimateSizeFactors} as \code{normMatrix}.
 This accounts for gene length bias while using DESeq2's median-of-ratios normalization.
+
+If \code{removeBatch} is specified, batch effects are removed using limma's
+\code{removeBatchEffect} while preserving the design effects.
 
 The data transformations are:
 \describe{

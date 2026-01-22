@@ -162,6 +162,7 @@ normalize_RPKM <- function(countMatrix, lengthMatrix,
 #' @param txi A tximport object containing counts, abundance, and length matrices.
 #' @param colData A data.frame with sample information. Row names must match column names of \code{txi$counts}.
 #' @param design A formula specifying the design for DESeq2 (e.g., \code{~ condition}).
+#' @param removeBatch Optional column name in \code{colData} specifying a batch variable to remove using \code{\link[limma]{removeBatchEffect}}.
 #' @param dataTransformation One of "log2", "vst", "sqrt", or "asin(sqrt)". See details.
 #'
 #' @return A matrix of normalized and transformed counts.
@@ -170,6 +171,9 @@ normalize_RPKM <- function(countMatrix, lengthMatrix,
 #' This function uses DESeq2's \code{DESeqDataSetFromTximport} which properly handles
 #' the length-scaled counts from tximport. Size factors are estimated using DESeq2's
 #' median-of-ratios method.
+#'
+#' If \code{removeBatch} is specified, batch effects are removed using limma's
+#' \code{removeBatchEffect} while preserving the design effects.
 #'
 #' The data transformations are:
 #' \describe{
@@ -186,6 +190,7 @@ normalize_RPKM <- function(countMatrix, lengthMatrix,
 normalizeFromTximport <- function(txi,
                                   colData,
                                   design,
+                                  removeBatch        = NULL,
                                   dataTransformation = c("log2", "vst", "sqrt", "asin(sqrt)")) {
 
   ## Arguments
@@ -202,10 +207,23 @@ normalizeFromTximport <- function(txi,
     stop("Row names of 'colData' must match column names of 'txi$counts'.")
   }
 
+  ## Check removeBatch
+  if (!is.null(removeBatch) && !(removeBatch %in% colnames(colData))) {
+    stop("'removeBatch' column '", removeBatch, "' not found in 'colData'.")
+  }
+
   dds <- DESeq2::DESeqDataSetFromTximport(txi, colData = colData, design = design)
   dds <- DESeq2::estimateSizeFactors(dds)
 
   data.trans <- applyTransformation(dds, dataTransformation)
+
+  if (!is.null(removeBatch)) {
+    mm        <- model.matrix(design, colData)
+    batch_col <- which(colnames(mm) == removeBatch)
+    ## Keep the design matrix with all experimental factors other than the batch effects
+    if (length(batch_col) > 0) mm <- mm[, -batch_col, drop = FALSE]
+    data.trans <- limma::removeBatchEffect(data.trans, batch = colData[[removeBatch]], design = mm)
+  }
 
   return(data.trans)
 }
@@ -220,6 +238,7 @@ normalizeFromTximport <- function(txi,
 #' @param countMatrix The RNASeq count matrix. Rows are genes, columns are samples. Must be named.
 #' @param colData A data.frame with sample information. Row names must match column names of \code{countMatrix}.
 #' @param design A formula specifying the design for DESeq2 (e.g., \code{~ condition}).
+#' @param removeBatch Optional column name in \code{colData} specifying a batch variable to remove using \code{\link[limma]{removeBatchEffect}}.
 #' @param lengthMatrix Optional length matrix for length normalization. Should have the same dimensions and names as \code{countMatrix}.
 #' @param dataTransformation One of "log2", "vst", "sqrt", or "asin(sqrt)". See details.
 #'
@@ -229,6 +248,9 @@ normalizeFromTximport <- function(txi,
 #' When \code{lengthMatrix} is provided, it is normalized by dividing each row by its
 #' geometric mean, then passed to DESeq2's \code{estimateSizeFactors} as \code{normMatrix}.
 #' This accounts for gene length bias while using DESeq2's median-of-ratios normalization.
+#'
+#' If \code{removeBatch} is specified, batch effects are removed using limma's
+#' \code{removeBatchEffect} while preserving the design effects.
 #'
 #' The data transformations are:
 #' \describe{
@@ -242,6 +264,7 @@ normalizeFromTximport <- function(txi,
 normalizeFromMatrix <- function(countMatrix,
                                 colData,
                                 design,
+                                removeBatch        = NULL,
                                 lengthMatrix       = NULL,
                                 dataTransformation = c("log2", "vst", "sqrt", "asin(sqrt)")) {
 
@@ -257,6 +280,11 @@ normalizeFromMatrix <- function(countMatrix,
   if (!is.data.frame(colData)) stop("'colData' must be a data.frame.")
   if (!all(colnames(countMatrix) %in% rownames(colData))) {
     stop("Row names of 'colData' must match column names of 'countMatrix'.")
+  }
+
+  ## Check removeBatch
+  if (!is.null(removeBatch) && !(removeBatch %in% colnames(colData))) {
+    stop("'removeBatch' column '", removeBatch, "' not found in 'colData'.")
   }
 
   dds <- DESeq2::DESeqDataSetFromMatrix(countMatrix, colData = colData, design = design)
@@ -281,11 +309,19 @@ normalizeFromMatrix <- function(countMatrix,
 
   data.trans <- applyTransformation(dds, dataTransformation)
 
+  if (!is.null(removeBatch)) {
+    mm        <- model.matrix(design, colData)
+    batch_col <- which(colnames(mm) == removeBatch)
+    ## Keep the design matrix with all experimental factors other than the batch effects
+    if (length(batch_col) > 0) mm <- mm[, -batch_col, drop = FALSE]
+    data.trans <- limma::removeBatchEffect(data.trans, batch = colData[[removeBatch]], design = mm)
+  }
+
   return(data.trans)
 }
 
 #' @title Apply data transformation to DESeq2 object
-#'
+
 #' @description
 #' Apply a variance-stabilizing or other transformation to normalized counts.
 #'
@@ -297,12 +333,14 @@ normalizeFromMatrix <- function(countMatrix,
 #' @keywords internal
 applyTransformation <- function(dds, dataTransformation) {
   if (dataTransformation == "vst") {
-    return(SummarizedExperiment::assay(DESeq2::vst(dds)))
+    data.trans <- SummarizedExperiment::assay(DESeq2::vst(dds))
   } else {
-    data.norm <- DESeq2::counts(dds, normalized = TRUE)
-    return(switch(dataTransformation,
-         log2         = log2(data.norm + 0.5),
+    data.norm  <- DESeq2::counts(dds, normalized = TRUE)
+    data.trans <- switch(dataTransformation,
+         log2         = log2(data.norm      + 0.5),
          "asin(sqrt)" = asin(sqrt(data.norm + 0.5)),
-         sqrt         = sqrt(data.norm + 0.5)))
+         sqrt         = sqrt(data.norm      + 0.5))
   }
+
+  return(data.trans)
 }
