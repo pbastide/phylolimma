@@ -150,3 +150,159 @@ normalize_RPKM <- function(countMatrix, lengthMatrix,
 
   return(data.norm)
 }
+
+
+#' @title Normalize RNASeq count data from tximport
+#'
+#' @description
+#' Normalize RNASeq data from a tximport object using DESeq2.
+#' This function handles length-scaled TPM counts from Salmon/kallisto via tximport,
+#' applying DESeq2's size factor estimation and variance stabilizing transformations.
+#'
+#' @param txi A tximport object containing counts, abundance, and length matrices.
+#' @param colData A data.frame with sample information. Row names must match column names of \code{txi$counts}.
+#' @param design A formula specifying the design for DESeq2 (e.g., \code{~ condition}).
+#' @param dataTransformation One of "log2", "vst", "sqrt", or "asin(sqrt)". See details.
+#'
+#' @return A matrix of normalized and transformed counts.
+#'
+#' @details
+#' This function uses DESeq2's \code{DESeqDataSetFromTximport} which properly handles
+#' the length-scaled counts from tximport. Size factors are estimated using DESeq2's
+#' median-of-ratios method.
+#'
+#' The data transformations are:
+#' \describe{
+#' \item{\code{log2}:}{Log2 transformation with pseudo-count of 0.5.}
+#' \item{\code{vst}:}{Variance stabilizing transformation from DESeq2.}
+#' \item{\code{sqrt}:}{Square root transformation with pseudo-count of 0.5.}
+#' \item{\code{asin(sqrt)}:}{Arcsine square root transformation with pseudo-count of 0.5.}
+#' }
+#'
+#' @references
+#' \url{https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#input-data}
+#'
+#' @export
+normalizeFromTximport <- function(txi,
+                                  colData,
+                                  design,
+                                  dataTransformation = c("log2", "vst", "sqrt", "asin(sqrt)")) {
+
+  ## Arguments
+  dataTransformation <- match.arg(dataTransformation)
+
+  ## Check txi
+ if (!is.list(txi) || !all(c("counts", "abundance", "length") %in% names(txi))) {
+    stop("'txi' must be a tximport object with 'counts', 'abundance', and 'length' elements.")
+  }
+
+  ## Check colData
+  if (!is.data.frame(colData)) stop("'colData' must be a data.frame.")
+  if (!all(colnames(txi$counts) %in% rownames(colData))) {
+    stop("Row names of 'colData' must match column names of 'txi$counts'.")
+  }
+
+  dds <- DESeq2::DESeqDataSetFromTximport(txi, colData = colData, design = design)
+  dds <- DESeq2::estimateSizeFactors(dds)
+
+  data.trans <- applyTransformation(dds, dataTransformation)
+
+  return(data.trans)
+}
+
+
+#' @title Normalize RNASeq count data from a count matrix
+#'
+#' @description
+#' Normalize RNASeq data from a count matrix using DESeq2.
+#' Optionally accounts for gene length using a length matrix.
+#'
+#' @param countMatrix The RNASeq count matrix. Rows are genes, columns are samples. Must be named.
+#' @param colData A data.frame with sample information. Row names must match column names of \code{countMatrix}.
+#' @param design A formula specifying the design for DESeq2 (e.g., \code{~ condition}).
+#' @param lengthMatrix Optional length matrix for length normalization. Should have the same dimensions and names as \code{countMatrix}.
+#' @param dataTransformation One of "log2", "vst", "sqrt", or "asin(sqrt)". See details.
+#'
+#' @return A matrix of normalized and transformed counts.
+#'
+#' @details
+#' When \code{lengthMatrix} is provided, it is normalized by dividing each row by its
+#' geometric mean, then passed to DESeq2's \code{estimateSizeFactors} as \code{normMatrix}.
+#' This accounts for gene length bias while using DESeq2's median-of-ratios normalization.
+#'
+#' The data transformations are:
+#' \describe{
+#' \item{\code{log2}:}{Log2 transformation with pseudo-count of 0.5.}
+#' \item{\code{vst}:}{Variance stabilizing transformation from DESeq2.}
+#' \item{\code{sqrt}:}{Square root transformation with pseudo-count of 0.5.}
+#' \item{\code{asin(sqrt)}:}{Arcsine square root transformation with pseudo-count of 0.5.}
+#' }
+#'
+#' @export
+normalizeFromMatrix <- function(countMatrix,
+                                colData,
+                                design,
+                                lengthMatrix       = NULL,
+                                dataTransformation = c("log2", "vst", "sqrt", "asin(sqrt)")) {
+
+  ## Arguments
+  dataTransformation <- match.arg(dataTransformation)
+
+  ## Check matrices
+  if (!is.matrix(countMatrix))        stop("'countMatrix' should be a matrix.")
+  if (is.null(colnames(countMatrix))) stop("Column of count matrix should be named.")
+  if (is.null(rownames(countMatrix))) stop("Rows of count matrix should be named.")
+
+  ## Check colData
+  if (!is.data.frame(colData)) stop("'colData' must be a data.frame.")
+  if (!all(colnames(countMatrix) %in% rownames(colData))) {
+    stop("Row names of 'colData' must match column names of 'countMatrix'.")
+  }
+
+  dds <- DESeq2::DESeqDataSetFromMatrix(countMatrix, colData = colData, design = design)
+
+  if (!is.null(lengthMatrix)) {
+    if (!is.matrix(lengthMatrix))                             stop("'lengthMatrix' should be a matrix.")
+    if (any(dim(countMatrix) != dim(lengthMatrix)))           stop("Count and length matrices should have the same dimension.")
+    if (is.null(colnames(lengthMatrix)))                      stop("Column of length matrix should be named.")
+    if (is.null(rownames(lengthMatrix)))                      stop("Rows of length matrix should be named.")
+    if (any(rownames(countMatrix) != rownames(lengthMatrix))) stop("Count and length matrices should have the same row names.")
+    if (any(colnames(countMatrix) != colnames(lengthMatrix))) stop("Count and length matrices should have the same column names.")
+
+    # DESeq2 models counts on the log scale with an intercept. Since gene length
+    # affects counts multiplicatively, we center the length matrix by dividing
+    # each row by its geometric mean (centering at zero on the log scale).
+    lengthMatrix <- lengthMatrix / exp(rowMeans(log(lengthMatrix)))
+
+    dds <- DESeq2::estimateSizeFactors(dds, normMatrix = lengthMatrix)
+  } else {
+    dds <- DESeq2::estimateSizeFactors(dds)
+  }
+
+  data.trans <- applyTransformation(dds, dataTransformation)
+
+  return(data.trans)
+}
+
+#' @title Apply data transformation to DESeq2 object
+#'
+#' @description
+#' Apply a variance-stabilizing or other transformation to normalized counts.
+#'
+#' @param dds A DESeqDataSet object with estimated size factors.
+#' @param dataTransformation One of "log2", "vst", "sqrt", or "asin(sqrt)".
+#'
+#' @return A matrix of transformed counts.
+#'
+#' @keywords internal
+applyTransformation <- function(dds, dataTransformation) {
+  if (dataTransformation == "vst") {
+    return(SummarizedExperiment::assay(DESeq2::vst(dds)))
+  } else {
+    data.norm <- DESeq2::counts(dds, normalized = TRUE)
+    return(switch(dataTransformation,
+         log2         = log2(data.norm + 0.5),
+         "asin(sqrt)" = asin(sqrt(data.norm + 0.5)),
+         sqrt         = sqrt(data.norm + 0.5)))
+  }
+}

@@ -20,7 +20,8 @@ Imports:
     phylolm (>= 2.6.5),
     methods,
     foreach,
-    doParallel
+    doParallel,
+    DESeq2
 Suggests: 
     Rphylopars,
     edgeR,
