@@ -264,3 +264,52 @@ test_that("phylolm p-values", {
                tolerance = 1e-3)
 
 })
+
+test_that("Check Lambert's W function", {
+  skip_if_not_installed("pracma")
+  skip_if_not_installed("phylolm")
+
+  ## Tree
+  set.seed(1289)
+  ntips <- 20
+  tree <- ape::rphylo(ntips, 0.1, 0)
+  r <- 3
+  ids <- as.vector(sapply(1:r, function(i) paste0(tree$tip.label, "_", i)))
+  traits = data.frame(species = sub("\\_.", "", ids),
+                      ids = ids)
+  tree_rep <- addReplicatesOnTree(tree, traits, species = "species", id = "ids")
+
+  ## params
+  sigma2_phylo <- 1
+  sigma2_intra <- 0.1
+  alpha <- 0.1
+
+  ## variance matrix
+  t_tree <- max(ape::vcv(tree_rep))
+  gamma2 <- sigma2_phylo / (2 * alpha)
+  tt <- ape::vcv(tree_rep)
+  varOU <- gamma2 * exp(-2 * alpha * (t_tree - tt)) * (1 - exp(-2 * alpha * tt)) + sigma2_intra * diag(rep(1, ncol(tt)))
+
+  ## transform tree
+  t_alpha <- 1 - exp(-2 * alpha * t_tree)
+  lambda_ou_error <- gamma2 * t_alpha / (sigma2_intra + gamma2 * t_alpha)
+  sigma2_alpha_lambda <- gamma2 * t_alpha + sigma2_intra
+
+  ## OU lambda tree
+  tree_ou <- phylolm::transf.branch.lengths(tree_rep, "OUfixedRoot", parameters = list(alpha = alpha))$tree
+  tree_ou_lambda <- phylolm::transf.branch.lengths(tree_ou, "lambda", parameters = list(lambda = lambda_ou_error))$tree
+  tree_model <- rescale_tree(tree_ou_lambda)
+
+  varOUtrans <- sigma2_alpha_lambda * ape::vcv(tree_model)
+
+  expect_equal(varOU, varOUtrans, tolerance = 1e-3)
+
+  ## using rho
+  rho <- 1 - t_alpha / (2 * alpha * t_tree)
+  W <- -pracma::lambertWp(-1 / (1 - rho) * exp(-1 / (1 - rho)))
+  C <- lambda_ou_error * (1 - rho) * W / (1 - (1 - rho) * W) * ((1/((1 - rho)*W))^(tt/t_tree) - 1)
+  diag(C) <- 1
+
+  expect_equal(ape::vcv(tree_model), C, tolerance = 1e-3)
+
+})
