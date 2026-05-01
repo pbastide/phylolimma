@@ -12,12 +12,19 @@ reference:
   desc: Class containing the result of a fit and associated helper functions.
   contents:
   - PhyloMArrayLM-class
-  - consensus_tree
-  - eBayes
+  - getParameters
+  - plotParameters
+  - consensusTree
   - log_likelihood
+  - eBayes
   - decideTests
 - title: Helper Functions
   desc: Function to pre-process the tree or the data.
   contents:
   - addReplicatesOnTree
   - lengthNormalizeRNASeq
+  - rhoFromAlpha
+- title: Dataset
+  desc: Crayfish dataset
+  contents:
+  - crayfish

@@ -24,7 +24,7 @@ A vector with lower and upper bounds for alpha
 Find reasonable bounds on the \code{alpha} parameter.
 }
 \details{
-This functions tries to find reasonable bounds on the \eqn{\alpha} parameter
+This function tries to find reasonable bounds on the \eqn{\alpha} parameter
 of an OU process by using the scaled phylogenetic half-life \eqn{t_{1/2} = \log(2) / \alpha / h},
 where \eqn{h} is the total height of the tree.
 If \eqn{t_{1/2} = D)}, it means that the trait will need a time \eqn{D \times h}

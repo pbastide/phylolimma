@@ -312,4 +312,8 @@ test_that("Check Lambert's W function", {
 
   expect_equal(ape::vcv(tree_model), C, tolerance = 1e-3)
 
+  expect_equal(rho, rhoFromAlpha(alpha, t_tree))
+  expect_equal(alpha, alphaFromRho(rho, t_tree))
+  expect_equal(0.1, alphaFromRho(rhoFromAlpha(0.1, 102), 102))
+
 })

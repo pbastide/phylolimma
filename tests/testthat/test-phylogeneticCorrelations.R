@@ -145,7 +145,7 @@ test_that("phylogeneticCorrelations - separate call", {
                            use_consensus = TRUE,
                            consensus_tree = pc)
         expect_equal(res1, res2)
-        expect_equal(consensus_tree(res1), pc$tree)
+        expect_equal(consensusTree(res1), pc$tree)
       }
     }
   }

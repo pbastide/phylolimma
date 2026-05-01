@@ -27,6 +27,9 @@ Suggests:
     statmod,
     testthat,
     pracma,
-    covr
+    covr,
+    knitr,
+    rmarkdown
 RoxygenNote: 7.3.3
 URL: https://pbastide.github.io/phyloDE/
+VignetteBuilder: knitr

@@ -373,6 +373,55 @@ rho_prime_inv <- function(y, t_tree, alpha_bounds) {
   uniroot((function(x) rho_prime(x, t_tree) - y), interval = alpha_bounds, tol = .Machine$double.eps^0.5)$root
 }
 
+#' @title Compute rho parameter
+#'
+#' @description
+#' Function \code{rhoFromAlpha}
+#' computes the \code{rho} parameter, as defined in Cornuault, 2023, Syst. Biol:
+#' \code{rho = 1 - (1 - exp(-2 * alpha * t_tree)) / (2 * alpha * t_tree)}
+#' \code{rho} can be interpreted as the percent decrease in
+#' trait variance caused by the OU as compared to the variance expected under under BM.
+#' When alpha goes to 0, \code{rho} goes to 0: the trait can be explained by a "neutral" BM process.
+#' When alpha goes to Inf, \code{rho} goes to 1: the trait exhibits no tree structure.
+#'
+#' Function \code{alphaFromRho} computes the value of \code{alpha} from the value of \code{rho}.
+#' This function can be expressed using the principal Lambert W function.
+#' Here, it is computed by inverting function \code{rhoFromAlpha} directly,
+#' using function \code{\link{uniroot}} within the \code{alpha_bounds} bounds.
+#'
+#' @param alpha the selection strength of the process
+#' @param t_tree the total height of the tree
+#' @param tol tolerence value for calling \code{alpha = 0}.
+#'
+#' @return Value of \code{rho} or \code{alpha}.
+#'
+#' @export
+#'
+rhoFromAlpha <- function(alpha, t_tree, tol = .Machine$double.eps) {
+  zeros <- alpha <= tol
+  nas <- is.na(alpha)
+  res <- rep(1, length(alpha))
+  res[!zeros & !nas] <- 1 + expm1(-2 * alpha[!zeros & !nas] * t_tree) / (2 * alpha[!zeros & !nas] * t_tree)
+  res[nas] <- NA
+  return(res)
+}
+
+#'
+#' @param rho the rho value
+#' @param t_tree the total height of the tree
+#' @param alpha_bounds lower and upper bounds on alpha values. If `NULL` (the default),
+#' default bounds are computed from the tree height.
+#'
+#'
+#' @rdname rhoFromAlpha
+#'
+alphaFromRho <- function(rho, t_tree, alpha_bounds = NULL) {
+  if (is.null(alpha_bounds)) {
+    alpha_bounds <- getBoundsSelectionStrengthFromHeight(t_tree)
+  }
+  uniroot((function(x) rhoFromAlpha(x, t_tree) - rho), interval = alpha_bounds, tol = .Machine$double.eps^0.5)$root
+}
+
 # #' @title Get OU transformed tree
 # #'
 # #' @description

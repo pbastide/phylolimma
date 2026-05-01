@@ -8,7 +8,7 @@
 #' @param relative_half_life_max optional maximal half life relative to tree height
 #'
 #' @details
-#' This functions tries to find reasonable bounds on the \eqn{\alpha} parameter
+#' This function tries to find reasonable bounds on the \eqn{\alpha} parameter
 #' of an OU process by using the scaled phylogenetic half-life \eqn{t_{1/2} = \log(2) / \alpha / h},
 #' where \eqn{h} is the total height of the tree.
 #' If \eqn{t_{1/2} = D)}, it means that the trait will need a time \eqn{D \times h}
@@ -38,6 +38,13 @@ getBoundsSelectionStrength <- function(phy,
                                        relative_half_life_max = 10000) {
   ## alpha min
   h_tree <- tree_height(phy)
+  return(getBoundsSelectionStrengthFromHeight(h_tree, relative_half_life_min, relative_half_life_max))
+}
+
+getBoundsSelectionStrengthFromHeight <- function(h_tree,
+                                                 relative_half_life_min = 0.0001,
+                                                 relative_half_life_max = 10000) {
+  ## alpha min
   alpha_min <- log(2) / (relative_half_life_max * h_tree)
   ## alpha max
   alpha_max <- log(2) / (relative_half_life_min * h_tree)
