@@ -88,8 +88,8 @@
 #' @export
 #'
 phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
-                       model = c("BM", "lambda", "OUfixedRoot"),
-                       measurement_error = FALSE,
+                       model = c("OUfixedRoot", "BM", "lambda"),
+                       measurement_error = TRUE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
                        REML = TRUE,

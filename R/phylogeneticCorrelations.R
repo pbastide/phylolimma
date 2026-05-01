@@ -34,7 +34,7 @@ NULL
 #' @importFrom stats approxfun lowess model.matrix uniroot complete.cases
 #'
 phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
-                                     model = c("BM", "lambda", "OUfixedRoot"),
+                                     model = c("OUfixedRoot", "BM", "lambda"),
                                      measurement_error = TRUE,
                                      trim = c(0.25, 0.05), REML = TRUE,
                                      ncores = 1,
