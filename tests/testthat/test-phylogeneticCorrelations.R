@@ -177,6 +177,9 @@ test_that("phylogeneticCorrelations - separate call", {
   pp <- getParameters(res1)
   expect_equal(length(pp), 2)
   expect_equal(names(pp), c("lambda", "rho"))
+  pp <- getParameters(res1, consensus = FALSE)
+  expect_equal(dim(pp), c(20, 2))
+  expect_equal(colnames(pp), c("lambda", "rho"))
 
 })
 

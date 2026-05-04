@@ -104,9 +104,6 @@ pfit <- phylolmFit(dat, design = design, phy = tree)
 pfit <- eBayes(pfit, trend = TRUE)
 limma::topTable(pfit, coef = 2)
 
-## plot estimated parameters
-plotParameters(pfit)
-
 
 }
 \seealso{

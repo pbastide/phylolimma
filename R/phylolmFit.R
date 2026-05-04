@@ -74,9 +74,6 @@
 #' pfit <- eBayes(pfit, trend = TRUE)
 #' limma::topTable(pfit, coef = 2)
 #'
-#' ## plot estimated parameters
-#' plotParameters(pfit)
-#'
 #'
 #' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}},
 #' \code{\link{phylogeneticCorrelations}}, \code{\link{eBayes}}
