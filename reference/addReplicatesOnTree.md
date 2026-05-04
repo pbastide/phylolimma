@@ -24,7 +24,7 @@ addReplicatesOnTree(
 - traits:
 
   A data frame containing at least two columns, one with sample ids, and
-  on with species names for each samples.
+  one with species names for each samples.
 
 - species:
 
@@ -37,7 +37,7 @@ addReplicatesOnTree(
 - eps:
 
   A small number to add to terminal branch lengths to avoid true zeros.
-  Default to `.Machine$double.eps`.
+  Default to `.Machine$double.eps^2`.
 
 ## Value
 

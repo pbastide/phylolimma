@@ -1,7 +1,8 @@
-# Add replicates to a tree
+# Parse the species names
 
-Utility function to add replicates to a tree, as tips with zero length
-branches.
+Utility function to parse the species names from the replicates,
+assuming that the replicates are named according to a pattern
+"speciesName_replicateID" or "speciesName.replicateID".
 
 ## Usage
 

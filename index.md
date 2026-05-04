@@ -12,6 +12,7 @@ The development version can be installed from GitHub using the `remotes`
 package:
 
 ``` r
+
 install.packages("remotes")
 remotes::install_github(repo = "pbastide/phyloDE")
 ```

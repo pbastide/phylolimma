@@ -12,8 +12,8 @@ phylolmFit(
   design = NULL,
   phy,
   col_species = NULL,
-  model = c("BM", "lambda", "OUfixedRoot"),
-  measurement_error = FALSE,
+  model = c("OUfixedRoot", "BM", "lambda"),
+  measurement_error = TRUE,
   use_consensus = TRUE,
   consensus_tree = NULL,
   REML = TRUE,
@@ -145,12 +145,7 @@ colnames(design) <- c("(Intercept)", "condition")
 rownames(design) <- rep_ids
 
 ## linear model fit
-pfit <- phylolmFit(dat,
-                   design = design,
-                   phy = tree,
-                   model = "OUfixedRoot",
-                   measurement_error = TRUE,
-                   use_consensus = TRUE)
+pfit <- phylolmFit(dat, design = design, phy = tree)
 #> Loading required package: ape
 
 ## eBayes correction
@@ -167,5 +162,9 @@ limma::topTable(pfit, coef = 2)
 #> g20  0.1474773 0.6529736   1.126593  2.603806e-01  5.422614e-01   -7.365100
 #> g18  0.1405957 0.5648386   1.057823  2.905765e-01  5.422614e-01   -7.440103
 #> g13 -0.1391035 0.5997454  -1.048037  2.950581e-01  5.422614e-01   -7.450394
+
+## plot estimated parameters
+plotParameters(pfit)
+
 
 ```

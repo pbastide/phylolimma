@@ -12,7 +12,7 @@ phylogeneticCorrelations(
   design = NULL,
   phy,
   col_species = NULL,
-  model = c("BM", "lambda", "OUfixedRoot"),
+  model = c("OUfixedRoot", "BM", "lambda"),
   measurement_error = TRUE,
   trim = c(0.25, 0.05),
   REML = TRUE,

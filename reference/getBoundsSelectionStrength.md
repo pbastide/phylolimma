@@ -32,7 +32,7 @@ A vector with lower and upper bounds for alpha
 
 ## Details
 
-This functions tries to find reasonable bounds on the \\\alpha\\
+This function tries to find reasonable bounds on the \\\alpha\\
 parameter of an OU process by using the scaled phylogenetic half-life
 \\t\_{1/2} = \log(2) / \alpha / h\\, where \\h\\ is the total height of
 the tree. If \\t\_{1/2} = D)\\, it means that the trait will need a time

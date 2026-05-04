@@ -1,14 +1,17 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://pbastide.github.io/phyloDE/404.html</loc></url>
+<url><loc>https://pbastide.github.io/phyloDE/articles/crayfish_exemple_tutorial.html</loc></url>
+<url><loc>https://pbastide.github.io/phyloDE/articles/index.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/authors.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/index.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/PhyloMArrayLM-class.html</loc></url>
+<url><loc>https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/addReplicatesOnTree.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/checkParamMatrix.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/check_design_matrix.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/check_expression_matrix.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/check_tree.html</loc></url>
-<url><loc>https://pbastide.github.io/phyloDE/reference/consensus_tree.html</loc></url>
+<url><loc>https://pbastide.github.io/phyloDE/reference/crayfish.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/ddf_samples.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/decideTests.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/dots.html</loc></url>
@@ -32,7 +35,6 @@
 <url><loc>https://pbastide.github.io/phyloDE/reference/index.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/lengthNormalizeRNASeq.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/lmFitLimma.html</loc></url>
-<url><loc>https://pbastide.github.io/phyloDE/reference/log_likelihood.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/mean_trim.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/normalize_RPKM.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/normalize_TPM.html</loc></url>
@@ -42,6 +44,7 @@
 <url><loc>https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/phylolmFit.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/rescale_tree.html</loc></url>
+<url><loc>https://pbastide.github.io/phyloDE/reference/rhoFromAlpha.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/rho_prime.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/rho_prime_inv.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/transform_data_tree.html</loc></url>
