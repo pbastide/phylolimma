@@ -74,6 +74,7 @@ test_that("phylolmFit - BM", {
   pp <- getParameters(resPhyloLmFit, consensus = FALSE)
   expect_equal(dim(pp), c(20, 1))
   expect_equal(colnames(pp), "lambda")
+  expect_warning(expect_null(consensusTree(resPhyloLmFit)), "did not use a consensus tree")
 
 })
 

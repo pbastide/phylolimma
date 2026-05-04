@@ -69,6 +69,7 @@
 #'
 #' ## linear model fit
 #' pfit <- phylolmFit(dat, design = design, phy = tree)
+#' pfit
 #'
 #' ## eBayes correction
 #' pfit <- eBayes(pfit, trend = TRUE)
