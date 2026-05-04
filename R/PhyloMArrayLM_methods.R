@@ -118,12 +118,12 @@ setMethod("show", "PhyloMArrayLM", function(object) {
 })
 
 #' @rdname PhyloMArrayLMMethods
-setGeneric("log_likelihood", function(object) standardGeneric("log_likelihood"))
+setGeneric("logLikelihood", function(object) standardGeneric("logLikelihood"))
 #' @rdname PhyloMArrayLMMethods
 #' @export
-setMethod("log_likelihood", "PhyloMArrayLM", function(object) log_likelihood_internal(object))
+setMethod("logLikelihood", "PhyloMArrayLM", function(object) logLikelihood_internal(object))
 
-log_likelihood_internal <- function (object) {
+logLikelihood_internal <- function (object) {
   REML <- object$REML
   sigma_hat <- object$sigma^2
   N <- length(object$phy$tip.label)

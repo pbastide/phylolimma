@@ -64,7 +64,7 @@ test_that("phylolmFit - equivalencies", {
     expect_equivalent(phylolm_pvalue, phyloDE_pvalue, 1e-7)
     # likelihood
     phylolm_ll <- sapply(fplm, function(z) z$logLik)
-    phyloDE_ll <- log_likelihood(resLmFit)
+    phyloDE_ll <- logLikelihood(resLmFit)
     expect_equivalent(phylolm_ll, as.vector(phyloDE_ll), 1e-8)
   }
 

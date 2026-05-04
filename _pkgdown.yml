@@ -15,7 +15,7 @@ reference:
   - getParameters
   - plotParameters
   - consensusTree
-  - log_likelihood
+  - logLikelihood
   - eBayes
   - decideTests
 - title: Helper Functions

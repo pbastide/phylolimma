@@ -7,8 +7,8 @@
 \alias{plotParameters}
 \alias{plotParameters,PhyloMArrayLM-method}
 \alias{show,PhyloMArrayLM-method}
-\alias{log_likelihood}
-\alias{log_likelihood,PhyloMArrayLM-method}
+\alias{logLikelihood}
+\alias{logLikelihood,PhyloMArrayLM-method}
 \alias{consensusTree}
 \alias{consensusTree,PhyloMArrayLM-method}
 \title{Methods for class PhyloMArrayLM}
@@ -23,9 +23,9 @@ plotParameters(object, ...)
 
 \S4method{show}{PhyloMArrayLM}(object)
 
-log_likelihood(object)
+logLikelihood(object)
 
-\S4method{log_likelihood}{PhyloMArrayLM}(object)
+\S4method{logLikelihood}{PhyloMArrayLM}(object)
 
 consensusTree(object)
 
