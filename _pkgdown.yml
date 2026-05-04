@@ -1,6 +1,12 @@
 url: https://pbastide.github.io/phyloDE/
 template:
   bootstrap: 5
+navbar:
+  left:
+  - text: Tutorial
+    href: articles/crayfish_exemple_tutorial.html
+  - text: Reference
+    href: reference/index.html
 reference:
 - title: Phylogenetic Differential Expression
   desc: Functions to test for differential expression using moderated phylogenetic linear regression.

@@ -8,9 +8,13 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+required <- c("edgeR")
+evalChuncks <- all(unlist(lapply(required, function(pkg) requireNamespace(pkg, quietly = TRUE))))
+
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = evalChuncks
 )
 ```
 
