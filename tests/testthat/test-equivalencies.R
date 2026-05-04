@@ -66,6 +66,23 @@ test_that("phylolmFit - equivalencies", {
     phylolm_ll <- sapply(fplm, function(z) z$logLik)
     phyloDE_ll <- logLikelihood(resLmFit)
     expect_equivalent(phylolm_ll, as.vector(phyloDE_ll), 1e-8)
+    # parameters
+    ## Methods
+    if (model == "BM" && measurement_error) {
+      expect_error(getParameters(resLmFit), "Fit did not use a consensus tree.")
+      pp <- getParameters(resLmFit, consensus = FALSE)
+      expect_equal(dim(pp), c(20, 1))
+      expect_equal(colnames(pp), "lambda")
+    }
+    if (model == "BM" && !measurement_error) {
+      expect_null(getParameters(resLmFit))
+    }
+    if (model == "OUfixedRoot") {
+      expect_error(getParameters(resLmFit), "Fit did not use a consensus tree.")
+      pp <- getParameters(resLmFit, consensus = FALSE)
+      expect_equal(dim(pp), c(20, 2))
+      expect_equal(colnames(pp), c("lambda", "rho"))
+    }
   }
 
   ## Tests

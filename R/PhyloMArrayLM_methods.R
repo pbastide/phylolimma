@@ -59,6 +59,7 @@ setGeneric("getParameters", function(object, consensus = TRUE) standardGeneric("
 #' @rdname PhyloMArrayLMMethods
 #' @export
 setMethod("getParameters", "PhyloMArrayLM", function(object, consensus = TRUE) {
+  if (object$modelphy == "BM" && !object$measurement_error) return(NULL)
   if (consensus) {
     if (!object$use_consensus) stop("Fit did not use a consensus tree. Set `consensus = FALSE` to get the individual gene-specific parameters, or re-run fit with consensus tree.")
     params <- object$lambda_error

@@ -65,6 +65,11 @@ test_that("phylogeneticCorrelations - BM", {
   expect_equal(colnames(fitphy$p.value), colnames(fitphycons$p.value))
   expect_equal(dim(fitphy$p.value), dim(fitphycons$p.value))
 
+  ## parameters
+  pp <- getParameters(resPhyloLmFitCons)
+  expect_equal(length(pp), 1)
+  expect_equal(names(pp), "lambda")
+
   #################################################################################################
   ## Pagel lambda
 
@@ -95,6 +100,11 @@ test_that("phylogeneticCorrelations - BM", {
   expect_equal(resPhyloLmFitConsLambda$phy_trans,
                resPhyloLmFitCons$phy_trans,
                tol = 1e-4)
+
+  ## parameters
+  pp <- getParameters(resPhyloLmFitConsLambda)
+  expect_equal(length(pp), 1)
+  expect_equal(names(pp), "lambda")
 
 })
 
@@ -163,7 +173,10 @@ test_that("phylogeneticCorrelations - separate call", {
                      consensus_tree = pc)
   expect_true(res1$coefficients[1, 1] != res2$coefficients[1, 1])
 
-
+  ## parameters
+  pp <- getParameters(res1)
+  expect_equal(length(pp), 2)
+  expect_equal(names(pp), c("lambda", "rho"))
 
 })
 

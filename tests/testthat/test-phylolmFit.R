@@ -69,6 +69,12 @@ test_that("phylolmFit - BM", {
   expect_error(decideTests(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
   expect_error(classifyTestsF(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
 
+  ## Methods
+  expect_error(getParameters(resPhyloLmFit), "Fit did not use a consensus tree.")
+  pp <- getParameters(resPhyloLmFit, consensus = FALSE)
+  expect_equal(dim(pp), c(20, 1))
+  expect_equal(colnames(pp), "lambda")
+
 })
 
 test_that("phylolmFit - bounds", {

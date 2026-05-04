@@ -68,16 +68,14 @@
 #' rownames(design) <- rep_ids
 #'
 #' ## linear model fit
-#' pfit <- phylolmFit(dat,
-#'                    design = design,
-#'                    phy = tree,
-#'                    model = "OUfixedRoot",
-#'                    measurement_error = TRUE,
-#'                    use_consensus = TRUE)
+#' pfit <- phylolmFit(dat, design = design, phy = tree)
 #'
 #' ## eBayes correction
 #' pfit <- eBayes(pfit, trend = TRUE)
 #' limma::topTable(pfit, coef = 2)
+#'
+#' ## plot estimated parameters
+#' plotParameters(pfit)
 #'
 #'
 #' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}},
