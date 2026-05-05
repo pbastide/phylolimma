@@ -1,11 +1,12 @@
-#' @title Get Bounds on alpha
+#' @title Get Bounds on alpha for an OU
 #'
 #' @description
-#' Find reasonable bounds on the \code{alpha} parameter.
+#' Find reasonable bounds on the \code{alpha} parameter of an OU process on a tree
+#' when fitted with \code{\link[phylolm]{phylolm}}.
 #'
 #' @param phy a phylogenetic tree.
-#' @param relative_half_life_min optional minimal half life relative to tree height
-#' @param relative_half_life_max optional maximal half life relative to tree height
+#' @param relative_half_life_min optional minimal half life relative to tree height. Default to 1e-4.
+#' @param relative_half_life_max optional maximal half life relative to tree height. Default to 1e4.
 #'
 #' @details
 #' This function tries to find reasonable bounds on the \eqn{\alpha} parameter
@@ -16,10 +17,10 @@
 #' Small values of \eqn{D} means high selection pressure (large \eqn{\alpha}),
 #' while large values of \eqn{D} means low selection pressure (small \eqn{\alpha}).
 #'
-#' The default maximum value for \eqn{D} is \code{relative_half_life_max = 10000}
+#' The default maximum value for \eqn{D} is \code{relative_half_life_max = 1e4}
 #' (selection is week and the process looks like a BM).
 #'
-#' The default minimum value for \eqn{D} is \code{relative_half_life_min = 0.0001}
+#' The default minimum value for \eqn{D} is \code{relative_half_life_min = 1e-4}
 #' (selection is strong and tips are only weakly correlated).
 #'
 #' The function makes sure that the maximum \eqn{\alpha} value associated with
@@ -31,7 +32,7 @@
 #' @references
 #' Hansen, T. F. (1997). Stabilizing Selection and the Comparative Analysis of Adaptation. Evolution, 51(5) :1341.
 #'
-#' @keywords internal
+#' @export
 #'
 getBoundsSelectionStrength <- function(phy,
                                        relative_half_life_min = 0.0001,
@@ -54,23 +55,28 @@ getBoundsSelectionStrengthFromHeight <- function(h_tree,
   return(c(alpha_min, alpha_max))
 }
 
-#' @title Get Min on sigma2_error
+#' @title Get Lower Bound on sigma2_error
 #'
 #' @description
-#' Find reasonable minimum on the \code{sigma2_error} parameter.
+#' Find reasonable lower bound on the \code{sigma2_error} parameter
+#' when fitted with \code{\link[phylolm]{phylolm}}.
 #'
 #' @param phy a phylogenetic tree.
-#' @param tol the numerical tolerance
+#' @param tol the numerical tolerance.
 #'
 #' @details
 #' The minimum value must be high enough so that it can be numerically
 #' distinguished from zero.
+#' This is important for trees with several samples per species, as the
+#' limit case \code{sigma2_error = 0} is degenerate, as it means that all
+#' the samples in one species have the exact same value.
+#'
 #' Default to \eqn{tol * h}, where \eqn{h} is the total height of the tree.
-#' If an OU is used, then this value is updated to match the transformed tree height.
+#' Note that if an OU is used in the fit, then this value is updated to match the transformed tree height.
 #'
-#' @return The minimum value for sigma2_error
+#' @return The minimum value for \code{sigma2_error}.
 #'
-#' @keywords internal
+#' @export
 #'
 getMinError <- function(phy,
                         tol = (.Machine$double.eps)^0.5) {

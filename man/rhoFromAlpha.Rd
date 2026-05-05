@@ -18,7 +18,7 @@ alphaFromRho(rho, t_tree, alpha_bounds = NULL)
 
 \item{rho}{the rho value}
 
-\item{alpha_bounds}{lower and upper bounds on alpha values. If `NULL` (the default),
+\item{alpha_bounds}{lower and upper bounds on alpha values. If \code{NULL} (the default),
 default bounds are computed from the tree height.}
 }
 \value{

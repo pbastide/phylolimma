@@ -32,7 +32,8 @@
 #' @param use_consensus If \code{TRUE} (the default),
 #' one unique consensus tree is used to represent the correlation structure,
 #' using a trimmed mean of the transformed parameters.
-#' See \code{\link{phylogeneticCorrelations}} for more details.
+#' See \code{\link{phylogeneticCorrelations}} for more details, and
+#' \code{limma} function \code{\link[limma]{duplicateCorrelation}}.
 #' If \code{FALSE}, each gene will use its own model parameters and will have
 #' its own correlation structure accordingly.
 #' @param consensus_tree If not \code{NULL}, the consensus tree containing the correlation structure,
@@ -51,8 +52,25 @@
 #' \code{\link[limma]{MArrayLM-class}}, and can be passed to \code{\link[limma]{eBayes}}.
 #'
 #' @details
+#' This function performs the fit in several steps:
+#' 1. Fit a phylogenetic linear model with \code{\link[phylolm]{phylolm}} on each gene.
+#' 2. If `use_consensus = TRUE`, use the trimmed mean of transformed parameters to get one regularized value for all the genes.
+#' This step uses \code{\link{phylogeneticCorrelations}}, and is similar to \code{\link[limma]{duplicateCorrelation}}.
+#' For more details on the specific parameters used in the regularization, see function \code{getParameters}.
+#' 3. Compute the estimated phylogenetic correlation matrix \eqn{\hat{C}_g} for each gene (it is the same for all genes if `use_consensus = TRUE`).
+#' 4. De-correlate the normalized data by left-multiplying it by \eqn{\hat{C}^{-1/2}_g} the inverse Cholesky decomposition of the correlation matrix.
+#' 5. Use \code{\link[limma]{lmFit}} on the de-correlated data.
+#'
+#' In particular, this procedure ensures that the fitted
+#' \code{coefficients}, \code{stdev.unscaled},
+#' \code{sigma} and \code{df.residual} do take the phylogeny into account,
+#' and can be used directly in downstream processing such as \code{\link[limma]{eBayes}}.
+#'
 #' The default bounds on the phylogenetic parameters are the same as in
-#' \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU.
+#' \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU,
+#' that use ad-hoc bounds from function \code{\link{getBoundsSelectionStrength}},
+#' and the \code{sigma2_error} of the intra-specific variance,
+#' that takes it lower bound from function \code{\link{getMinError}}.
 #'
 #' @examples
 #' ## Simulate a tree with tip conditions

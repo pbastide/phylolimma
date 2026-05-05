@@ -15,7 +15,7 @@ parse_species(tree, ids, pattern = "(_|\\\\.).*$")
 Default to removing everything after a dot or underscore.}
 }
 \value{
-A vector of the same length as `ids`, with the species of each sample.
+A vector of the same length as \code{ids}, with the species of each sample.
 }
 \description{
 Utility function to parse the species names from the replicates,

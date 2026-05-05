@@ -2,25 +2,29 @@
 % Please edit documentation in R/utils.R
 \name{getMinError}
 \alias{getMinError}
-\title{Get Min on sigma2_error}
+\title{Get Lower Bound on sigma2_error}
 \usage{
 getMinError(phy, tol = (.Machine$double.eps)^0.5)
 }
 \arguments{
 \item{phy}{a phylogenetic tree.}
 
-\item{tol}{the numerical tolerance}
+\item{tol}{the numerical tolerance.}
 }
 \value{
-The minimum value for sigma2_error
+The minimum value for \code{sigma2_error}.
 }
 \description{
-Find reasonable minimum on the \code{sigma2_error} parameter.
+Find reasonable lower bound on the \code{sigma2_error} parameter
+when fitted with \code{\link[phylolm]{phylolm}}.
 }
 \details{
 The minimum value must be high enough so that it can be numerically
 distinguished from zero.
+This is important for trees with several samples per species, as the
+limit case \code{sigma2_error = 0} is degenerate, as it means that all
+the samples in one species have the exact same value.
+
 Default to \eqn{tol * h}, where \eqn{h} is the total height of the tree.
-If an OU is used, then this value is updated to match the transformed tree height.
+Note that if an OU is used in the fit, then this value is updated to match the transformed tree height.
 }
-\keyword{internal}

@@ -28,6 +28,8 @@ reference:
   - addReplicatesOnTree
   - lengthNormalizeRNASeq
   - rhoFromAlpha
+  - getBoundsSelectionStrength
+  - getMinError
 - title: Dataset
   desc: Crayfish dataset
   contents:

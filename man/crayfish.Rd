@@ -7,10 +7,10 @@
 \format{
 A list, with:
 \describe{
-  \item{tree}{Dated species tree}
-  \item{counts}{RNA-Seq count data}
-  \item{lengths}{Gene lengths}
-  \item{sights}{Wether a species can see (1) or is blind (0)}
+\item{tree}{Dated species tree}
+\item{counts}{RNA-Seq count data}
+\item{lengths}{Gene lengths}
+\item{sights}{Wether a species can see (1) or is blind (0)}
 }
 }
 \source{

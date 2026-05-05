@@ -26,7 +26,7 @@ one with sample ids, and one with species names for each samples.}
 }
 \value{
 A phylogenetic tree with as many tips as the number of rows in \code{traits},
- and clusters of tips with zero branch lengths corresponding to replicates.
+and clusters of tips with zero branch lengths corresponding to replicates.
 }
 \description{
 Utility function to add replicates to a tree, as tips with zero length branches.
