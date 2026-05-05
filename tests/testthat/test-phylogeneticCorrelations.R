@@ -58,8 +58,8 @@ test_that("phylogeneticCorrelations - BM", {
   expect_equal(dim(resPhyloLmFit$stdev.unscaled), dim(resPhyloLmFitCons$stdev.unscaled))
 
   ## ebayes
-  fitphy <- eBayes(resPhyloLmFit)
-  fitphycons <- eBayes(resPhyloLmFitCons)
+  fitphy <- limma::eBayes(resPhyloLmFit)
+  fitphycons <- limma::eBayes(resPhyloLmFitCons)
 
   ## Test names and dimensions
   expect_equal(colnames(fitphy$p.value), colnames(fitphycons$p.value))
@@ -203,8 +203,8 @@ test_that("phylogeneticCorrelations - eBayes", {
                      model = "OUfixedRoot",
                      measurement_error = TRUE,
                      use_consensus = TRUE)
-  fit1eb <- eBayes(fit1)
-  fit1ebtrend <- eBayes(fit1, trend = TRUE)
+  fit1eb <- limma::eBayes(fit1)
+  fit1ebtrend <- limma::eBayes(fit1, trend = TRUE)
 
   ## phyCor
   pc <- phylogeneticCorrelations(y_data, design = design, phy = tree,
@@ -215,8 +215,8 @@ test_that("phylogeneticCorrelations - eBayes", {
                      measurement_error = TRUE,
                      use_consensus = TRUE,
                      consensus_tree = pc)
-  fit2eb <- eBayes(fit2)
-  fit2ebtrend <- eBayes(fit2, trend = TRUE)
+  fit2eb <- limma::eBayes(fit2)
+  fit2ebtrend <- limma::eBayes(fit2, trend = TRUE)
 
   expect_equal(fit1, fit2)
   expect_equal(fit1eb, fit2eb)

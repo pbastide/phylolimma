@@ -32,8 +32,3 @@ reference:
   desc: Crayfish dataset
   contents:
   - crayfish
-- title: Not Implemented
-  desc: Functions that apply to MArrayLM-class but not implemented for PhyloMArrayLM-class
-  contents:
-  - treat
-  - decideTests

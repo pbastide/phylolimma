@@ -57,8 +57,8 @@ test_that("phylolmFit - BM", {
   expect_equal(getSpeciesNumber(tree), ntips)
 
   ## ebayes
-  fitphy <- eBayes(resPhyloLmFit)
   fitlimma <- limma::eBayes(resLmFit)
+  fitphy <- limma::eBayes(resPhyloLmFit)
 
   ## Test names and dimensions
   expect_equal(colnames(fitphy$p.value), colnames(fitlimma$p.value))

@@ -191,7 +191,9 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                              stdev.unscaled = resLmFit$stdev.unscaled,
                              df.residual = resLmFit$df.residual,
                              Amean = resLmFit$Amean,
-                             qr = resLmFit$qr))
+                             qr = resLmFit$qr,
+                             cov.coefficients = resLmFit$cov.coefficients,
+                             pivot = resLmFit$pivot))
   } else {
     resFitFormat <- new("PhyloMArrayLM",
                         list(coefficients = do.call(rbind, resLmFit["coefficients", ]),
@@ -199,7 +201,9 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                              stdev.unscaled = do.call(rbind, resLmFit["stdev.unscaled", ]),
                              df.residual = do.call(c, resLmFit["df.residual", ]),
                              Amean = do.call(c, resLmFit["Amean", ]),
-                             qr = resLmFit["qr", ]))
+                             qr = resLmFit["qr", ],
+                             cov.coefficients = resLmFit["cov.coefficients", ],
+                             pivot = resLmFit["pivot", ]))
   }
 
   resFitFormat$df.residual <- ddf_fits
@@ -217,6 +221,8 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   resFitFormat$REML <- REML
   if (use_consensus) resFitFormat$consensus_tree <- consensus_tree
   resFitFormat$use_consensus <- use_consensus
+  resFitFormat$design <- design
+  resFitFormat$design_trans <- design_trans
 
   ## Result
   return(resFitFormat)
