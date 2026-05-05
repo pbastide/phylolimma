@@ -2,7 +2,7 @@
 % Please edit documentation in R/phylolmFit.R
 \name{phylolmFit}
 \alias{phylolmFit}
-\title{Phylogenetic Comparative Method using LIMMA}
+\title{Phylogenetic Linear Model for Gene Expression Analysis}
 \usage{
 phylolmFit(
   object,
@@ -19,31 +19,42 @@ phylolmFit(
 )
 }
 \arguments{
-\item{object}{A matrix data object containing normalized expression values,
+\item{object}{a matrix data object containing normalized expression values,
 with rows corresponding to genes and columns to samples (species).}
 
 \item{design}{the design matrix of the experiment,
 with rows corresponding to samples and columns to coefficients to be estimated.
 Defaults to the unit vector (intercept).}
 
-\item{phy}{an object of class \code{\link[ape]{phylo}}.
-It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-or a tree such that tip labels match with species names in `col_species`.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of \code{object} follow the pattern
+\code{SpeciesName_SampleId} or \code{SpeciesName.SampleId},
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in \code{col_species} (see below).
+The tip labels of the tree can also match exactly the names as the columns of \code{object},
+so that the tree directly includes all the replicates.}
 
-\item{col_species}{a character vector with same length as columns in the expression matrix,
-specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.}
+\item{col_species}{a character vector with same length as there are columns
+in the expression matrix, specifying the species for the corresponding column.
+If left \code{NULL} (the default), an automatic parsing of species names with sample ids is attempted.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda" or "OUfixedRoot".
+Must be one of  "OUfixedRoot" (the default), "BM", or "lambda".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
-\item{measurement_error}{a logical value indicating whether there is measurement error.
-Default to \code{TRUE}.
+\item{measurement_error}{a logical value indicating whether there is measurement error,
+or individual independent (non phylogenetic) variation among samples.
+Default to \code{TRUE}. Setting this to \code{FALSE} can give unexpected results,
+except for the "lambda" model.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
-\item{use_consensus}{If \code{TRUE}, one consensus tree is used to represent the correlation structure. see \code{\link{phylogeneticCorrelations}}.
-If \code{FALSE}, each gene will use its own model parameters and will have its own correlation structure accordingly.
-Default to TRUE.}
+\item{use_consensus}{If \code{TRUE} (the default),
+one unique consensus tree is used to represent the correlation structure,
+using a trimmed mean of the transformed parameters.
+See \code{\link{phylogeneticCorrelations}} for more details.
+If \code{FALSE}, each gene will use its own model parameters and will have
+its own correlation structure accordingly.}
 
 \item{consensus_tree}{If not \code{NULL}, the consensus tree containing the correlation structure,
 result of function \code{\link{phylogeneticCorrelations}}.
@@ -61,26 +72,28 @@ An object of class \code{\link{PhyloMArrayLM-class}},
 with list components \code{coefficients}, \code{stdev.unscaled},
 \code{sigma} and \code{df.residual}.
 These quantities take the phylogenetic model into account.
-The object can be passed to \code{\link{eBayes}}.
+The object inherits from the \code{limma} class
+\code{\link[limma]{MArrayLM-class}}, and can be passed to \code{\link[limma]{eBayes}}.
 }
 \description{
-This function applies \code{\link[limma]{lmFit}} to the normalized data,
-in order to take the phylogeny into account.
-TODO: explain more.
+Fit a phylogenetic linear model using \code{\link[phylolm]{phylolm}} for
+each gene given a matrix of normalized expression data.
+This function inherits its interface from the \code{limma} function \code{\link[limma]{lmFit}}.
 }
 \details{
 The default bounds on the phylogenetic parameters are the same as in
 \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU.
 }
 \examples{
-## Simulate a tree
+## Simulate a tree with tip conditions
 set.seed(1289)
-ntips <- 20
+ntips <- 10
 tree <- ape::rphylo(ntips, 0.1, 0)
-condition <- sample(c(0, 1), ntips, replace = TRUE)
+condition <- c(0, 0, 1, 1, 1, 0, 0, 1, 1, 0)
+plot(tree, tip.color = hcl.colors(3)[condition + 1])
 
-## Simulate data with replicates
-reps <- sample(1:5, ntips, replace = TRUE)
+## Simulate data with 1 to 3 samples per species
+reps <- sample(1:3, ntips, replace = TRUE)
 rep_ids <- make.unique(rep(tree$tip.label, times = reps), sep = "_")
 ngenes <- 20
 dat <- matrix(rnorm(sum(reps) * ngenes, 1, 0.5), nrow = ngenes)
@@ -99,14 +112,24 @@ rownames(design) <- rep_ids
 
 ## linear model fit
 pfit <- phylolmFit(dat, design = design, phy = tree)
+pfit
 
 ## eBayes correction
-pfit <- eBayes(pfit, trend = TRUE)
+pfit <- limma::eBayes(pfit, trend = TRUE)
 limma::topTable(pfit, coef = 2)
+
+## Volcano plot
+limma::volcanoplot(pfit, coef = 2, highlight = ndiff)
 
 
 }
 \seealso{
-\code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}},
-\code{\link{phylogeneticCorrelations}}, \code{\link{eBayes}}
+\code{\link[limma]{lmFit}},
+\code{\link[phylolm]{phylolm}},
+\code{\link{PhyloMArrayLM-class}},
+\code{\link{phylogeneticCorrelations}},
+\code{\link[limma]{eBayes}},
+\code{\link{getParameters}},
+\code{\link{plotParameters}},
+\code{\link{consensusTree}}.
 }

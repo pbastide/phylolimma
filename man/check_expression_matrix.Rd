@@ -7,7 +7,7 @@
 check_expression_matrix(object)
 }
 \arguments{
-\item{object}{A matrix data object containing normalized expression values,
+\item{object}{a matrix data object containing normalized expression values,
 with rows corresponding to genes and columns to samples (species).}
 }
 \value{

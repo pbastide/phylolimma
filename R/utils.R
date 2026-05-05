@@ -386,3 +386,20 @@ check_tree <- function(phy, y, col_species) {
                    id = colnames(y$exprs))
   return(addReplicatesOnTree(phy, tt))
 }
+
+# #' @title Check the tree
+# #'
+# #' @inheritParams phylolmFit
+# #'
+# #' @return the correctly formatted tree
+# #'
+# #' @keywords internal
+# #'
+# get_tree <- function(phy, col_species) {
+#   if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
+#   if (length(phy$tip.label) == ncol(y$exprs)) return(phy)
+#   if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
+#   tt <- data.frame(species = col_species,
+#                    id = colnames(y$exprs))
+#   return(addReplicatesOnTree(phy, tt))
+# }

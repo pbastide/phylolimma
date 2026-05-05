@@ -30,6 +30,6 @@ Suggests:
     covr,
     knitr,
     rmarkdown
-RoxygenNote: 7.3.3
 URL: https://pbastide.github.io/phyloDE/
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

@@ -26,7 +26,7 @@ NULL
 #' @importFrom methods new
 #'
 #' @seealso \code{\link[limma]{lmFit}}, \code{\link{phylolmFit}},
-#' \code{\link[phylolm]{phylolm}}, \code{\link{eBayes}}
+#' \code{\link[phylolm]{phylolm}}, \code{\link[limma]{eBayes}}
 #'
 #' @export
 #'

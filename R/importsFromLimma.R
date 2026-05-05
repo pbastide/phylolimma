@@ -1,56 +1,30 @@
-#' @title Empirical Bayes Statistics for Differential Expression
+#' @title Not Implemented Functions
 #'
 #' @description
-#' Apply \code{\link[limma]{eBayes}} to the result of function
-#' \code{\link{phylolmFit}}.
-#'
-#' Function \code{\link[limma]{treat}} is not supported yet for a \code{\linkS4class{PhyloMArrayLM}},
+#' Functions
+#' \code{\link[limma]{treat}},
+#' \code{\link[limma]{decideTests}},
+#' \code{\link[limma]{classifyTestsF}}
+#' are not supported yet for a \code{\linkS4class{PhyloMArrayLM}},
 #' and will throw an error.
 #'
 #' @param fit a \code{\linkS4class{PhyloMArrayLM}} object, fitted using \code{\link{phylolmFit}}.
-#' @param ... further parameters to be passed to \code{\link[limma]{eBayes}} or \code{\link[limma]{treat}}.
+#' @param ... further parameters.
 #'
 #' @export
-#'
-eBayes <- function(fit, ...) {
-  return(limma::eBayes(fit, ...))
-}
-
-#'
-#' @rdname eBayes
-#' @export
-#'
 treat <- function(fit, ...) {
   if (is(fit, "PhyloMArrayLM")) stop("Function `treat` is not supported for an object of class `PhyloMArrayLM`.")
   return(limma::treat(fit, ...))
 }
 
-#' @title Multiple Testing Across Genes and Contrasts
-#'
-#' @description
-#' Function \code{\link[limma]{decideTests}} is not supported yet for a \code{\linkS4class{PhyloMArrayLM}},
-#' and will throw an error.
-#'
-#' @param fit a \code{\linkS4class{PhyloMArrayLM}} object, fitted using \code{\link{phylolmFit}}.
-#' @param ... further parameters to be passed to \code{\link[limma]{decideTests}}.
-#'
+#' @rdname treat
 #' @export
-#'
 decideTests <- function(fit, ...) {
   if (is(fit, "PhyloMArrayLM")) stop("Function `decideTests` is not supported for an object of class `PhyloMArrayLM`.")
   return(limma::decideTests(fit, ...))
 }
 
-#' @title Multiple Testing Across Genes and Contrasts
-#'
-#' @description
-#' Function \code{\link[limma]{classifyTestsF}} is not supported yet for a \code{\linkS4class{PhyloMArrayLM}},
-#' and will throw an error.
-#'
-#' @param fit a \code{\linkS4class{PhyloMArrayLM}} object, fitted using \code{\link{phylolmFit}}.
-#' @param ... further parameters to be passed to \code{\link[limma]{classifyTestsF}}.
-#'
-#' @rdname decideTests
+#' @rdname treat
 #' @export
 #'
 classifyTestsF <- function(fit, ...) {

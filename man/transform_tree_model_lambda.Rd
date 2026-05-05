@@ -7,12 +7,19 @@
 transform_tree_model_lambda(phy, phyfit, measurement_error)
 }
 \arguments{
-\item{phy}{an object of class \code{\link[ape]{phylo}}.
-It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-or a tree such that tip labels match with species names in `col_species`.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of \code{object} follow the pattern
+\code{SpeciesName_SampleId} or \code{SpeciesName.SampleId},
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in \code{col_species} (see below).
+The tip labels of the tree can also match exactly the names as the columns of \code{object},
+so that the tree directly includes all the replicates.}
 
-\item{measurement_error}{a logical value indicating whether there is measurement error.
-Default to \code{TRUE}.
+\item{measurement_error}{a logical value indicating whether there is measurement error,
+or individual independent (non phylogenetic) variation among samples.
+Default to \code{TRUE}. Setting this to \code{FALSE} can give unexpected results,
+except for the "lambda" model.
 See \code{\link[phylolm]{phylolm}} for more details.}
 }
 \value{

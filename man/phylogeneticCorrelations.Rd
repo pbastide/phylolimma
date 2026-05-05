@@ -18,26 +18,34 @@ phylogeneticCorrelations(
 )
 }
 \arguments{
-\item{object}{A matrix data object containing normalized expression values,
+\item{object}{a matrix data object containing normalized expression values,
 with rows corresponding to genes and columns to samples (species).}
 
 \item{design}{the design matrix of the experiment,
 with rows corresponding to samples and columns to coefficients to be estimated.
 Defaults to the unit vector (intercept).}
 
-\item{phy}{an object of class \code{\link[ape]{phylo}}.
-It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-or a tree such that tip labels match with species names in `col_species`.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of \code{object} follow the pattern
+\code{SpeciesName_SampleId} or \code{SpeciesName.SampleId},
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in \code{col_species} (see below).
+The tip labels of the tree can also match exactly the names as the columns of \code{object},
+so that the tree directly includes all the replicates.}
 
-\item{col_species}{a character vector with same length as columns in the expression matrix,
-specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.}
+\item{col_species}{a character vector with same length as there are columns
+in the expression matrix, specifying the species for the corresponding column.
+If left \code{NULL} (the default), an automatic parsing of species names with sample ids is attempted.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda" or "OUfixedRoot".
+Must be one of  "OUfixedRoot" (the default), "BM", or "lambda".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
-\item{measurement_error}{a logical value indicating whether there is measurement error.
-Default to \code{TRUE}.
+\item{measurement_error}{a logical value indicating whether there is measurement error,
+or individual independent (non phylogenetic) variation among samples.
+Default to \code{TRUE}. Setting this to \code{FALSE} can give unexpected results,
+except for the "lambda" model.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
 \item{trim}{a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.}
@@ -66,5 +74,5 @@ TODO: explain more.
 \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}}, \code{\link[limma]{duplicateCorrelation}}
 
 \code{\link[limma]{lmFit}}, \code{\link{phylolmFit}},
-\code{\link[phylolm]{phylolm}}, \code{\link{eBayes}}
+\code{\link[phylolm]{phylolm}}, \code{\link[limma]{eBayes}}
 }
