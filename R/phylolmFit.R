@@ -212,6 +212,8 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                              qr = resLmFit$qr,
                              cov.coefficients = resLmFit$cov.coefficients,
                              pivot = resLmFit$pivot))
+    resFitFormat$design <- design
+    resFitFormat$design_trans <- design_trans
   } else {
     resFitFormat <- new("PhyloMArrayLM",
                         list(coefficients = do.call(rbind, resLmFit["coefficients", ]),
@@ -239,8 +241,6 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   resFitFormat$REML <- REML
   if (use_consensus) resFitFormat$consensus_tree <- consensus_tree
   resFitFormat$use_consensus <- use_consensus
-  resFitFormat$design <- design
-  resFitFormat$design_trans <- design_trans
 
   ## Result
   return(resFitFormat)
