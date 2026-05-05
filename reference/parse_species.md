@@ -27,4 +27,4 @@ parse_species(tree, ids, pattern = "(_|\\.).*$")
 
 ## Value
 
-A vector of the same length as \`ids\`, with the species of each sample.
+A vector of the same length as `ids`, with the species of each sample.

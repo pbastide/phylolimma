@@ -1,7 +1,7 @@
 # Trimmed mean
 
 Trimmed mean, with asymetric trim up and down. Code adapted from
-\`mean.default\`, with a different trim value for the lower and upper
+`mean.default`, with a different trim value for the lower and upper
 ends.
 
 ## Usage
@@ -24,7 +24,7 @@ mean_trim(x, trim = 0.15, na.rm = FALSE, ...)
 
 - na.rm:
 
-  whether to remove \`NA\`s before the computation.
+  whether to remove `NA`s before the computation.
 
 - ...:
 

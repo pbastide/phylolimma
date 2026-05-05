@@ -1,6 +1,8 @@
-# Get Bounds on alpha
+# Get Bounds on alpha for an OU
 
-Find reasonable bounds on the `alpha` parameter.
+Find reasonable bounds on the `alpha` parameter of an OU process on a
+tree when fitted with
+[`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html).
 
 ## Usage
 
@@ -20,11 +22,11 @@ getBoundsSelectionStrength(
 
 - relative_half_life_min:
 
-  optional minimal half life relative to tree height
+  optional minimal half life relative to tree height. Default to 1e-4.
 
 - relative_half_life_max:
 
-  optional maximal half life relative to tree height
+  optional maximal half life relative to tree height. Default to 1e4.
 
 ## Value
 
@@ -41,10 +43,10 @@ Hansen, 1997). Small values of \\D\\ means high selection pressure
 (large \\\alpha\\), while large values of \\D\\ means low selection
 pressure (small \\\alpha\\).
 
-The default maximum value for \\D\\ is `relative_half_life_max = 10000`
+The default maximum value for \\D\\ is `relative_half_life_max = 1e4`
 (selection is week and the process looks like a BM).
 
-The default minimum value for \\D\\ is `relative_half_life_min = 0.0001`
+The default minimum value for \\D\\ is `relative_half_life_min = 1e-4`
 (selection is strong and tips are only weakly correlated).
 
 The function makes sure that the maximum \\\alpha\\ value associated

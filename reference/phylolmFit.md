@@ -79,8 +79,10 @@ phylolmFit(
   represent the correlation structure, using a trimmed mean of the
   transformed parameters. See
   [`phylogeneticCorrelations`](https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.md)
-  for more details. If `FALSE`, each gene will use its own model
-  parameters and will have its own correlation structure accordingly.
+  for more details, and `limma` function
+  [`duplicateCorrelation`](https://rdrr.io/pkg/limma/man/dupcor.html).
+  If `FALSE`, each gene will use its own model parameters and will have
+  its own correlation structure accordingly.
 
 - consensus_tree:
 
@@ -117,9 +119,44 @@ be passed to [`eBayes`](https://rdrr.io/pkg/limma/man/ebayes.html).
 
 ## Details
 
+This function performs the fit in several steps:
+
+1.  Fit a phylogenetic linear model with
+    [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html) on each
+    gene.
+
+2.  If `use_consensus = TRUE`, use the trimmed mean of transformed
+    parameters to get one regularized value for all the genes. This step
+    uses
+    [`phylogeneticCorrelations`](https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.md),
+    and is similar to
+    [`duplicateCorrelation`](https://rdrr.io/pkg/limma/man/dupcor.html).
+    For more details on the specific parameters used in the
+    regularization, see function `getParameters`.
+
+3.  Compute the estimated phylogenetic correlation matrix \\\hat{C}\_g\\
+    for each gene (it is the same for all genes if
+    `use_consensus = TRUE`).
+
+4.  De-correlate the normalized data by left-multiplying it by
+    \\\hat{C}^{-1/2}\_g\\ the inverse Cholesky decomposition of the
+    correlation matrix.
+
+5.  Use [`lmFit`](https://rdrr.io/pkg/limma/man/lmFit.html) on the
+    de-correlated data.
+
+In particular, this procedure ensures that the fitted `coefficients`,
+`stdev.unscaled`, `sigma` and `df.residual` do take the phylogeny into
+account, and can be used directly in downstream processing such as
+[`eBayes`](https://rdrr.io/pkg/limma/man/ebayes.html).
+
 The default bounds on the phylogenetic parameters are the same as in
 [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html), except for
-the `alpha` parameter of the OU.
+the `alpha` parameter of the OU, that use ad-hoc bounds from function
+[`getBoundsSelectionStrength`](https://pbastide.github.io/phyloDE/reference/getBoundsSelectionStrength.md),
+and the `sigma2_error` of the intra-specific variance, that takes it
+lower bound from function
+[`getMinError`](https://pbastide.github.io/phyloDE/reference/getMinError.md).
 
 ## See also
 

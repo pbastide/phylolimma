@@ -44,7 +44,7 @@ alphaFromRho(rho, t_tree, alpha_bounds = NULL)
 
 - alpha_bounds:
 
-  lower and upper bounds on alpha values. If \`NULL\` (the default),
+  lower and upper bounds on alpha values. If `NULL` (the default),
   default bounds are computed from the tree height.
 
 ## Value

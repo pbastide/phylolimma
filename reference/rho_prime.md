@@ -1,6 +1,6 @@
 # Compute 1 - rho
 
-rhoprime = 1 - rho = (1 - exp(-2\*alpha\*t_H)) / (2 \* alpha \* t_H) is
+rhoprime = 1 - rho = (1 - exp(-2*alpha*t_H)) / (2 \* alpha \* t_H) is
 the variance of the OU over the variance of the BM. Taken from
 Cornuault, 2023, Syst. Biol. It is the fraction of the variance that can
 be explained by "neutral" BM evolution. When alpha goes to 0, rhoprime

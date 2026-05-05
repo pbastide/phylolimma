@@ -37,6 +37,10 @@ Function to pre-process the tree or the data.
 - [`rhoFromAlpha()`](https://pbastide.github.io/phyloDE/reference/rhoFromAlpha.md)
   [`alphaFromRho()`](https://pbastide.github.io/phyloDE/reference/rhoFromAlpha.md)
   : Compute rho parameter
+- [`getBoundsSelectionStrength()`](https://pbastide.github.io/phyloDE/reference/getBoundsSelectionStrength.md)
+  : Get Bounds on alpha for an OU
+- [`getMinError()`](https://pbastide.github.io/phyloDE/reference/getMinError.md)
+  : Get Lower Bound on sigma2_error
 
 ## Dataset
 
@@ -44,13 +48,3 @@ Crayfish dataset
 
 - [`crayfish`](https://pbastide.github.io/phyloDE/reference/crayfish.md)
   : Crayfish RNA-Seq dataset
-
-## Not Implemented
-
-Functions that apply to MArrayLM-class but not implemented for
-PhyloMArrayLM-class
-
-- [`treat()`](https://pbastide.github.io/phyloDE/reference/treat.md)
-  [`decideTests()`](https://pbastide.github.io/phyloDE/reference/treat.md)
-  [`classifyTestsF()`](https://pbastide.github.io/phyloDE/reference/treat.md)
-  : Not Implemented Functions

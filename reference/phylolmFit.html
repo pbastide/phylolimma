@@ -109,7 +109,8 @@ See <code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external
 <dd><p>If <code>TRUE</code> (the default),
 one unique consensus tree is used to represent the correlation structure,
 using a trimmed mean of the transformed parameters.
-See <code><a href="phylogeneticCorrelations.html">phylogeneticCorrelations</a></code> for more details.
+See <code><a href="phylogeneticCorrelations.html">phylogeneticCorrelations</a></code> for more details, and
+<code>limma</code> function <code><a href="https://rdrr.io/pkg/limma/man/dupcor.html" class="external-link">duplicateCorrelation</a></code>.
 If <code>FALSE</code>, each gene will use its own model parameters and will have
 its own correlation structure accordingly.</p></dd>
 
@@ -144,8 +145,22 @@ The object inherits from the <code>limma</code> class
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The default bounds on the phylogenetic parameters are the same as in
-<code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code>, except for the <code>alpha</code> parameter of the OU.</p>
+    <p>This function performs the fit in several steps:</p><ol><li><p>Fit a phylogenetic linear model with <code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code> on each gene.</p></li>
+<li><p>If <code>use_consensus = TRUE</code>, use the trimmed mean of transformed parameters to get one regularized value for all the genes.
+This step uses <code><a href="phylogeneticCorrelations.html">phylogeneticCorrelations</a></code>, and is similar to <code><a href="https://rdrr.io/pkg/limma/man/dupcor.html" class="external-link">duplicateCorrelation</a></code>.
+For more details on the specific parameters used in the regularization, see function <code>getParameters</code>.</p></li>
+<li><p>Compute the estimated phylogenetic correlation matrix \(\hat{C}_g\) for each gene (it is the same for all genes if <code>use_consensus = TRUE</code>).</p></li>
+<li><p>De-correlate the normalized data by left-multiplying it by \(\hat{C}^{-1/2}_g\) the inverse Cholesky decomposition of the correlation matrix.</p></li>
+<li><p>Use <code><a href="https://rdrr.io/pkg/limma/man/lmFit.html" class="external-link">lmFit</a></code> on the de-correlated data.</p></li>
+</ol><p>In particular, this procedure ensures that the fitted
+<code>coefficients</code>, <code>stdev.unscaled</code>,
+<code>sigma</code> and <code>df.residual</code> do take the phylogeny into account,
+and can be used directly in downstream processing such as <code><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></code>.</p>
+<p>The default bounds on the phylogenetic parameters are the same as in
+<code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code>, except for the <code>alpha</code> parameter of the OU,
+that use ad-hoc bounds from function <code><a href="getBoundsSelectionStrength.html">getBoundsSelectionStrength</a></code>,
+and the <code>sigma2_error</code> of the intra-specific variance,
+that takes it lower bound from function <code><a href="getMinError.html">getMinError</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

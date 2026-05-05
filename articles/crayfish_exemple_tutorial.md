@@ -4,11 +4,6 @@
 
 library(limma)
 library(phyloDE)
-#> 
-#> Attaching package: 'phyloDE'
-#> The following objects are masked from 'package:limma':
-#> 
-#>     classifyTestsF, decideTests, treat
 ```
 
 ## Data
