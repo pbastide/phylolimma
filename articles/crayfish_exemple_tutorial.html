@@ -107,6 +107,15 @@ on gene expression.</p>
 <code class="sourceCode R"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></span><span class="op">(</span><span class="op">~</span> <span class="va">sights</span>, <span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">crayfish</span><span class="op">$</span><span class="va">sights</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="heatmap-matrix">Heatmap matrix<a class="anchor" aria-label="anchor" href="#heatmap-matrix"></a>
+</h2>
+<p>We can plot the data using a heatmap, using the phylogenetic
+structure on the columns, and a standard clustering on the rows.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/phyHeatmap.html">phyHeatmap</a></span><span class="op">(</span><span class="va">norm_data</span>, <span class="va">design</span>, <span class="fl">2</span>, <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span><span class="op">)</span></span></code></pre></div>
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="672"></p>
+</div>
+<div class="section level2">
 <h2 id="fit-with-phylode">Fit with <code>phyloDE</code><a class="anchor" aria-label="anchor" href="#fit-with-phylode"></a>
 </h2>
 <p>Finally, we apply <code>phylolmFit</code>, that has a syntax similar
@@ -115,7 +124,7 @@ argument, it takes the phylogenetic tree.</p>
 <p>To keep compilation time low, we only analyse the first 500 genes
 here, but in an analysis users should use the full dataset, and
 parallelize the computations using the <code>ncores</code> argument.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/phylolmFit.html">phylolmFit</a></span><span class="op">(</span><span class="va">norm_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">500</span>, <span class="op">]</span>, <span class="va">design</span>,</span>
 <span>                   phy <span class="op">=</span> <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span>,</span>
 <span>                   ncores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
@@ -130,7 +139,7 @@ results cannot to be interpreted directly, and some plots might look
 different when analyzing the full dataset.</p>
 <p>We can check whether there is a trend in the data by plotting the
 mean-variance trend.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mean_genes</span> <span class="op">&lt;-</span> <span class="va">pfit</span><span class="op">$</span><span class="va">Amean</span></span>
 <span><span class="va">sd_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">pfit</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span></span>
 <span><span class="va">lfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lowess.html" class="external-link">lowess</a></span><span class="op">(</span><span class="va">mean_genes</span>, <span class="va">sd_genes</span>, f <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
@@ -139,13 +148,13 @@ mean-variance trend.</p>
 <span>     pch <span class="op">=</span> <span class="fl">16</span>, cex <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/title.html" class="external-link">title</a></span><span class="op">(</span><span class="st">"Mean-variance trend"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">lfit</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="480"></p>
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="480"></p>
 <p>We then apply <code>eBayes</code>, here with a trend.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">pfit</span>, trend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>And then extract the most significant genes with
 <code>topTable</code>.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/toptable.html" class="external-link">topTable</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;               logFC  AveExpr         t      P.Value  adj.P.Val          B</span></span>
 <span><span class="co">#&gt; OG0000233 -2.146107 5.563365 -4.267689 0.0001300675 0.06503376  0.8600254</span></span>
@@ -168,22 +177,22 @@ diagnostic plots.</p>
 <li>Plot of p-values: they must be uniformly distributed under the null
 hypothesis.</li>
 </ul>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">pfit</span><span class="op">$</span><span class="va">p.value</span><span class="op">)</span></span></code></pre></div>
-<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="480"></p>
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="480"></p>
 <ul>
 <li>MA Plot: points must be centered in zero, showing no biais.</li>
 </ul>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/plotMD.html" class="external-link">plotMD</a></span><span class="op">(</span><span class="va">pfit</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>h <span class="op">=</span> <span class="fl">0</span>, col <span class="op">=</span> <span class="st">"red"</span>, lwd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="480"></p>
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="480"></p>
 <ul>
 <li>Volcano plot:</li>
 </ul>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/volcanoplot.html" class="external-link">volcanoplot</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span>, highlight <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
-<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="480"></p>
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="480"></p>
 </div>
 <div class="section level2">
 <h2 id="parameters-of-the-ou">Parameters of the OU<a class="anchor" aria-label="anchor" href="#parameters-of-the-ou"></a>
@@ -193,7 +202,7 @@ a OU process per gene, and then regularize the parameters (by taking the
 trimmed means of the tanh values).</p>
 <p>Function <code>getParameters</code> extract the regularized
 parameters.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PhyloMArrayLMMethods.html">getParameters</a></span><span class="op">(</span><span class="va">pfit</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    lambda       rho </span></span>
 <span><span class="co">#&gt; 0.7158580 0.9354393</span></span></code></pre></div>
@@ -226,9 +235,9 @@ strength alpha is close to zero).</li>
 </ul>
 <p>The gene-specific and regularized parameters can be plotted with
 function <code>plotParameters</code>.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PhyloMArrayLMMethods.html">plotParameters</a></span><span class="op">(</span><span class="va">pfit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672">
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672">
 Histograms are histograms over all the fits on all genes, while dashed
 lines represent regularized parameters. Modes close to the 0 and 1
 bounds can be expected, especially for small parameters.</p>

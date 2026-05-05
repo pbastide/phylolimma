@@ -30,6 +30,8 @@ Class containing the result of a fit and associated helper functions.
 
 Function to pre-process the tree or the data.
 
+- [`phyHeatmap()`](https://pbastide.github.io/phyloDE/reference/phyHeatmap.md)
+  : Heatmap with Phylogeny Structured Columns
 - [`addReplicatesOnTree()`](https://pbastide.github.io/phyloDE/reference/addReplicatesOnTree.md)
   : Add replicates to a tree
 - [`lengthNormalizeRNASeq()`](https://pbastide.github.io/phyloDE/reference/lengthNormalizeRNASeq.md)

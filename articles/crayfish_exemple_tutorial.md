@@ -56,6 +56,18 @@ gene expression.
 design <- model.matrix(~ sights, model.frame(crayfish$sights))
 ```
 
+## Heatmap matrix
+
+We can plot the data using a heatmap, using the phylogenetic structure
+on the columns, and a standard clustering on the rows.
+
+``` r
+
+phyHeatmap(norm_data, design, 2, crayfish$tree)
+```
+
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-6-1.png)
+
 ## Fit with `phyloDE`
 
 Finally, we apply `phylolmFit`, that has a syntax similar to `limma`
@@ -97,7 +109,7 @@ title("Mean-variance trend")
 lines(lfit, col = "red")
 ```
 
-![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-7-1.png)
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-8-1.png)
 
 We then apply `eBayes`, here with a trend.
 
@@ -137,7 +149,7 @@ plots.
 hist(pfit$p.value)
 ```
 
-![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-10-1.png)
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-11-1.png)
 
 - MA Plot: points must be centered in zero, showing no biais.
 
@@ -147,7 +159,7 @@ plotMD(pfit)
 abline(h = 0, col = "red", lwd = 3)
 ```
 
-![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-11-1.png)
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-12-1.png)
 
 - Volcano plot:
 
@@ -156,7 +168,7 @@ abline(h = 0, col = "red", lwd = 3)
 volcanoplot(pfit, coef = 2, highlight = 10)
 ```
 
-![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-12-1.png)
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-13-1.png)
 
 ## Parameters of the OU
 
@@ -197,7 +209,7 @@ function `plotParameters`.
 plotParameters(pfit)
 ```
 
-![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-14-1.png)
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-15-1.png)
 Histograms are histograms over all the fits on all genes, while dashed
 lines represent regularized parameters. Modes close to the 0 and 1
 bounds can be expected, especially for small parameters.
