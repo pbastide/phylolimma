@@ -65,7 +65,7 @@
 <span><span class="co">#&gt; Attaching package: 'phyloDE'</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:limma':</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     classifyTestsF, decideTests, eBayes, treat</span></span></code></pre></div>
+<span><span class="co">#&gt;     classifyTestsF, decideTests, treat</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
@@ -117,9 +117,9 @@ on gene expression.</p>
 <p>Finally, we apply <code>phylolmFit</code>, that has a syntax similar
 to <code>limma</code> function <code>lmFit</code>. As an additional
 argument, it takes the phylogenetic tree.</p>
-<p>Computations can be made in parallel with argument
-<code>ncores</code>. Here, for the sake of rapidity, we only analyse the
-first 500 genes.</p>
+<p>To keep compilation time low, we only analyse the first 500 genes
+here, but in an analysis users should use the full dataset, and
+parallelize the computations using the <code>ncores</code> argument.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/phylolmFit.html">phylolmFit</a></span><span class="op">(</span><span class="va">norm_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">500</span>, <span class="op">]</span>, <span class="va">design</span>,</span>
 <span>                   phy <span class="op">=</span> <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span>,</span>
@@ -130,8 +130,9 @@ first 500 genes.</p>
 </h2>
 <p>Just as for a <code>limma</code> object, we can apply the
 <code>eBayes</code> procedure to the results.</p>
-<p>(Here, keep in mind that because we only analysed the first 500
-genes, the results cannot to be interpreted directly.)</p>
+<p>Keep in mind that because we only analysed the first 500 genes, the
+results cannot to be interpreted directly, and some plots might look
+different when analyzing the full dataset.</p>
 <p>We can check whether there is a trend in the data by plotting the
 mean-variance trend.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -146,7 +147,7 @@ mean-variance trend.</p>
 <p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="480"></p>
 <p>We then apply <code>eBayes</code>, here with a trend.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/eBayes.html">eBayes</a></span><span class="op">(</span><span class="va">pfit</span>, trend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">pfit</span>, trend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>And then extract the most significant genes with
 <code>topTable</code>.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">

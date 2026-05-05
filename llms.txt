@@ -35,7 +35,7 @@ phylogenetic linear regression.
   [`phyloDE`](https://pbastide.github.io/phyloDE/reference/phyloDE-package.md)
   : TODO
 - [`phylolmFit()`](https://pbastide.github.io/phyloDE/reference/phylolmFit.md)
-  : Phylogenetic Comparative Method using LIMMA
+  : Phylogenetic Linear Model for Gene Expression Analysis
 - [`phylogeneticCorrelations()`](https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.md)
   : Phylogenetic correlation using a consensus tree
 
@@ -51,12 +51,6 @@ Class containing the result of a fit and associated helper functions.
   [`logLikelihood()`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
   [`consensusTree()`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
   : Methods for class PhyloMArrayLM
-- [`eBayes()`](https://pbastide.github.io/phyloDE/reference/eBayes.md)
-  [`treat()`](https://pbastide.github.io/phyloDE/reference/eBayes.md) :
-  Empirical Bayes Statistics for Differential Expression
-- [`decideTests()`](https://pbastide.github.io/phyloDE/reference/decideTests.md)
-  [`classifyTestsF()`](https://pbastide.github.io/phyloDE/reference/decideTests.md)
-  : Multiple Testing Across Genes and Contrasts
 
 ## Helper Functions
 
@@ -76,6 +70,16 @@ Crayfish dataset
 
 - [`crayfish`](https://pbastide.github.io/phyloDE/reference/crayfish.md)
   : Crayfish RNA-Seq dataset
+
+## Not Implemented
+
+Functions that apply to MArrayLM-class but not implemented for
+PhyloMArrayLM-class
+
+- [`treat()`](https://pbastide.github.io/phyloDE/reference/treat.md)
+  [`decideTests()`](https://pbastide.github.io/phyloDE/reference/treat.md)
+  [`classifyTestsF()`](https://pbastide.github.io/phyloDE/reference/treat.md)
+  : Not Implemented Functions
 
 # Articles
 

@@ -8,7 +8,7 @@ library(phyloDE)
 #> Attaching package: 'phyloDE'
 #> The following objects are masked from 'package:limma':
 #> 
-#>     classifyTestsF, decideTests, eBayes, treat
+#>     classifyTestsF, decideTests, treat
 ```
 
 ## Data
@@ -67,8 +67,9 @@ Finally, we apply `phylolmFit`, that has a syntax similar to `limma`
 function `lmFit`. As an additional argument, it takes the phylogenetic
 tree.
 
-Computations can be made in parallel with argument `ncores`. Here, for
-the sake of rapidity, we only analyse the first 500 genes.
+To keep compilation time low, we only analyse the first 500 genes here,
+but in an analysis users should use the full dataset, and parallelize
+the computations using the `ncores` argument.
 
 ``` r
 
@@ -82,8 +83,9 @@ pfit <- phylolmFit(norm_data[1:500, ], design,
 Just as for a `limma` object, we can apply the `eBayes` procedure to the
 results.
 
-(Here, keep in mind that because we only analysed the first 500 genes,
-the results cannot to be interpreted directly.)
+Keep in mind that because we only analysed the first 500 genes, the
+results cannot to be interpreted directly, and some plots might look
+different when analyzing the full dataset.
 
 We can check whether there is a trend in the data by plotting the
 mean-variance trend.

@@ -52,9 +52,14 @@ Defaults to the unit vector (intercept).</p></dd>
 
 
 <dt id="arg-phy">phy<a class="anchor" aria-label="anchor" href="#arg-phy"></a></dt>
-<dd><p>an object of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.
-It must be either a tree with tips having the same names as the columns of <code>object</code> (including replicates),
-or a tree such that tip labels match with species names in `col_species`.</p></dd>
+<dd><p>an object of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of <code>object</code> follow the pattern
+<code>SpeciesName_SampleId</code> or <code>SpeciesName.SampleId</code>,
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in <code>col_species</code> (see below).
+The tip labels of the tree can also match exactly the names as the columns of <code>object</code>,
+so that the tree directly includes all the replicates.</p></dd>
 
 </dl></div>
     <div class="section level2">

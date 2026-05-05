@@ -1,8 +1,10 @@
-# Phylogenetic Comparative Method using LIMMA
+# Phylogenetic Linear Model for Gene Expression Analysis
 
-This function applies
-[`lmFit`](https://rdrr.io/pkg/limma/man/lmFit.html) to the normalized
-data, in order to take the phylogeny into account. TODO: explain more.
+Fit a phylogenetic linear model using
+[`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html) for each gene
+given a matrix of normalized expression data. This function inherits its
+interface from the `limma` function
+[`lmFit`](https://rdrr.io/pkg/limma/man/lmFit.html).
 
 ## Usage
 
@@ -26,7 +28,7 @@ phylolmFit(
 
 - object:
 
-  A matrix data object containing normalized expression values, with
+  a matrix data object containing normalized expression values, with
   rows corresponding to genes and columns to samples (species).
 
 - design:
@@ -38,39 +40,47 @@ phylolmFit(
 - phy:
 
   an object of class
-  [`phylo`](https://rdrr.io/pkg/ape/man/read.tree.html). It must be
-  either a tree with tips having the same names as the columns of
-  `object` (including replicates), or a tree such that tip labels match
-  with species names in \`col_species\`.
+  [`phylo`](https://rdrr.io/pkg/ape/man/read.tree.html), representing
+  the phylogenetic relationships between the species. It must be dated
+  and ultrametric. If the column names of `object` follow the pattern
+  `SpeciesName_SampleId` or `SpeciesName.SampleId`, an automatic
+  matching of the samples on the tip of the tree is performed.
+  Otherwise, the tree tip labels must match with species names in
+  `col_species` (see below). The tip labels of the tree can also match
+  exactly the names as the columns of `object`, so that the tree
+  directly includes all the replicates.
 
 - col_species:
 
-  a character vector with same length as columns in the expression
-  matrix, specifying the species for the corresponding column. If left
-  \`NULL\`, an automatic parsing of species names with sample ids is
-  attempted.
+  a character vector with same length as there are columns in the
+  expression matrix, specifying the species for the corresponding
+  column. If left `NULL` (the default), an automatic parsing of species
+  names with sample ids is attempted.
 
 - model:
 
   the phylogenetic model used to correct for the phylogeny. Must be one
-  of "BM", "lambda" or "OUfixedRoot". See
+  of "OUfixedRoot" (the default), "BM", or "lambda". See
   [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html) for more
   details.
 
 - measurement_error:
 
-  a logical value indicating whether there is measurement error. Default
-  to `TRUE`. See
+  a logical value indicating whether there is measurement error, or
+  individual independent (non phylogenetic) variation among samples.
+  Default to `TRUE`. Setting this to `FALSE` can give unexpected
+  results, except for the "lambda" model. See
   [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html) for more
   details.
 
 - use_consensus:
 
-  If `TRUE`, one consensus tree is used to represent the correlation
-  structure. see
-  [`phylogeneticCorrelations`](https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.md).
-  If `FALSE`, each gene will use its own model parameters and will have
-  its own correlation structure accordingly. Default to TRUE.
+  If `TRUE` (the default), one unique consensus tree is used to
+  represent the correlation structure, using a trimmed mean of the
+  transformed parameters. See
+  [`phylogeneticCorrelations`](https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.md)
+  for more details. If `FALSE`, each gene will use its own model
+  parameters and will have its own correlation structure accordingly.
 
 - consensus_tree:
 
@@ -101,8 +111,9 @@ An object of class
 [`PhyloMArrayLM-class`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLM-class.md),
 with list components `coefficients`, `stdev.unscaled`, `sigma` and
 `df.residual`. These quantities take the phylogenetic model into
-account. The object can be passed to
-[`eBayes`](https://pbastide.github.io/phyloDE/reference/eBayes.md).
+account. The object inherits from the `limma` class
+[`MArrayLM-class`](https://rdrr.io/pkg/limma/man/marraylm.html), and can
+be passed to [`eBayes`](https://rdrr.io/pkg/limma/man/ebayes.html).
 
 ## Details
 
@@ -114,20 +125,26 @@ the `alpha` parameter of the OU.
 
 [`lmFit`](https://rdrr.io/pkg/limma/man/lmFit.html),
 [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html),
+[`PhyloMArrayLM-class`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLM-class.md),
 [`phylogeneticCorrelations`](https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.md),
-[`eBayes`](https://pbastide.github.io/phyloDE/reference/eBayes.md)
+[`eBayes`](https://rdrr.io/pkg/limma/man/ebayes.html),
+[`getParameters`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md),
+[`plotParameters`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md),
+[`consensusTree`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md).
 
 ## Examples
 
 ``` r
-## Simulate a tree
+## Simulate a tree with tip conditions
 set.seed(1289)
-ntips <- 20
+ntips <- 10
 tree <- ape::rphylo(ntips, 0.1, 0)
-condition <- sample(c(0, 1), ntips, replace = TRUE)
+condition <- c(0, 0, 1, 1, 1, 0, 0, 1, 1, 0)
+plot(tree, tip.color = hcl.colors(3)[condition + 1])
 
-## Simulate data with replicates
-reps <- sample(1:5, ntips, replace = TRUE)
+
+## Simulate data with 1 to 3 samples per species
+reps <- sample(1:3, ntips, replace = TRUE)
 rep_ids <- make.unique(rep(tree$tip.label, times = reps), sep = "_")
 ngenes <- 20
 dat <- matrix(rnorm(sum(reps) * ngenes, 1, 0.5), nrow = ngenes)
@@ -147,20 +164,29 @@ rownames(design) <- rep_ids
 ## linear model fit
 pfit <- phylolmFit(dat, design = design, phy = tree)
 #> Loading required package: ape
+pfit
+#> PhyloMArrayLM
+#>   Fit on: 20 genes.
+#>   Model:  OUfixedRoot, with measurement error.
+#>   Using a consensus tree.
 
 ## eBayes correction
-pfit <- eBayes(pfit, trend = TRUE)
+pfit <- limma::eBayes(pfit, trend = TRUE)
 limma::topTable(pfit, coef = 2)
-#>          logFC   AveExpr          t       P.Value     adj.P.Val           B
-#> g2  25.2948752 7.6462148 194.650854  0.000000e+00  0.000000e+00 1190.049817
-#> g5   9.0026076 3.1593224  72.724947 1.262101e-293 1.262101e-292  661.316179
-#> g4   7.7178819 2.6802085  62.294317 4.560948e-259 3.040632e-258  582.396074
-#> g1   0.7354200 0.7938382   5.525255  4.975259e-08  2.487629e-07    6.885335
-#> g3   0.6213833 0.6894336   4.654513  4.028371e-06  1.611348e-05    2.641743
-#> g15  0.1925638 0.6160945   1.446090  1.486921e-01  4.956405e-01   -6.955053
-#> g6  -0.1761358 0.5960219  -1.330530  1.838666e-01  5.253331e-01   -7.115052
-#> g20  0.1474773 0.6529736   1.126593  2.603806e-01  5.422614e-01   -7.365100
-#> g18  0.1405957 0.5648386   1.057823  2.905765e-01  5.422614e-01   -7.440103
-#> g13 -0.1391035 0.5997454  -1.048037  2.950581e-01  5.422614e-01   -7.450394
+#>          logFC   AveExpr          t      P.Value    adj.P.Val         B
+#> g2   2.4801330 1.8127645  7.9985315 3.016969e-12 6.033938e-11 17.423416
+#> g1   1.6783282 1.3716897  5.7235899 1.209830e-07 1.209830e-06  7.039861
+#> g4   1.7538081 1.4047876  5.5060408 3.110442e-07 2.073628e-06  6.121750
+#> g5   0.8542889 1.0296559  2.7063159 8.064976e-03 4.032488e-02 -3.525871
+#> g13  0.5534069 0.7824108  1.8099043 7.346971e-02 2.522354e-01 -5.448973
+#> g15 -0.5651961 0.8212475 -1.7959996 7.567061e-02 2.522354e-01 -5.473288
+#> g17 -0.4552155 0.8176752 -1.3476872 1.809613e-01 5.170324e-01 -6.161894
+#> g3   0.3247762 1.1046741  1.0831302 2.814896e-01 7.037241e-01 -6.479465
+#> g8   0.3384772 0.7251398  1.0044543 3.177090e-01 7.060201e-01 -6.560914
+#> g6   0.2393203 0.7514823  0.7978168 4.269648e-01 8.121245e-01 -6.746119
+
+## Volcano plot
+limma::volcanoplot(pfit, coef = 2, highlight = ndiff)
+
 
 ```

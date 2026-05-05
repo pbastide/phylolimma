@@ -25,7 +25,7 @@ phylogeneticCorrelations(
 
 - object:
 
-  A matrix data object containing normalized expression values, with
+  a matrix data object containing normalized expression values, with
   rows corresponding to genes and columns to samples (species).
 
 - design:
@@ -37,29 +37,36 @@ phylogeneticCorrelations(
 - phy:
 
   an object of class
-  [`phylo`](https://rdrr.io/pkg/ape/man/read.tree.html). It must be
-  either a tree with tips having the same names as the columns of
-  `object` (including replicates), or a tree such that tip labels match
-  with species names in \`col_species\`.
+  [`phylo`](https://rdrr.io/pkg/ape/man/read.tree.html), representing
+  the phylogenetic relationships between the species. It must be dated
+  and ultrametric. If the column names of `object` follow the pattern
+  `SpeciesName_SampleId` or `SpeciesName.SampleId`, an automatic
+  matching of the samples on the tip of the tree is performed.
+  Otherwise, the tree tip labels must match with species names in
+  `col_species` (see below). The tip labels of the tree can also match
+  exactly the names as the columns of `object`, so that the tree
+  directly includes all the replicates.
 
 - col_species:
 
-  a character vector with same length as columns in the expression
-  matrix, specifying the species for the corresponding column. If left
-  \`NULL\`, an automatic parsing of species names with sample ids is
-  attempted.
+  a character vector with same length as there are columns in the
+  expression matrix, specifying the species for the corresponding
+  column. If left `NULL` (the default), an automatic parsing of species
+  names with sample ids is attempted.
 
 - model:
 
   the phylogenetic model used to correct for the phylogeny. Must be one
-  of "BM", "lambda" or "OUfixedRoot". See
+  of "OUfixedRoot" (the default), "BM", or "lambda". See
   [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html) for more
   details.
 
 - measurement_error:
 
-  a logical value indicating whether there is measurement error. Default
-  to `TRUE`. See
+  a logical value indicating whether there is measurement error, or
+  individual independent (non phylogenetic) variation among samples.
+  Default to `TRUE`. Setting this to `FALSE` can give unexpected
+  results, except for the "lambda" model. See
   [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html) for more
   details.
 
@@ -106,4 +113,4 @@ on to [`lmFit`](https://rdrr.io/pkg/limma/man/lmFit.html).
 [`lmFit`](https://rdrr.io/pkg/limma/man/lmFit.html),
 [`phylolmFit`](https://pbastide.github.io/phyloDE/reference/phylolmFit.md),
 [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html),
-[`eBayes`](https://pbastide.github.io/phyloDE/reference/eBayes.md)
+[`eBayes`](https://rdrr.io/pkg/limma/man/ebayes.html)

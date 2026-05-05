@@ -13,9 +13,7 @@
 <url><loc>https://pbastide.github.io/phyloDE/reference/check_tree.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/crayfish.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/ddf_samples.html</loc></url>
-<url><loc>https://pbastide.github.io/phyloDE/reference/decideTests.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/dots.html</loc></url>
-<url><loc>https://pbastide.github.io/phyloDE/reference/eBayes.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/fit_all_phylolm.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/getBoundsSelectionStrength.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/getMaxLambda.html</loc></url>
@@ -53,6 +51,7 @@
 <url><loc>https://pbastide.github.io/phyloDE/reference/transform_tree_model_OUfixedRoot.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/transform_tree_model_lambda.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/transform_tree_phylolm.html</loc></url>
+<url><loc>https://pbastide.github.io/phyloDE/reference/treat.html</loc></url>
 <url><loc>https://pbastide.github.io/phyloDE/reference/tree_height.html</loc></url>
 </urlset>
 

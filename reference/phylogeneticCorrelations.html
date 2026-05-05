@@ -63,7 +63,7 @@ TODO: explain more.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>A matrix data object containing normalized expression values,
+<dd><p>a matrix data object containing normalized expression values,
 with rows corresponding to genes and columns to samples (species).</p></dd>
 
 
@@ -74,25 +74,33 @@ Defaults to the unit vector (intercept).</p></dd>
 
 
 <dt id="arg-phy">phy<a class="anchor" aria-label="anchor" href="#arg-phy"></a></dt>
-<dd><p>an object of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.
-It must be either a tree with tips having the same names as the columns of <code>object</code> (including replicates),
-or a tree such that tip labels match with species names in `col_species`.</p></dd>
+<dd><p>an object of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of <code>object</code> follow the pattern
+<code>SpeciesName_SampleId</code> or <code>SpeciesName.SampleId</code>,
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in <code>col_species</code> (see below).
+The tip labels of the tree can also match exactly the names as the columns of <code>object</code>,
+so that the tree directly includes all the replicates.</p></dd>
 
 
 <dt id="arg-col-species">col_species<a class="anchor" aria-label="anchor" href="#arg-col-species"></a></dt>
-<dd><p>a character vector with same length as columns in the expression matrix,
-specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.</p></dd>
+<dd><p>a character vector with same length as there are columns
+in the expression matrix, specifying the species for the corresponding column.
+If left <code>NULL</code> (the default), an automatic parsing of species names with sample ids is attempted.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda" or "OUfixedRoot".
+Must be one of  "OUfixedRoot" (the default), "BM", or "lambda".
 See <code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code> for more details.</p></dd>
 
 
 <dt id="arg-measurement-error">measurement_error<a class="anchor" aria-label="anchor" href="#arg-measurement-error"></a></dt>
-<dd><p>a logical value indicating whether there is measurement error.
-Default to <code>TRUE</code>.
+<dd><p>a logical value indicating whether there is measurement error,
+or individual independent (non phylogenetic) variation among samples.
+Default to <code>TRUE</code>. Setting this to <code>FALSE</code> can give unexpected results,
+except for the "lambda" model.
 See <code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code> for more details.</p></dd>
 
 
@@ -123,7 +131,7 @@ with list components:</p><ul><li><p><code>tree</code> the transformed consensus 
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/limma/man/lmFit.html" class="external-link">lmFit</a></code>, <code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code>, <code><a href="https://rdrr.io/pkg/limma/man/dupcor.html" class="external-link">duplicateCorrelation</a></code></p>
 <p><code><a href="https://rdrr.io/pkg/limma/man/lmFit.html" class="external-link">lmFit</a></code>, <code><a href="phylolmFit.html">phylolmFit</a></code>,
-<code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code>, <code><a href="eBayes.html">eBayes</a></code></p></div>
+<code><a href="https://rdrr.io/pkg/phylolm/man/phylolm.html" class="external-link">phylolm</a></code>, <code><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
