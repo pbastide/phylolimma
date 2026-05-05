@@ -409,3 +409,62 @@ check_tree <- function(phy, y, col_species) {
 #                    id = colnames(y$exprs))
 #   return(addReplicatesOnTree(phy, tt))
 # }
+
+#' @title Heatmap with Phylogeny Structured Columns
+#'
+#' @inheritParams phylolmFit
+#' @param coef column number or column name specifying which coefficient or contrast
+#' of the linear model in the `design` matrix is of interest. If left \code{NULL},
+#' defaults to the last column of `design`.
+#' @param scale character indicating if the values on the heatmap should be centered and scaled in either the row direction or the column direction, or none.
+#' The default is "none", as the data is assumed to be already normalized.
+#' This scaling only affects the colour scale; it does not scale the original data. See documentation of \code{\link{heatmap}}.
+#' @param ColSideColors (optional) character vector of length `ncol(object)`
+#' containing the color names for a horizontal side bar that may be used to annotate the columns of the heatmap.
+#' If left \code{NULL} and `design` is specified, the column of the \code{design} matrix corresponding to `coef` will be used.
+#' @param add.expr expression that will be evaluated after the call to image.
+#' Can be used to add components to the plot.
+#' See documentation of \code{\link{heatmap}}.
+#' If left \code{NULL} and `design` is specified, the column of the \code{design}
+#' matrix corresponding to `coef` will be used to draw vertical lines.
+#' @param ... further arguments to be passed to \code{\link{heatmap}}.
+#' Argument \code{Colv} defaults to the phylogeny, and cannot be overwritten.
+#'
+#' @description
+#' This function uses the \code{\link{heatmap}} function to plot
+#' the (normalized) data, using the phylogenetic tree as the column
+#' dendogram.
+#'
+#' @return Invisibly, a list, see \code{\link{heatmap}}.
+#'
+#' @export
+#'
+phyHeatmap <- function(object, design = NULL, coef = NULL, phy, scale = "none", ColSideColors = NULL, add.expr = NULL, ...) {
+  ## data
+  y <- check_expression_matrix(object)
+  ## tree
+  phy <- check_tree(phy, y, NULL)
+  tree_dend <- as.dendrogram(as.hclust(phy))
+  ## design and colors
+  if (!is.null(design)) {
+    design <- check_design_matrix(design, y, phy)
+    if (is.null(coef)) coef <- ncol(design)
+    colColors <- factor(design[, coef])
+    nColLevels <- length(unique(colColors))
+    levels(colColors) <-  hcl.colors(3)[seq_len(nColLevels)]
+    colColors <- as.vector(colColors)
+    colInd <- order.dendrogram(tree_dend)
+    pos_shifts <- which(diff(design[colInd, 2]) != 0)
+    heatmap(y$exprs,
+            Colv = tree_dend,
+            ColSideColors = colColors,
+            scale = scale,
+            add.expr = abline(v = pos_shifts + 0.5, lty = "dashed"), ...)
+  } else {
+    heatmap(y$exprs, Colv = tree_dend, scale = scale, ...)
+  }
+}
+
+#' @importFrom grDevices hcl.colors
+#' @importFrom stats as.dendrogram as.hclust heatmap order.dendrogram
+NULL

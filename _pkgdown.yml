@@ -25,6 +25,7 @@ reference:
 - title: Helper Functions
   desc: Function to pre-process the tree or the data.
   contents:
+  - phyHeatmap
   - addReplicatesOnTree
   - lengthNormalizeRNASeq
   - rhoFromAlpha

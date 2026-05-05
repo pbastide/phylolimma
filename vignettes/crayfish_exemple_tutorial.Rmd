@@ -59,6 +59,7 @@ norm_data <- lengthNormalizeRNASeq(crayfish$counts,
                                    dataTransformation = "log2")
 ```
 
+
 ## Design matrix
 
 We then construct the design matrix, to analyse the effect of sight
@@ -68,6 +69,13 @@ on gene expression.
 design <- model.matrix(~ sights, model.frame(crayfish$sights))
 ```
 
+## Heatmap matrix
+
+We can plot the data using a heatmap, using the phylogenetic
+structure on the columns, and a standard clustering on the rows.
+```{r, fig.show='hold', fig.height=7, fig.width=7}
+phyHeatmap(norm_data, design, 2, crayfish$tree)
+```
 
 ## Fit with `phyloDE`
 
