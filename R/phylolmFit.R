@@ -239,7 +239,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   resFitFormat$sigma2_phy <- C_tree_params$sigma2_phy
   resFitFormat$sigma2_error <- C_tree_params$sigma2_error
   resFitFormat$REML <- REML
-  if (use_consensus) resFitFormat$consensus_tree <- consensus_tree
+  if (use_consensus) resFitFormat$consensus_tree <- new("ConsensusTreeModel", consensus_tree)
   resFitFormat$use_consensus <- use_consensus
 
   ## Result

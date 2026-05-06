@@ -36,9 +36,37 @@ setClass("PhyloMArrayLM",
          contains = "MArrayLM",
 )
 
-#' Methods for class PhyloMArrayLM
+#' @title Class ConsensusTreeModel
 #'
-#' @param object an object of class \code{\link{PhyloMArrayLM-class}}
+#' @description
+#' A simple list-based S4 class, that contains a tree and associated parameters,
+#' obtained through function \code{\link{phylogeneticCorrelations}}.
+#'
+#' @section Components:
+#' \code{ConsensusTreeModel} objects do not contain any slots (apart from .Data)
+#' but they should contain the following list components:
+#'
+#'#' \itemize{
+#' \item \code{tree} the transformed consensus tree
+#' \item \code{params} the associated consensus parameters.
+#' }
+#'
+#' \describe{
+#' \item{\code{tree}:}{the transformed consensus tree used to define the correlation structure.}
+#' \item{\code{params}:}{the parameters associated with the tree, including regularized values of the parameters.}
+#' }
+#'
+#' @seealso \code{\link{phylogeneticCorrelations}}, \code{\link{phylolmFit}}, \code{\link{PhyloMArrayLM-class}}.
+#'
+#' @export
+#'
+setClass("ConsensusTreeModel",
+         representation("list")
+)
+
+#' Methods for classes PhyloMArrayLM and ConsensusTreeModel
+#'
+#' @param object an object of class \code{\link{PhyloMArrayLM-class}} or \code{\link{ConsensusTreeModel-class}}
 #'
 #' @param consensus if \code{TRUE} (the default), \code{getParameters}
 #' returns the consensus parameters as a named vector.
@@ -60,26 +88,39 @@ setGeneric("getParameters", function(object, consensus = TRUE) standardGeneric("
 #' @export
 setMethod("getParameters", "PhyloMArrayLM", function(object, consensus = TRUE) {
   if (object$modelphy == "BM" && !object$measurement_error) return(NULL)
-  if (consensus) {
-    if (!object$use_consensus) stop("Fit did not use a consensus tree. Set `consensus = FALSE` to get the individual gene-specific parameters, or re-run fit with consensus tree.")
-    params <- object$lambda_error
-    params_names <- "lambda"
+  if (object$use_consensus) {
+    return(getParameters(object$consensus_tree, consensus = consensus))
+  } else {
+    if (consensus) stop("Fit did not use a consensus tree. Set `consensus = FALSE` to get the individual gene-specific parameters, or re-run fit with consensus tree.")
+    params <- data.frame(lambda = object$lambda_error)
     if (object$modelphy == "OUfixedRoot") {
-      params <- c(params, rhoFromAlpha(object$optpar, max(ape::node.depth.edgelength(object$phy))))
+      params$rho <- rhoFromAlpha(object$optpar, max(ape::node.depth.edgelength(object$phy)))
+    }
+    return(params)
+  }
+  return(params)
+})
+
+#' @rdname PhyloMArrayLMMethods
+#' @export
+setMethod("getParameters", "ConsensusTreeModel", function(object, consensus = TRUE) {
+  objpar <- object$param
+  if (objpar$model == "BM" && !objpar$measurement_error) return(NULL)
+  if (consensus) {
+    params <- params_names <- NULL
+    if (!is.null(objpar$lambda_error)) {
+      params <- objpar$lambda_error
+      params_names <- "lambda"
+    }
+    if (objpar$model == "OUfixedRoot") {
+      params <- c(params, rhoFromAlpha(objpar$alpha, objpar$t_original_tree))
       params_names <- c(params_names, "rho")
     }
     names(params) <- params_names
   } else {
-    if (object$use_consensus) {
-      params <- data.frame(lambda = tanh(object$consensus_tree$params$atanh_lambda_error))
-      if (object$modelphy == "OUfixedRoot") {
-        params$rho <- tanh(object$consensus_tree$params$trans_alpha)
-      }
-    } else {
-      params <- data.frame(lambda = object$lambda_error)
-      if (object$modelphy == "OUfixedRoot") {
-        params$rho <- rhoFromAlpha(object$optpar, max(ape::node.depth.edgelength(object$phy)))
-      }
+    params <- data.frame(lambda = tanh(objpar$atanh_lambda_error))
+    if (objpar$model == "OUfixedRoot") {
+      params$rho <- tanh(objpar$trans_alpha)
     }
   }
   return(params)
@@ -96,7 +137,17 @@ setGeneric("plotParameters", function(object, ...) standardGeneric("plotParamete
 setMethod("plotParameters", "PhyloMArrayLM", function(object, ...) {
   params <- NULL
   if (object$use_consensus) params <- getParameters(object, consensus = TRUE)
-  all_params <- getParameters(object, consensus = FALSE)
+  plot_params_internal(params, getParameters(object, consensus = FALSE), ...)
+})
+
+#' @rdname PhyloMArrayLMMethods
+#' @export
+setMethod("plotParameters", "ConsensusTreeModel", function(object, ...) {
+  plot_params_internal(getParameters(object, consensus = TRUE),
+                       getParameters(object, consensus = FALSE), ...)
+})
+
+plot_params_internal <- function(params, all_params, ...) {
   ncols <- ncol(all_params)
   scr <- split.screen(c(1, ncols))
   on.exit(close.screen(all.screens = TRUE))
@@ -104,9 +155,9 @@ setMethod("plotParameters", "PhyloMArrayLM", function(object, ...) {
     screen(scr[i])
     hist(all_params[, i], xlim = c(0, 1), xlab = colnames(all_params)[i],
          main = "", ...)
-    abline(v = params[i], lty = "dashed", lwd = 2)
+    if (!is.null(params)) abline(v = params[i], lty = "dashed", lwd = 2)
   }
-})
+}
 
 #' @rdname PhyloMArrayLMMethods
 setMethod("show", "PhyloMArrayLM", function(object) {
@@ -117,6 +168,27 @@ setMethod("show", "PhyloMArrayLM", function(object) {
       sep = ""
   )
 })
+
+#' @rdname PhyloMArrayLMMethods
+setMethod("show", "ConsensusTreeModel", function(object) {
+  cat(is(object)[[1]], "\n",
+      "  Consensus tree on: ", length(object$params$atanh_lambda_error), " genes.\n",
+      "  Model: ", object$param$model, ifelse(object$params$measurement_error, ", with", ", without"), " measurement error.\n",
+      "  Consensus parameters: ",
+      sep = ""
+  )
+  getParametersString(object)
+})
+
+getParametersString <- function(object) {
+  pp <- getParameters(object)
+  cat(names(pp)[1], "=", pp[1])
+  if (length(pp) > 1) {
+    for (i in 2:length(pp)) {
+      cat(",", names(pp)[i], "=", pp[i])
+    }
+  }
+}
 
 #' @rdname PhyloMArrayLMMethods
 setGeneric("logLikelihood", function(object) standardGeneric("logLikelihood"))
@@ -159,7 +231,18 @@ logLikelihood_internal <- function (object) {
 setGeneric("consensusTree", function(object) standardGeneric("consensusTree"))
 #' @rdname PhyloMArrayLMMethods
 #' @export
-setMethod("consensusTree", "PhyloMArrayLM", function(object) consensus_tree_internal(object))
+setMethod("consensusTree", "PhyloMArrayLM", function(object) {
+  if (!object$use_consensus) {
+    warning("The fitted object did not use a consensus tree.")
+    return(NULL)
+  }
+  return(consensusTree(object$consensus_tree))
+})
+#' @rdname PhyloMArrayLMMethods
+#' @export
+setMethod("consensusTree", "ConsensusTreeModel", function(object) {
+  return(object$tree)
+})
 
 consensus_tree_internal <- function (object) {
   if (!object$use_consensus) {
@@ -168,8 +251,5 @@ consensus_tree_internal <- function (object) {
   }
   return(object$consensus_tree$tree)
 }
-
-## TODO: create a special class for a consensus tree
-## (tree with the associated parameters ?)
 
 

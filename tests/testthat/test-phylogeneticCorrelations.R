@@ -102,9 +102,7 @@ test_that("phylogeneticCorrelations - BM", {
                tol = 1e-4)
 
   ## parameters
-  pp <- getParameters(resPhyloLmFitConsLambda)
-  expect_equal(length(pp), 1)
-  expect_equal(names(pp), "lambda")
+  expect_equal(getParameters(resPhyloLmFitConsLambda), getParameters(resPhyloLmFitCons), tol = 1e-4)
 
 })
 
@@ -156,6 +154,7 @@ test_that("phylogeneticCorrelations - separate call", {
                            consensus_tree = pc)
         expect_equal(res1, res2)
         expect_equal(consensusTree(res1), pc$tree)
+        expect_equal(getParameters(res1), getParameters(pc))
       }
     }
   }
@@ -180,6 +179,8 @@ test_that("phylogeneticCorrelations - separate call", {
   pp <- getParameters(res1, consensus = FALSE)
   expect_equal(dim(pp), c(20, 2))
   expect_equal(colnames(pp), c("lambda", "rho"))
+  expect_equal(getParameters(res1, consensus = FALSE),
+               getParameters(res2, consensus = FALSE))
 
 })
 
@@ -191,6 +192,7 @@ test_that("phylogeneticCorrelations - eBayes", {
   mat_tree <- ape::vcv(tree)
   ## data
   ngenes <- 20
+  y_data <- t(phylolm::rTrait(ngenes, tree, model = "delta", parameters = list(delta = 0.1)))
   y_data <- t(phylolm::rTrait(ngenes, tree, model = "delta", parameters = list(delta = 0.1)))
   ## Design
   design <- matrix(1, nrow = ntips, ncol = 2)

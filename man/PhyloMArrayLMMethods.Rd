@@ -4,24 +4,34 @@
 \name{getParameters}
 \alias{getParameters}
 \alias{getParameters,PhyloMArrayLM-method}
+\alias{getParameters,ConsensusTreeModel-method}
 \alias{plotParameters}
 \alias{plotParameters,PhyloMArrayLM-method}
+\alias{plotParameters,ConsensusTreeModel-method}
 \alias{show,PhyloMArrayLM-method}
+\alias{show,ConsensusTreeModel-method}
 \alias{logLikelihood}
 \alias{logLikelihood,PhyloMArrayLM-method}
 \alias{consensusTree}
 \alias{consensusTree,PhyloMArrayLM-method}
-\title{Methods for class PhyloMArrayLM}
+\alias{consensusTree,ConsensusTreeModel-method}
+\title{Methods for classes PhyloMArrayLM and ConsensusTreeModel}
 \usage{
 getParameters(object, consensus = TRUE)
 
 \S4method{getParameters}{PhyloMArrayLM}(object, consensus = TRUE)
 
+\S4method{getParameters}{ConsensusTreeModel}(object, consensus = TRUE)
+
 plotParameters(object, ...)
 
 \S4method{plotParameters}{PhyloMArrayLM}(object, ...)
 
+\S4method{plotParameters}{ConsensusTreeModel}(object, ...)
+
 \S4method{show}{PhyloMArrayLM}(object)
+
+\S4method{show}{ConsensusTreeModel}(object)
 
 logLikelihood(object)
 
@@ -30,9 +40,11 @@ logLikelihood(object)
 consensusTree(object)
 
 \S4method{consensusTree}{PhyloMArrayLM}(object)
+
+\S4method{consensusTree}{ConsensusTreeModel}(object)
 }
 \arguments{
-\item{object}{an object of class \code{\link{PhyloMArrayLM-class}}}
+\item{object}{an object of class \code{\link{PhyloMArrayLM-class}} or \code{\link{ConsensusTreeModel-class}}}
 
 \item{consensus}{if \code{TRUE} (the default), \code{getParameters}
 returns the consensus parameters as a named vector.
@@ -44,7 +56,7 @@ Otherwise, it returns the individual fits for all genes.}
 Depending on the method, a named vector, a data frame, or a plot.
 }
 \description{
-Methods for class PhyloMArrayLM
+Methods for classes PhyloMArrayLM and ConsensusTreeModel
 }
 \seealso{
 \code{\link{PhyloMArrayLM-class}}, \code{\link{phylolmFit}}

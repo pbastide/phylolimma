@@ -2,36 +2,96 @@
 #' @importFrom foreach %do%
 NULL
 
-#' @title Phylogenetic correlation using a consensus tree
+#' @title Phylogenetic Correlation using a Consensus Tree
 #'
 #' @description
-#' This function applies \code{\link[limma]{lmFit}} to the normalized data,
-#' in order to take the phylogeny into account.
-#' TODO: explain more.
+#' This function finds a consensus correlation structure common to all genes,
+#' that can be used as an entry in \code{\link{phylolmFit}}.
+#' It is similar to \code{\link[limma]{duplicateCorrelation}},
+#' but instead of being simply block diagonal, the correlation matrix
+#' has a structure given by the phylogenetic tree and the model of trait
+#' evolution.
+#'
 #'
 #' @inheritParams phylolmFit
-#' @param trim a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.
+#' @param trim a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of
+#' `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean.
+#' If a single value is provided, it is recycled as a vector of size two.
+#' Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.
 #' @param ... further parameters to be passed to \code{\link[phylolm]{phylolm}}.
 #'
-#' @return An object of class \code{TransTree-class},
-#' with list components:
-#' \itemize{
-#' \item \code{tree} the transformed consensus tree
-#' \item \code{params} the associated consensus parameters.
-#' }
-#' This consensus tree defines a correlation structure, and can be passed on to \code{\link[limma]{lmFit}}.
+#' @details
+#' This function finds a consensus tree in two steps:
+#' 1. Fit a phylogenetic linear model with \code{\link[phylolm]{phylolm}} on each gene.
+#' 2. Use the trimmed mean of transformed parameters to get one regularized value for all the genes.
 #'
-#' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}}, \code{\link[limma]{duplicateCorrelation}}
+#' Given a vector of parameters `params_genes` on all genes,
+#' the consensus parameter `param_consensus` is found using the formula:
+#' ```
+#' param_consensus = mean_trim(tanh(params_genes), trim = trim)
+#' ```
 #'
-#' @importFrom methods new
+#' The regularized parameters `params` depend on the phylogenetic model used:
+#' * For a BM with measurement error or a Pagel's lambda model, the
+#' regularized parameter is `lambda`.
+#' * For a OU process with measurement error the
+#' regularized parameters are `lambda` and `rho`.
 #'
-#' @seealso \code{\link[limma]{lmFit}}, \code{\link{phylolmFit}},
-#' \code{\link[phylolm]{phylolm}}, \code{\link[limma]{eBayes}}
+#'
+#' The consensus tree can then be given to \code{\link{phylolmFit}} with the
+#' argument `consensus_tree`.
+#' This two step procedure is equivalent to calling \code{\link{phylolmFit}}
+#' with `use_consensus = TRUE` and no consensus tree directly (see Examples).
+#'
+#' The default bounds on the phylogenetic parameters are the same as in
+#' \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU,
+#' that use ad-hoc bounds from function \code{\link{getBoundsSelectionStrength}},
+#' and the \code{sigma2_error} of the intra-specific variance,
+#' that takes it lower bound from function \code{\link{getMinError}}.
+#' @return An object of class \code{\link{ConsensusTreeModel-class}}.
+#' This consensus tree defines a correlation structure,
+#' and can be passed on to \code{\link{phylolmFit}}.
+#'
+#' @seealso \code{\link{phylolmFit}},
+#' \code{\link[phylolm]{phylolm}},
+#' \code{\link[limma]{duplicateCorrelation}}
+#' \code{\link{mean_trim}}
+#'
+#' @examples
+#' ## Use the normalized Crayfish dataset
+#' data(crayfish)
+#' # For more details on the normalization, see \code{vignette("crayfish_exemple_tutorial")}
+#' norm_data <- lengthNormalizeRNASeq(crayfish$counts, crayfish$lengths)
+#'
+#' ## Design matrix
+#' design <- model.matrix(~ sights, model.frame(crayfish$sights))
+#'
+#' ## Consensus tree (using only genes 1 to 50)
+#' ctree <- phylogeneticCorrelations(norm_data[1:50, ], design = design, phy = crayfish$tree)
+#' ctree
+#'
+#' ## linear model fit using the consensus tree
+#' pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree, consensus_tree = ctree)
+#' pfit
+#'
+#' ## eBayes correction
+#' pfit <- limma::eBayes(pfit, trend = TRUE)
+#' limma::topTable(pfit, coef = 2)
+#'
+#' ## Volcano plot
+#' limma::volcanoplot(pfit, coef = 2, highlight = 2)
+#'
+#' ## Direct call to phylolmFit gives the same results
+#' pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree)
+#' pfit
+#'
+#' ## eBayes correction
+#' pfit <- limma::eBayes(pfit, trend = TRUE)
+#' limma::topTable(pfit, coef = 2)
 #'
 #' @export
 #'
-#' @importFrom graphics lines title
-#' @importFrom stats approxfun lowess model.matrix uniroot complete.cases
+#' @importFrom stats uniroot
 #'
 phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = NULL,
                                      model = c("OUfixedRoot", "BM", "lambda"),
@@ -67,6 +127,7 @@ phylogeneticCorrelations <- function(object, design = NULL, phy, col_species = N
                                    REML = REML,
                                    ncores = ncores, ...)
 
+  tree_model <- new("ConsensusTreeModel", tree_model)
   return(tree_model)
 }
 
@@ -288,6 +349,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
       params = list(model = "OUfixedRoot",
                     measurement_error = measurement_error,
                     alpha = alpha_mean,
+                    t_original_tree = t_original_tree,
                     log_alpha = log(all_alphas),
                     trans_alpha = all_alphas_transform,
                     trans_alpha_fun = "atanh(1-rho)"))
@@ -322,6 +384,7 @@ get_consensus_tree_OUfixedRoot <- function(phy, all_phyfit, measurement_error, t
                   alpha = alpha_mean,
                   alpha_min = alpha_bounds[1],
                   alpha_max = alpha_bounds[2],
+                  t_original_tree = t_original_tree,
                   trans_alpha = all_alphas_transform,
                   log_alpha = log(all_alphas),
                   trans_alpha_fun = "atanh(rho)",
