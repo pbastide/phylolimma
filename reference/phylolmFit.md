@@ -200,7 +200,6 @@ rownames(design) <- rep_ids
 
 ## linear model fit
 pfit <- phylolmFit(dat, design = design, phy = tree)
-#> Loading required package: ape
 pfit
 #> PhyloMArrayLM
 #>   Fit on: 20 genes.

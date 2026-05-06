@@ -33,24 +33,31 @@ phylogenetic linear regression.
 
 - [`phyloDE-package`](https://pbastide.github.io/phyloDE/reference/phyloDE-package.md)
   [`phyloDE`](https://pbastide.github.io/phyloDE/reference/phyloDE-package.md)
-  : TODO
+  :
+
+  The `phyloDE` Package for Differential Expression Analysis
+
 - [`phylolmFit()`](https://pbastide.github.io/phyloDE/reference/phylolmFit.md)
   : Phylogenetic Linear Model for Gene Expression Analysis
+
 - [`phylogeneticCorrelations()`](https://pbastide.github.io/phyloDE/reference/phylogeneticCorrelations.md)
-  : Phylogenetic correlation using a consensus tree
+  : Phylogenetic Correlation using a Consensus Tree
 
-## PhyloMArrayLM Class
+## S4 Classes
 
-Class containing the result of a fit and associated helper functions.
+Classes containing the result of a fit and associated helper functions.
 
 - [`PhyloMArrayLM-class`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLM-class.md)
   : Class PhyloMArrayLM
+- [`ConsensusTreeModel-class`](https://pbastide.github.io/phyloDE/reference/ConsensusTreeModel-class.md)
+  : Class ConsensusTreeModel
 - [`getParameters()`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
   [`plotParameters()`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
   [`show(`*`<PhyloMArrayLM>`*`)`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
+  [`show(`*`<ConsensusTreeModel>`*`)`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
   [`logLikelihood()`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
   [`consensusTree()`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLMMethods.md)
-  : Methods for class PhyloMArrayLM
+  : Methods for classes PhyloMArrayLM and ConsensusTreeModel
 
 ## Helper Functions
 

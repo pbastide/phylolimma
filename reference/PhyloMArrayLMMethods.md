@@ -1,6 +1,6 @@
-# Methods for class PhyloMArrayLM
+# Methods for classes PhyloMArrayLM and ConsensusTreeModel
 
-Methods for class PhyloMArrayLM
+Methods for classes PhyloMArrayLM and ConsensusTreeModel
 
 ## Usage
 
@@ -10,12 +10,21 @@ getParameters(object, consensus = TRUE)
 # S4 method for class 'PhyloMArrayLM'
 getParameters(object, consensus = TRUE)
 
+# S4 method for class 'ConsensusTreeModel'
+getParameters(object, consensus = TRUE)
+
 plotParameters(object, ...)
 
 # S4 method for class 'PhyloMArrayLM'
 plotParameters(object, ...)
 
+# S4 method for class 'ConsensusTreeModel'
+plotParameters(object, ...)
+
 # S4 method for class 'PhyloMArrayLM'
+show(object)
+
+# S4 method for class 'ConsensusTreeModel'
 show(object)
 
 logLikelihood(object)
@@ -27,6 +36,9 @@ consensusTree(object)
 
 # S4 method for class 'PhyloMArrayLM'
 consensusTree(object)
+
+# S4 method for class 'ConsensusTreeModel'
+consensusTree(object)
 ```
 
 ## Arguments
@@ -35,6 +47,8 @@ consensusTree(object)
 
   an object of class
   [`PhyloMArrayLM-class`](https://pbastide.github.io/phyloDE/reference/PhyloMArrayLM-class.md)
+  or
+  [`ConsensusTreeModel-class`](https://pbastide.github.io/phyloDE/reference/ConsensusTreeModel-class.md)
 
 - consensus:
 
