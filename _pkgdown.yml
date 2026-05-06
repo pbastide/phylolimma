@@ -14,10 +14,11 @@ reference:
   - phyloDE-package
   - phylolmFit
   - phylogeneticCorrelations
-- title: PhyloMArrayLM Class
-  desc: Class containing the result of a fit and associated helper functions.
+- title: S4 Classes
+  desc: Classes containing the result of a fit and associated helper functions.
   contents:
   - PhyloMArrayLM-class
+  - ConsensusTreeModel-class
   - getParameters
   - plotParameters
   - consensusTree
