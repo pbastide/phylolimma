@@ -109,10 +109,10 @@ on gene expression.</p>
 <div class="section level2">
 <h2 id="heatmap-matrix">Heatmap matrix<a class="anchor" aria-label="anchor" href="#heatmap-matrix"></a>
 </h2>
-<p>We can plot the data using a heatmap, using the phylogenetic
-structure on the columns, and a standard clustering on the rows.</p>
+<p>We can plot the data with a heatmap, using the phylogenetic structure
+on the columns, and a standard clustering on the rows.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/phyHeatmap.html">phyHeatmap</a></span><span class="op">(</span><span class="va">norm_data</span>, <span class="va">design</span>, <span class="fl">2</span>, <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/phyHeatmap.html">phyHeatmap</a></span><span class="op">(</span><span class="va">norm_data</span>, <span class="va">design</span>, coef <span class="op">=</span> <span class="fl">2</span>, <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span>, margins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level2">
@@ -193,6 +193,15 @@ hypothesis.</li>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/volcanoplot.html" class="external-link">volcanoplot</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span>, highlight <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="480"></p>
+<ul>
+<li>Heatmap restricted to top
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>10</mn><annotation encoding="application/x-tex">10</annotation></semantics></math>
+genes:</li>
+</ul>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">topGenes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/toptable.html" class="external-link">topTable</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/phyHeatmap.html">phyHeatmap</a></span><span class="op">(</span><span class="va">norm_data</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">topGenes</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">norm_data</span><span class="op">)</span><span class="op">)</span>, <span class="op">]</span>, <span class="va">design</span>, coef <span class="op">=</span> <span class="fl">2</span>, <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span>, margins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level2">
 <h2 id="parameters-of-the-ou">Parameters of the OU<a class="anchor" aria-label="anchor" href="#parameters-of-the-ou"></a>
@@ -202,7 +211,7 @@ a OU process per gene, and then regularize the parameters (by taking the
 trimmed means of the tanh values).</p>
 <p>Function <code>getParameters</code> extract the regularized
 parameters.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PhyloMArrayLMMethods.html">getParameters</a></span><span class="op">(</span><span class="va">pfit</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    lambda       rho </span></span>
 <span><span class="co">#&gt; 0.7158580 0.9354393</span></span></code></pre></div>
@@ -235,9 +244,9 @@ strength alpha is close to zero).</li>
 </ul>
 <p>The gene-specific and regularized parameters can be plotted with
 function <code>plotParameters</code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PhyloMArrayLMMethods.html">plotParameters</a></span><span class="op">(</span><span class="va">pfit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672">
+<p><img src="crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="672">
 Histograms are histograms over all the fits on all genes, while dashed
 lines represent regularized parameters. Modes close to the 0 and 1
 bounds can be expected, especially for small parameters.</p>

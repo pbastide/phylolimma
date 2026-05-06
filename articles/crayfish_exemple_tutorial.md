@@ -58,12 +58,12 @@ design <- model.matrix(~ sights, model.frame(crayfish$sights))
 
 ## Heatmap matrix
 
-We can plot the data using a heatmap, using the phylogenetic structure
-on the columns, and a standard clustering on the rows.
+We can plot the data with a heatmap, using the phylogenetic structure on
+the columns, and a standard clustering on the rows.
 
 ``` r
 
-phyHeatmap(norm_data, design, 2, crayfish$tree)
+phyHeatmap(norm_data, design, coef = 2, crayfish$tree, margins = c(7, 3))
 ```
 
 ![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-6-1.png)
@@ -170,6 +170,16 @@ volcanoplot(pfit, coef = 2, highlight = 10)
 
 ![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-13-1.png)
 
+- Heatmap restricted to top $`10`$ genes:
+
+``` r
+
+topGenes <- rownames(topTable(pfit, coef = 2))
+phyHeatmap(norm_data[match(topGenes, rownames(norm_data)), ], design, coef = 2, crayfish$tree, margins = c(7, 6))
+```
+
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-14-1.png)
+
 ## Parameters of the OU
 
 Some diagnostic plots are specific to `phyloDE`, that fits a OU process
@@ -209,7 +219,7 @@ function `plotParameters`.
 plotParameters(pfit)
 ```
 
-![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-15-1.png)
+![](crayfish_exemple_tutorial_files/figure-html/unnamed-chunk-16-1.png)
 Histograms are histograms over all the fits on all genes, while dashed
 lines represent regularized parameters. Modes close to the 0 and 1
 bounds can be expected, especially for small parameters.
