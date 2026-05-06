@@ -71,10 +71,10 @@ design <- model.matrix(~ sights, model.frame(crayfish$sights))
 
 ## Heatmap matrix
 
-We can plot the data using a heatmap, using the phylogenetic
+We can plot the data with a heatmap, using the phylogenetic
 structure on the columns, and a standard clustering on the rows.
 ```{r, fig.show='hold', fig.height=7, fig.width=7}
-phyHeatmap(norm_data, design, 2, crayfish$tree)
+phyHeatmap(norm_data, design, coef = 2, crayfish$tree, margins = c(7, 3))
 ```
 
 ## Fit with `phyloDE`
@@ -148,6 +148,11 @@ abline(h = 0, col = "red", lwd = 3)
 volcanoplot(pfit, coef = 2, highlight = 10)
 ```
 
+* Heatmap restricted to top $10$ genes:
+```{r, fig.show='hold', fig.height=7, fig.width=7}
+topGenes <- rownames(topTable(pfit, coef = 2))
+phyHeatmap(norm_data[match(topGenes, rownames(norm_data)), ], design, coef = 2, crayfish$tree, margins = c(7, 6))
+```
 
 ## Parameters of the OU
 
