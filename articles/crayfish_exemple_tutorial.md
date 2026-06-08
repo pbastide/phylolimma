@@ -10,7 +10,7 @@ library(phyloDE)
 
 In this tutorial, we re-analyse the Crayfish dataset from Stern &
 Crandal (2018)[^1], re-analysed in Bastide et al. (2023)[^2], and
-available in the `crafish` dataset.
+available in the `crayfish` dataset.
 
 ``` r
 
