@@ -91,7 +91,7 @@ Just as for a `limma` object, we can apply the `eBayes` procedure to the
 results.
 
 Keep in mind that because we only analysed the first 500 genes, the
-results cannot to be interpreted directly, and some plots might look
+results cannot be interpreted directly, and some plots might look
 different when analyzing the full dataset.
 
 We can check whether there is a trend in the data by plotting the
@@ -195,7 +195,7 @@ getParameters(pfit)
 #> 0.7158580 0.9354393
 ```
 
-The parameters are the normalized `lambda` and `rho` parameters:
+The parameters are the normalized `lambda` and `rho` values:
 
 - `lambda` is the ratio of noise attributed to the phylogeny versus the
   total noise.
