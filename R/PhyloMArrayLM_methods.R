@@ -98,7 +98,6 @@ setMethod("getParameters", "PhyloMArrayLM", function(object, consensus = TRUE) {
     }
     return(params)
   }
-  return(params)
 })
 
 #' @rdname PhyloMArrayLMMethods
