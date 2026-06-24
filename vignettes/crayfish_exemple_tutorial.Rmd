@@ -23,11 +23,13 @@ library(limma)
 library(phyloDE)
 ```
 
-## Data
+## Data 
 
 In this tutorial, we re-analyse the Crayfish dataset from
 Stern & Crandal (2018)[^1], re-analysed in Bastide et al. (2023)[^2],
 and available in the `crayfish` dataset.
+
+
 
 ```{r}
 data(crayfish)
@@ -37,6 +39,9 @@ The dataset contains a count RNA-Seq matrix,
 associated gene lengths,
 a phylogenetic tree of the crayfish species included in the study,
 and a data-frame specifying whether a species is blind (0) or sighted (1).
+The goal of this script is to detect genes with a significant parallel shift 
+in optimum between blind species versus sighted species (one of the hypothesis presented in the 
+Table from Stern & Crandal (2018)[^1] ).
 
 ```{r, fig.show='hold', fig.height=4, fig.width=5}
 library(ape)
