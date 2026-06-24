@@ -278,6 +278,7 @@ test_that("Check Lambert's W function", {
   traits = data.frame(species = sub("\\_.", "", ids),
                       ids = ids)
   tree_rep <- addReplicatesOnTree(tree, traits, species = "species", id = "ids")
+  tree_rep <- reorder(tree_rep, "pruningwise")
 
   ## params
   sigma2_phylo <- 1
@@ -315,5 +316,13 @@ test_that("Check Lambert's W function", {
   expect_equal(rho, rhoFromAlpha(alpha, t_tree))
   expect_equal(alpha, alphaFromRho(rho, t_tree))
   expect_equal(0.1, alphaFromRho(rhoFromAlpha(0.1, 102), 102))
+
+  ## manual tree transform
+  tree_trans_bis <- tree_rep
+  tip_branches <- tree_trans_bis$edge[, 2] %in% 1:length(tree_trans_bis$tip.label)
+  node_ages <- phylolm:::pruningwise.distFromRoot(tree_rep)
+  tree_trans_bis$edge.length[tip_branches] <- 1 - lambda_ou_error * (1 - rho) * W / (1 - (1 - rho) * W) * ((1/((1 - rho)*W))^(node_ages[tree_rep$edge[tip_branches,2]]/t_tree) - 1)
+  tree_trans_bis$edge.length[!tip_branches] <- lambda_ou_error * (1 - rho) * W / (1 - (1 - rho) * W) * ((1/((1 - rho)*W))^(node_ages[tree_rep$edge[!tip_branches,2]]/t_tree) - (1/((1 - rho)*W))^(node_ages[tree_rep$edge[!tip_branches,1]]/t_tree))
+  all.equal(tree_trans_bis$edge.length, unname(tree_model$edge.length))
 
 })
