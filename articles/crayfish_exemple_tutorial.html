@@ -76,7 +76,12 @@ available in the <code>crayfish</code> dataset.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">crayfish</span><span class="op">)</span></span></code></pre></div>
 <p>The dataset contains a count RNA-Seq matrix, associated gene lengths,
 a phylogenetic tree of the crayfish species included in the study, and a
-data-frame specifying whether a species is blind (0) or sighted (1).</p>
+data-frame specifying whether a species is blind (0) or sighted (1). The
+goal of this script is to detect genes with a significant parallel shift
+in optimum between blind species versus sighted species (one of the
+hypothesis presented in the Table from Stern &amp; Crandal (2018)<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;Stern, D. B. and Crandall, K. A. (2018), ‘The Evolution
+of Gene Expression Underlying Vision Loss in Cave Animals’, Molecular
+Biology and Evolution 35(8), 2005–2014.&lt;/p&gt;"><sup>3</sup></a> ).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/emmanuelparadis/ape" class="external-link">ape</a></span><span class="op">)</span></span>
 <span><span class="va">cond_species</span> <span class="op">&lt;-</span> <span class="va">crayfish</span><span class="op">$</span><span class="va">sights</span><span class="op">$</span><span class="va">sights</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span><span class="op">$</span><span class="va">tip.label</span>, <span class="va">crayfish</span><span class="op">$</span><span class="va">sights</span><span class="op">$</span><span class="va">species</span><span class="op">)</span><span class="op">]</span></span>
@@ -233,7 +238,7 @@ phylogeny versus the total noise.
 the OU as compared to the variance expected under under BM, see
 Cornuault (2022)<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;Cornuault, J. (2022), ‘Bayesian Analyses of Comparative
 Data with the Ornstein–Uhlenbeck Model: Potential Pitfalls’, Systematic
-Biology 71(6), 1524–1540.&lt;/p&gt;"><sup>3</sup></a>.
+Biology 71(6), 1524–1540.&lt;/p&gt;"><sup>4</sup></a>.
 <ul>
 <li>Values close to 0 mean that process looks like a BM (selection
 strength alpha is close to zero).</li>

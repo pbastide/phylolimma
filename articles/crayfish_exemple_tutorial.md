@@ -19,7 +19,10 @@ data(crayfish)
 
 The dataset contains a count RNA-Seq matrix, associated gene lengths, a
 phylogenetic tree of the crayfish species included in the study, and a
-data-frame specifying whether a species is blind (0) or sighted (1).
+data-frame specifying whether a species is blind (0) or sighted (1). The
+goal of this script is to detect genes with a significant parallel shift
+in optimum between blind species versus sighted species (one of the
+hypothesis presented in the Table from Stern & Crandal (2018)[^3] ).
 
 ``` r
 
@@ -205,7 +208,7 @@ The parameters are the normalized `lambda` and `rho` values:
     (no independent errors).
 - `rho` is the percent decrease in trait variance caused by the OU as
   compared to the variance expected under under BM, see Cornuault
-  (2022)[^3].
+  (2022)[^4].
   - Values close to 0 mean that process looks like a BM (selection
     strength alpha is close to zero).
   - Values close to 1 mean that the tree is close to a star tree
@@ -233,6 +236,10 @@ bounds can be expected, especially for small parameters.
     Interspecies RNA-Seq Data’, Molecular Biology and Evolution 40(1),
     msac269.
 
-[^3]: Cornuault, J. (2022), ‘Bayesian Analyses of Comparative Data with
+[^3]: Stern, D. B. and Crandall, K. A. (2018), ‘The Evolution of Gene
+    Expression Underlying Vision Loss in Cave Animals’, Molecular
+    Biology and Evolution 35(8), 2005–2014.
+
+[^4]: Cornuault, J. (2022), ‘Bayesian Analyses of Comparative Data with
     the Ornstein–Uhlenbeck Model: Potential Pitfalls’, Systematic
     Biology 71(6), 1524–1540.
