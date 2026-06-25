@@ -176,71 +176,58 @@ that takes it lower bound from function <code><a href="getMinError.html">getMinE
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Use the normalized Crayfish dataset</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">crayfish</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># For more details on the normalization, see \code{vignette("crayfish_exemple_tutorial")}</span></span></span>
-<span class="r-in"><span><span class="va">norm_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="lengthNormalizeRNASeq.html">lengthNormalizeRNASeq</a></span><span class="op">(</span><span class="va">crayfish</span><span class="op">$</span><span class="va">counts</span>, <span class="va">crayfish</span><span class="op">$</span><span class="va">lengths</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Design matrix</span></span></span>
-<span class="r-in"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></span><span class="op">(</span><span class="op">~</span> <span class="va">sights</span>, <span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">crayfish</span><span class="op">$</span><span class="va">sights</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Consensus tree (using only genes 1 to 50)</span></span></span>
-<span class="r-in"><span><span class="va">ctree</span> <span class="op">&lt;-</span> <span class="fu"><a href="phylogeneticCorrelations.html">phylogeneticCorrelations</a></span><span class="op">(</span><span class="va">norm_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="op">]</span>, design <span class="op">=</span> <span class="va">design</span>, phy <span class="op">=</span> <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">ctree</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ConsensusTreeModel</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Consensus tree on: 50 genes.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Model: OUfixedRoot, with measurement error.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Consensus parameters: lambda = 0.7632214, rho = 0.911506</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## linear model fit using the consensus tree</span></span></span>
-<span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">phylolmFit</span><span class="op">(</span><span class="va">norm_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="op">]</span>, design <span class="op">=</span> <span class="va">design</span>, phy <span class="op">=</span> <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span>, consensus_tree <span class="op">=</span> <span class="va">ctree</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">pfit</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> PhyloMArrayLM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Fit on: 50 genes.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Model:  OUfixedRoot, with measurement error.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Using a consensus tree.</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## eBayes correction</span></span></span>
-<span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">pfit</span>, trend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/toptable.html" class="external-link">topTable</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               logFC  AveExpr         t    P.Value adj.P.Val         B</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000013 -1.762035 4.157728 -2.371752 0.02271043 0.3322022 -4.553342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000006 -1.123699 4.661495 -2.264746 0.02913447 0.3322022 -4.557420</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000011 -1.515651 6.119281 -2.198865 0.03385542 0.3322022 -4.559880</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000045 -1.656621 4.360357 -2.180602 0.03527915 0.3322022 -4.560555</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000017 -1.246775 3.627495 -2.170592 0.03608178 0.3322022 -4.560923</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000000 -1.125277 3.112778 -2.125918 0.03986427 0.3322022 -4.562556</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000041 -1.567679 3.964510 -2.008296 0.05153887 0.3631216 -4.566756</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000025 -1.957641 4.706274 -1.952082 0.05809945 0.3631216 -4.568710</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000031 -1.226828 4.569394 -1.849555 0.07192955 0.3996086 -4.572180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000046 -0.970511 6.000647 -1.599226 0.11780259 0.5133275 -4.580095</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Volcano plot</span></span></span>
-<span class="r-in"><span><span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/volcanoplot.html" class="external-link">volcanoplot</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span>, highlight <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Simulate a tree with tip conditions</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1289</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ntips</span> <span class="op">&lt;-</span> <span class="fl">10</span></span></span>
+<span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/rlineage.html" class="external-link">rphylo</a></span><span class="op">(</span><span class="va">ntips</span>, <span class="fl">0.1</span>, <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">condition</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tree</span>, tip.color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">hcl.colors</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span><span class="op">[</span><span class="va">condition</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="phylolmFit-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Direct call to phylolmFit gives the same results</span></span></span>
-<span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">phylolmFit</span><span class="op">(</span><span class="va">norm_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="op">]</span>, design <span class="op">=</span> <span class="va">design</span>, phy <span class="op">=</span> <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## Simulate data with 1 to 3 samples per species</span></span></span>
+<span class="r-in"><span><span class="va">reps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="va">ntips</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">rep_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/make.unique.html" class="external-link">make.unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">tree</span><span class="op">$</span><span class="va">tip.label</span>, times <span class="op">=</span> <span class="va">reps</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ngenes</span> <span class="op">&lt;-</span> <span class="fl">20</span></span></span>
+<span class="r-in"><span><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">reps</span><span class="op">)</span> <span class="op">*</span> <span class="va">ngenes</span>, <span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="va">ngenes</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">ngenes</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">rep_ids</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Add differentially expressed genes</span></span></span>
+<span class="r-in"><span><span class="va">condition_reps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">condition</span>, times <span class="op">=</span> <span class="va">reps</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ndiff</span> <span class="op">&lt;-</span> <span class="fl">5</span></span></span>
+<span class="r-in"><span><span class="va">dat</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">ndiff</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="va">dat</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">ndiff</span>, <span class="op">]</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="va">ndiff</span>, <span class="fl">1</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">condition_reps</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Design matrix</span></span></span>
+<span class="r-in"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span><span class="op">)</span>, <span class="va">condition_reps</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">design</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"(Intercept)"</span>, <span class="st">"condition"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">design</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">rep_ids</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## linear model fit</span></span></span>
+<span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">phylolmFit</span><span class="op">(</span><span class="va">dat</span>, design <span class="op">=</span> <span class="va">design</span>, phy <span class="op">=</span> <span class="va">tree</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pfit</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> PhyloMArrayLM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Fit on: 50 genes.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Fit on: 20 genes.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Model:  OUfixedRoot, with measurement error.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Using a consensus tree.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## eBayes correction</span></span></span>
 <span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">pfit</span>, trend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/toptable.html" class="external-link">topTable</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               logFC  AveExpr         t    P.Value adj.P.Val         B</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000013 -1.762035 4.157728 -2.371752 0.02271043 0.3322022 -4.553342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000006 -1.123699 4.661495 -2.264746 0.02913447 0.3322022 -4.557420</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000011 -1.515651 6.119281 -2.198865 0.03385542 0.3322022 -4.559880</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000045 -1.656621 4.360357 -2.180602 0.03527915 0.3322022 -4.560555</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000017 -1.246775 3.627495 -2.170592 0.03608178 0.3322022 -4.560923</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000000 -1.125277 3.112778 -2.125918 0.03986427 0.3322022 -4.562556</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000041 -1.567679 3.964510 -2.008296 0.05153887 0.3631216 -4.566756</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000025 -1.957641 4.706274 -1.952082 0.05809945 0.3631216 -4.568710</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000031 -1.226828 4.569394 -1.849555 0.07192955 0.3996086 -4.572180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000046 -0.970511 6.000647 -1.599226 0.11780259 0.5133275 -4.580095</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          logFC   AveExpr          t      P.Value    adj.P.Val         B</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g2   2.4801330 1.8127645  7.9985315 3.016969e-12 6.033938e-11 17.423416</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g1   1.6783282 1.3716897  5.7235899 1.209830e-07 1.209830e-06  7.039861</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g4   1.7538081 1.4047876  5.5060408 3.110442e-07 2.073628e-06  6.121750</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g5   0.8542889 1.0296559  2.7063159 8.064976e-03 4.032488e-02 -3.525871</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g13  0.5534069 0.7824108  1.8099043 7.346971e-02 2.522354e-01 -5.448973</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g15 -0.5651961 0.8212475 -1.7959996 7.567061e-02 2.522354e-01 -5.473288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g17 -0.4552155 0.8176752 -1.3476872 1.809613e-01 5.170324e-01 -6.161894</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g3   0.3247762 1.1046741  1.0831302 2.814896e-01 7.037241e-01 -6.479465</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g8   0.3384772 0.7251398  1.0044543 3.177090e-01 7.060201e-01 -6.560914</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> g6   0.2393203 0.7514823  0.7978168 4.269648e-01 8.121245e-01 -6.746119</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Volcano plot</span></span></span>
+<span class="r-in"><span><span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/volcanoplot.html" class="external-link">volcanoplot</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span>, highlight <span class="op">=</span> <span class="va">ndiff</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="phylolmFit-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

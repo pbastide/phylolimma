@@ -172,70 +172,57 @@ lower bound from function
 ## Examples
 
 ``` r
-## Use the normalized Crayfish dataset
-data(crayfish)
-# For more details on the normalization, see \code{vignette("crayfish_exemple_tutorial")}
-norm_data <- lengthNormalizeRNASeq(crayfish$counts, crayfish$lengths)
+## Simulate a tree with tip conditions
+set.seed(1289)
+ntips <- 10
+tree <- ape::rphylo(ntips, 0.1, 0)
+condition <- c(0, 0, 1, 1, 1, 0, 0, 1, 1, 0)
+plot(tree, tip.color = hcl.colors(3)[condition + 1])
+
+
+## Simulate data with 1 to 3 samples per species
+reps <- sample(1:3, ntips, replace = TRUE)
+rep_ids <- make.unique(rep(tree$tip.label, times = reps), sep = "_")
+ngenes <- 20
+dat <- matrix(rnorm(sum(reps) * ngenes, 1, 0.5), nrow = ngenes)
+rownames(dat) <- paste0("g", 1:ngenes)
+colnames(dat) <- rep_ids
+
+## Add differentially expressed genes
+condition_reps <- rep(condition, times = reps)
+ndiff <- 5
+dat[1:ndiff, ] <- dat[1:ndiff, ] + rexp(ndiff, 1/2) %*% t(condition_reps)
 
 ## Design matrix
-design <- model.matrix(~ sights, model.frame(crayfish$sights))
+design <- cbind(rep(1, ncol(dat)), condition_reps)
+colnames(design) <- c("(Intercept)", "condition")
+rownames(design) <- rep_ids
 
-## Consensus tree (using only genes 1 to 50)
-ctree <- phylogeneticCorrelations(norm_data[1:50, ], design = design, phy = crayfish$tree)
-ctree
-#> ConsensusTreeModel
-#>   Consensus tree on: 50 genes.
-#>   Model: OUfixedRoot, with measurement error.
-#>   Consensus parameters: lambda = 0.7632214, rho = 0.911506
-
-## linear model fit using the consensus tree
-pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree, consensus_tree = ctree)
+## linear model fit
+pfit <- phylolmFit(dat, design = design, phy = tree)
 pfit
 #> PhyloMArrayLM
-#>   Fit on: 50 genes.
+#>   Fit on: 20 genes.
 #>   Model:  OUfixedRoot, with measurement error.
 #>   Using a consensus tree.
 
 ## eBayes correction
 pfit <- limma::eBayes(pfit, trend = TRUE)
 limma::topTable(pfit, coef = 2)
-#>               logFC  AveExpr         t    P.Value adj.P.Val         B
-#> OG0000013 -1.762035 4.157728 -2.371752 0.02271043 0.3322022 -4.553342
-#> OG0000006 -1.123699 4.661495 -2.264746 0.02913447 0.3322022 -4.557420
-#> OG0000011 -1.515651 6.119281 -2.198865 0.03385542 0.3322022 -4.559880
-#> OG0000045 -1.656621 4.360357 -2.180602 0.03527915 0.3322022 -4.560555
-#> OG0000017 -1.246775 3.627495 -2.170592 0.03608178 0.3322022 -4.560923
-#> OG0000000 -1.125277 3.112778 -2.125918 0.03986427 0.3322022 -4.562556
-#> OG0000041 -1.567679 3.964510 -2.008296 0.05153887 0.3631216 -4.566756
-#> OG0000025 -1.957641 4.706274 -1.952082 0.05809945 0.3631216 -4.568710
-#> OG0000031 -1.226828 4.569394 -1.849555 0.07192955 0.3996086 -4.572180
-#> OG0000046 -0.970511 6.000647 -1.599226 0.11780259 0.5133275 -4.580095
+#>          logFC   AveExpr          t      P.Value    adj.P.Val         B
+#> g2   2.4801330 1.8127645  7.9985315 3.016969e-12 6.033938e-11 17.423416
+#> g1   1.6783282 1.3716897  5.7235899 1.209830e-07 1.209830e-06  7.039861
+#> g4   1.7538081 1.4047876  5.5060408 3.110442e-07 2.073628e-06  6.121750
+#> g5   0.8542889 1.0296559  2.7063159 8.064976e-03 4.032488e-02 -3.525871
+#> g13  0.5534069 0.7824108  1.8099043 7.346971e-02 2.522354e-01 -5.448973
+#> g15 -0.5651961 0.8212475 -1.7959996 7.567061e-02 2.522354e-01 -5.473288
+#> g17 -0.4552155 0.8176752 -1.3476872 1.809613e-01 5.170324e-01 -6.161894
+#> g3   0.3247762 1.1046741  1.0831302 2.814896e-01 7.037241e-01 -6.479465
+#> g8   0.3384772 0.7251398  1.0044543 3.177090e-01 7.060201e-01 -6.560914
+#> g6   0.2393203 0.7514823  0.7978168 4.269648e-01 8.121245e-01 -6.746119
 
 ## Volcano plot
-limma::volcanoplot(pfit, coef = 2, highlight = 2)
+limma::volcanoplot(pfit, coef = 2, highlight = ndiff)
 
-
-## Direct call to phylolmFit gives the same results
-pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree)
-pfit
-#> PhyloMArrayLM
-#>   Fit on: 50 genes.
-#>   Model:  OUfixedRoot, with measurement error.
-#>   Using a consensus tree.
-
-## eBayes correction
-pfit <- limma::eBayes(pfit, trend = TRUE)
-limma::topTable(pfit, coef = 2)
-#>               logFC  AveExpr         t    P.Value adj.P.Val         B
-#> OG0000013 -1.762035 4.157728 -2.371752 0.02271043 0.3322022 -4.553342
-#> OG0000006 -1.123699 4.661495 -2.264746 0.02913447 0.3322022 -4.557420
-#> OG0000011 -1.515651 6.119281 -2.198865 0.03385542 0.3322022 -4.559880
-#> OG0000045 -1.656621 4.360357 -2.180602 0.03527915 0.3322022 -4.560555
-#> OG0000017 -1.246775 3.627495 -2.170592 0.03608178 0.3322022 -4.560923
-#> OG0000000 -1.125277 3.112778 -2.125918 0.03986427 0.3322022 -4.562556
-#> OG0000041 -1.567679 3.964510 -2.008296 0.05153887 0.3631216 -4.566756
-#> OG0000025 -1.957641 4.706274 -1.952082 0.05809945 0.3631216 -4.568710
-#> OG0000031 -1.226828 4.569394 -1.849555 0.07192955 0.3996086 -4.572180
-#> OG0000046 -0.970511 6.000647 -1.599226 0.11780259 0.5133275 -4.580095
 
 ```
