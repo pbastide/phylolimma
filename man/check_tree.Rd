@@ -7,12 +7,18 @@
 check_tree(phy, y, col_species)
 }
 \arguments{
-\item{phy}{an object of class \code{\link[ape]{phylo}}.
-It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-or a tree such that tip labels match with species names in `col_species`.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of \code{object} follow the pattern
+\code{SpeciesName_SampleId} or \code{SpeciesName.SampleId},
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in \code{col_species} (see below).
+The tip labels of the tree can also match exactly the names as the columns of \code{object},
+so that the tree directly includes all the replicates.}
 
-\item{col_species}{a character vector with same length as columns in the expression matrix,
-specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.}
+\item{col_species}{a character vector with same length as there are columns
+in the expression matrix, specifying the species for the corresponding column.
+If left \code{NULL} (the default), an automatic parsing of species names with sample ids is attempted.}
 }
 \value{
 the correctly formatted tree

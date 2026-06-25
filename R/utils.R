@@ -1,14 +1,15 @@
-#' @title Get Bounds on alpha
+#' @title Get bounds on alpha for an OU
 #'
 #' @description
-#' Find reasonable bounds on the \code{alpha} parameter.
+#' Find reasonable bounds on the \code{alpha} parameter of an OU process on a tree
+#' when fitted with \code{\link[phylolm]{phylolm}}.
 #'
 #' @param phy a phylogenetic tree.
-#' @param relative_half_life_min optional minimal half life relative to tree height
-#' @param relative_half_life_max optional maximal half life relative to tree height
+#' @param relative_half_life_min optional minimal half life relative to tree height. Default to 1e-4.
+#' @param relative_half_life_max optional maximal half life relative to tree height. Default to 1e4.
 #'
 #' @details
-#' This functions tries to find reasonable bounds on the \eqn{\alpha} parameter
+#' This function tries to find reasonable bounds on the \eqn{\alpha} parameter
 #' of an OU process by using the scaled phylogenetic half-life \eqn{t_{1/2} = \log(2) / \alpha / h},
 #' where \eqn{h} is the total height of the tree.
 #' If \eqn{t_{1/2} = D)}, it means that the trait will need a time \eqn{D \times h}
@@ -16,10 +17,10 @@
 #' Small values of \eqn{D} means high selection pressure (large \eqn{\alpha}),
 #' while large values of \eqn{D} means low selection pressure (small \eqn{\alpha}).
 #'
-#' The default maximum value for \eqn{D} is \code{relative_half_life_max = 10000}
+#' The default maximum value for \eqn{D} is \code{relative_half_life_max = 1e4}
 #' (selection is week and the process looks like a BM).
 #'
-#' The default minimum value for \eqn{D} is \code{relative_half_life_min = 0.0001}
+#' The default minimum value for \eqn{D} is \code{relative_half_life_min = 1e-4}
 #' (selection is strong and tips are only weakly correlated).
 #'
 #' The function makes sure that the maximum \eqn{\alpha} value associated with
@@ -31,13 +32,20 @@
 #' @references
 #' Hansen, T. F. (1997). Stabilizing Selection and the Comparative Analysis of Adaptation. Evolution, 51(5) :1341.
 #'
-#' @keywords internal
+#' @export
 #'
 getBoundsSelectionStrength <- function(phy,
                                        relative_half_life_min = 0.0001,
                                        relative_half_life_max = 10000) {
   ## alpha min
   h_tree <- tree_height(phy)
+  return(getBoundsSelectionStrengthFromHeight(h_tree, relative_half_life_min, relative_half_life_max))
+}
+
+getBoundsSelectionStrengthFromHeight <- function(h_tree,
+                                                 relative_half_life_min = 0.0001,
+                                                 relative_half_life_max = 10000) {
+  ## alpha min
   alpha_min <- log(2) / (relative_half_life_max * h_tree)
   ## alpha max
   alpha_max <- log(2) / (relative_half_life_min * h_tree)
@@ -47,23 +55,28 @@ getBoundsSelectionStrength <- function(phy,
   return(c(alpha_min, alpha_max))
 }
 
-#' @title Get Min on sigma2_error
+#' @title Get Lower Bound on sigma2_error
 #'
 #' @description
-#' Find reasonable minimum on the \code{sigma2_error} parameter.
+#' Find reasonable lower bound on the \code{sigma2_error} parameter
+#' when fitted with \code{\link[phylolm]{phylolm}}.
 #'
 #' @param phy a phylogenetic tree.
-#' @param tol the numerical tolerance
+#' @param tol the numerical tolerance.
 #'
 #' @details
 #' The minimum value must be high enough so that it can be numerically
 #' distinguished from zero.
+#' This is important for trees with several samples per species, as the
+#' limit case \code{sigma2_error = 0} is degenerate, as it means that all
+#' the samples in one species have the exact same value.
+#'
 #' Default to \eqn{tol * h}, where \eqn{h} is the total height of the tree.
-#' If an OU is used, then this value is updated to match the transformed tree height.
+#' Note that if an OU is used in the fit, then this value is updated to match the transformed tree height.
 #'
-#' @return The minimum value for sigma2_error
+#' @return The minimum value for \code{sigma2_error}.
 #'
-#' @keywords internal
+#' @export
 #'
 getMinError <- function(phy,
                         tol = (.Machine$double.eps)^0.5) {
@@ -379,3 +392,79 @@ check_tree <- function(phy, y, col_species) {
                    id = colnames(y$exprs))
   return(addReplicatesOnTree(phy, tt))
 }
+
+# #' @title Check the tree
+# #'
+# #' @inheritParams phylolmFit
+# #'
+# #' @return the correctly formatted tree
+# #'
+# #' @keywords internal
+# #'
+# get_tree <- function(phy, col_species) {
+#   if (!inherits(phy, "phylo")) stop("object 'phy' must be of class 'phylo'.")
+#   if (length(phy$tip.label) == ncol(y$exprs)) return(phy)
+#   if (is.null(col_species)) col_species <- parse_species(phy, colnames(y$exprs))
+#   tt <- data.frame(species = col_species,
+#                    id = colnames(y$exprs))
+#   return(addReplicatesOnTree(phy, tt))
+# }
+
+#' @title Heatmap with Phylogeny Structured Columns
+#'
+#' @inheritParams phylolmFit
+#' @param coef column number or column name specifying which coefficient or contrast
+#' of the linear model in the `design` matrix is of interest. If left \code{NULL},
+#' defaults to the last column of `design`.
+#' @param scale character indicating if the values on the heatmap should be centered and scaled in either the row direction or the column direction, or none.
+#' The default is "none", as the data is assumed to be already normalized.
+#' This scaling only affects the colour scale; it does not scale the original data. See documentation of \code{\link{heatmap}}.
+#' @param ColSideColors (optional) character vector of length `ncol(object)`
+#' containing the color names for a horizontal side bar that may be used to annotate the columns of the heatmap.
+#' If left \code{NULL} and `design` is specified, the column of the \code{design} matrix corresponding to `coef` will be used.
+#' @param add.expr expression that will be evaluated after the call to image.
+#' Can be used to add components to the plot.
+#' See documentation of \code{\link{heatmap}}.
+#' If left \code{NULL} and `design` is specified, the column of the \code{design}
+#' matrix corresponding to `coef` will be used to draw vertical lines.
+#' @param ... further arguments to be passed to \code{\link{heatmap}}.
+#' Argument \code{Colv} defaults to the phylogeny, and cannot be overwritten.
+#'
+#' @description
+#' This function uses the \code{\link{heatmap}} function to plot
+#' the (normalized) data, using the phylogenetic tree as the column
+#' dendogram.
+#'
+#' @return Invisibly, a list, see \code{\link{heatmap}}.
+#'
+#' @export
+#'
+phyHeatmap <- function(object, design = NULL, coef = NULL, phy, scale = "none", ColSideColors = NULL, add.expr = NULL, ...) {
+  ## data
+  y <- check_expression_matrix(object)
+  ## tree
+  phy <- check_tree(phy, y, NULL)
+  tree_dend <- as.dendrogram(as.hclust(phy))
+  ## design and colors
+  if (!is.null(design)) {
+    design <- check_design_matrix(design, y, phy)
+    if (is.null(coef)) coef <- ncol(design)
+    colColors <- factor(design[, coef])
+    nColLevels <- length(unique(colColors))
+    levels(colColors) <-  hcl.colors(3)[seq_len(nColLevels)]
+    colColors <- as.vector(colColors)
+    colInd <- order.dendrogram(tree_dend)
+    pos_shifts <- which(diff(design[colInd, 2]) != 0)
+    heatmap(y$exprs,
+            Colv = tree_dend,
+            ColSideColors = colColors,
+            scale = scale,
+            add.expr = abline(v = pos_shifts + 0.5, lty = "dashed"), ...)
+  } else {
+    heatmap(y$exprs, Colv = tree_dend, scale = scale, ...)
+  }
+}
+
+#' @importFrom grDevices hcl.colors
+#' @importFrom stats as.dendrogram as.hclust heatmap order.dendrogram
+NULL

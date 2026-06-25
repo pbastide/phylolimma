@@ -58,12 +58,17 @@ test_that("phylogeneticCorrelations - BM", {
   expect_equal(dim(resPhyloLmFit$stdev.unscaled), dim(resPhyloLmFitCons$stdev.unscaled))
 
   ## ebayes
-  fitphy <- eBayes(resPhyloLmFit)
-  fitphycons <- eBayes(resPhyloLmFitCons)
+  fitphy <- limma::eBayes(resPhyloLmFit)
+  fitphycons <- limma::eBayes(resPhyloLmFitCons)
 
   ## Test names and dimensions
   expect_equal(colnames(fitphy$p.value), colnames(fitphycons$p.value))
   expect_equal(dim(fitphy$p.value), dim(fitphycons$p.value))
+
+  ## parameters
+  pp <- getParameters(resPhyloLmFitCons)
+  expect_equal(length(pp), 1)
+  expect_equal(names(pp), "lambda")
 
   #################################################################################################
   ## Pagel lambda
@@ -95,6 +100,9 @@ test_that("phylogeneticCorrelations - BM", {
   expect_equal(resPhyloLmFitConsLambda$phy_trans,
                resPhyloLmFitCons$phy_trans,
                tol = 1e-4)
+
+  ## parameters
+  expect_equal(getParameters(resPhyloLmFitConsLambda), getParameters(resPhyloLmFitCons), tol = 1e-4)
 
 })
 
@@ -145,7 +153,8 @@ test_that("phylogeneticCorrelations - separate call", {
                            use_consensus = TRUE,
                            consensus_tree = pc)
         expect_equal(res1, res2)
-        expect_equal(consensus_tree(res1), pc$tree)
+        expect_equal(consensusTree(res1), pc$tree)
+        expect_equal(getParameters(res1), getParameters(pc))
       }
     }
   }
@@ -163,7 +172,15 @@ test_that("phylogeneticCorrelations - separate call", {
                      consensus_tree = pc)
   expect_true(res1$coefficients[1, 1] != res2$coefficients[1, 1])
 
-
+  ## parameters
+  pp <- getParameters(res1)
+  expect_equal(length(pp), 2)
+  expect_equal(names(pp), c("lambda", "rho"))
+  pp <- getParameters(res1, consensus = FALSE)
+  expect_equal(dim(pp), c(20, 2))
+  expect_equal(colnames(pp), c("lambda", "rho"))
+  expect_equal(getParameters(res1, consensus = FALSE),
+               getParameters(res2, consensus = FALSE))
 
 })
 
@@ -176,6 +193,7 @@ test_that("phylogeneticCorrelations - eBayes", {
   ## data
   ngenes <- 20
   y_data <- t(phylolm::rTrait(ngenes, tree, model = "delta", parameters = list(delta = 0.1)))
+  y_data <- t(phylolm::rTrait(ngenes, tree, model = "delta", parameters = list(delta = 0.1)))
   ## Design
   design <- matrix(1, nrow = ntips, ncol = 2)
   design[sample(1:ntips, floor(ntips / 2)), 2] <- 0
@@ -187,8 +205,8 @@ test_that("phylogeneticCorrelations - eBayes", {
                      model = "OUfixedRoot",
                      measurement_error = TRUE,
                      use_consensus = TRUE)
-  fit1eb <- eBayes(fit1)
-  fit1ebtrend <- eBayes(fit1, trend = TRUE)
+  fit1eb <- limma::eBayes(fit1)
+  fit1ebtrend <- limma::eBayes(fit1, trend = TRUE)
 
   ## phyCor
   pc <- phylogeneticCorrelations(y_data, design = design, phy = tree,
@@ -199,8 +217,8 @@ test_that("phylogeneticCorrelations - eBayes", {
                      measurement_error = TRUE,
                      use_consensus = TRUE,
                      consensus_tree = pc)
-  fit2eb <- eBayes(fit2)
-  fit2ebtrend <- eBayes(fit2, trend = TRUE)
+  fit2eb <- limma::eBayes(fit2)
+  fit2ebtrend <- limma::eBayes(fit2, trend = TRUE)
 
   expect_equal(fit1, fit2)
   expect_equal(fit1eb, fit2eb)

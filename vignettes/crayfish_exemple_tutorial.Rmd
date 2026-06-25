@@ -1,0 +1,207 @@
+---
+title: "Crayfish Exemple Tutorial"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Crayfish Exemple Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+required <- c("edgeR")
+evalChuncks <- all(unlist(lapply(required, function(pkg) requireNamespace(pkg, quietly = TRUE))))
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = evalChuncks
+)
+```
+
+```{r setup}
+library(limma)
+library(phyloDE)
+```
+
+## Data 
+
+In this tutorial, we re-analyse the Crayfish dataset from
+Stern & Crandal (2018)[^1], re-analysed in Bastide et al. (2023)[^2],
+and available in the `crayfish` dataset.
+
+
+
+```{r}
+data(crayfish)
+```
+
+The dataset contains a count RNA-Seq matrix,
+associated gene lengths,
+a phylogenetic tree of the crayfish species included in the study,
+and a data-frame specifying whether a species is blind (0) or sighted (1).
+The goal of this script is to detect genes with a significant parallel shift 
+in optimum between blind species versus sighted species (one of the hypothesis presented in the 
+Table from Stern & Crandal (2018)[^1] ).
+
+```{r, fig.show='hold', fig.height=4, fig.width=5}
+library(ape)
+cond_species <- crayfish$sights$sights[match(crayfish$tree$tip.label, crayfish$sights$species)]
+plot(crayfish$tree, tip.color = hcl.colors(3)[as.numeric(cond_species)])
+```
+
+
+## Normalization of the data
+
+In order to apply `phyloDE`, we need to normalize the data.
+Here, we use TPM, with normalizing factors computed using the TMM method.
+
+```{r}
+nf <- edgeR::calcNormFactors(crayfish$counts / crayfish$lengths, method = "TMM")
+norm_data <- lengthNormalizeRNASeq(crayfish$counts, 
+                                   crayfish$lengths, 
+                                   nf, 
+                                   lengthNormalization = "TPM", 
+                                   dataTransformation = "log2")
+```
+
+
+## Design matrix
+
+We then construct the design matrix, to analyse the effect of sight
+on gene expression.
+
+```{r}
+design <- model.matrix(~ sights, model.frame(crayfish$sights))
+```
+
+## Heatmap matrix
+
+We can plot the data with a heatmap, using the phylogenetic
+structure on the columns, and a standard clustering on the rows.
+```{r, fig.show='hold', fig.height=7, fig.width=7}
+phyHeatmap(norm_data, design, coef = 2, crayfish$tree, margins = c(7, 3))
+```
+
+## Fit with `phyloDE`
+
+Finally, we apply `phylolmFit`, that has a syntax similar to 
+`limma` function `lmFit`.
+As an additional argument, it takes the phylogenetic tree.
+
+To keep compilation time low, we only analyse the first 500 genes here,
+but in an analysis users should use the full dataset, and
+parallelize the computations using the `ncores` argument.
+
+
+
+```{r}
+pfit <- phylolmFit(norm_data[1:500, ], design,
+                   phy = crayfish$tree,
+                   ncores = 1)
+```
+
+
+## Empirical Bayes analysis
+
+Just as for a `limma` object, we can apply the `eBayes` procedure
+to the results.
+
+Keep in mind that because we only analysed the first 500 genes, the results
+cannot be interpreted directly, and some plots might look different when
+analyzing the full dataset.
+
+We can check whether there is a trend in the data by plotting the mean-variance trend.
+```{r, fig.show='hold', fig.height=4, fig.width=5}
+mean_genes <- pfit$Amean
+sd_genes <- sqrt(pfit$sigma)
+lfit <- lowess(mean_genes, sd_genes, f = 0.5)
+plot(mean_genes, sd_genes,
+     xlab = "log2(TPM)", ylab = "Sqrt( standard deviation )",
+     pch = 16, cex = 0.25)
+title("Mean-variance trend")
+lines(lfit, col = "red")
+```
+
+We then apply `eBayes`, here with a trend.
+
+```{r}
+pfit <- eBayes(pfit, trend = TRUE)
+```
+
+And then extract the most significant genes with `topTable`.
+```{r}
+topTable(pfit, coef = 2)
+```
+
+## Standard Diagnostics
+
+As for a standard `limma` analysis, we can perform some diagnostic plots.
+
+* Plot of p-values: they must be uniformly distributed under the null hypothesis.
+```{r, fig.show='hold', fig.height=4, fig.width=5}
+hist(pfit$p.value)
+```
+
+* MA Plot: points must be centered in zero, showing no biais.
+```{r, fig.show='hold', fig.height=4, fig.width=5}
+plotMD(pfit)
+abline(h = 0, col = "red", lwd = 3)
+```
+
+* Volcano plot:
+```{r, fig.show='hold', fig.height=4, fig.width=5}
+volcanoplot(pfit, coef = 2, highlight = 10)
+```
+
+* Heatmap restricted to top $10$ genes:
+```{r, fig.show='hold', fig.height=7, fig.width=7}
+topGenes <- rownames(topTable(pfit, coef = 2))
+phyHeatmap(norm_data[match(topGenes, rownames(norm_data)), ], design, coef = 2, crayfish$tree, margins = c(7, 6))
+```
+
+## Parameters of the OU
+
+Some diagnostic plots are specific to `phyloDE`,
+that fits a OU process per gene, and then regularize the parameters
+(by taking the trimmed means of the tanh values).
+
+Function `getParameters` extract the regularized parameters.
+```{r}
+getParameters(pfit)
+```
+The parameters are the normalized `lambda` and `rho` values:
+
+* `lambda` is the ratio of noise attributed to the phylogeny versus the total noise.
+    - Values close to 0 mean that the tree has little influence (independent errors only).
+    - Values close to 1 mean that there the tree explains all the variance (no independent errors).
+
+* `rho` is the percent decrease in
+trait variance caused by the OU as compared to the variance expected under under BM,
+see Cornuault (2022)[^3].
+    - Values close to 0 mean that process looks like a BM (selection strength alpha is close to zero).
+    - Values close to 1 mean that the tree is close to a star tree (selection strength alpha is large).
+
+The gene-specific and regularized parameters can be plotted with
+function `plotParameters`.
+
+```{r, fig.show='hold', fig.height=4, fig.width=7}
+plotParameters(pfit)
+```
+Histograms are histograms over all the fits on all genes,
+while dashed lines represent regularized parameters.
+Modes close to the 0 and 1 bounds can be expected,
+especially for small parameters.
+
+
+
+[^1]: Stern, D. B. and Crandall, K. A. (2018), 
+'The Evolution of Gene Expression Underlying Vision Loss in Cave Animals', 
+Molecular Biology and Evolution 35(8), 2005--2014.
+
+[^2]: Bastide, P., Soneson, C., Stern, D. B., Lespinet, O. and Gallopin, M. (2023), 
+'A Phylogenetic Framework to Simulate Synthetic Interspecies RNA-Seq Data', 
+Molecular Biology and Evolution 40(1), msac269.
+
+[^3]: Cornuault, J. (2022), 
+'Bayesian Analyses of Comparative Data with the Ornstein–Uhlenbeck Model: Potential Pitfalls', 
+Systematic Biology 71(6), 1524--1540.

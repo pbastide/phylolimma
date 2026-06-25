@@ -1,29 +1,41 @@
-#' @title Phylogenetic Comparative Method using LIMMA
+#' @title Phylogenetic Linear Model for Gene Expression Analysis
 #'
 #' @description
-#' This function applies \code{\link[limma]{lmFit}} to the normalized data,
-#' in order to take the phylogeny into account.
-#' TODO: explain more.
+#' Fit a phylogenetic linear model using \code{\link[phylolm]{phylolm}} for
+#' each gene given a matrix of normalized expression data.
+#' This function inherits its interface from the \code{limma} function \code{\link[limma]{lmFit}}.
 #'
-#' @param object 	A matrix data object containing normalized expression values,
+#' @param object a matrix data object containing normalized expression values,
 #' with rows corresponding to genes and columns to samples (species).
 #' @param design the design matrix of the experiment,
 #' with rows corresponding to samples and columns to coefficients to be estimated.
 #' Defaults to the unit vector (intercept).
-#' @param phy an object of class \code{\link[ape]{phylo}}.
-#' It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-#' or a tree such that tip labels match with species names in `col_species`.
-#' @param col_species a character vector with same length as columns in the expression matrix,
-#' specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.
+#' @param phy an object of class \code{\link[ape]{phylo}}, representing the phylogenetic
+#' relationships between the species. It must be dated and ultrametric.
+#' If the column names of \code{object} follow the pattern
+#' \code{SpeciesName_SampleId} or \code{SpeciesName.SampleId},
+#' an automatic matching of the samples on the tip of the tree is performed.
+#' Otherwise, the tree tip labels must match with species names in \code{col_species} (see below).
+#' The tip labels of the tree can also match exactly the names as the columns of \code{object},
+#' so that the tree directly includes all the replicates.
+#' @param col_species a character vector with same length as there are columns
+#' in the expression matrix, specifying the species for the corresponding column.
+#' If left \code{NULL} (the default), an automatic parsing of species names with sample ids is attempted.
 #' @param model the phylogenetic model used to correct for the phylogeny.
-#' Must be one of "BM", "lambda" or "OUfixedRoot".
+#' Must be one of  "OUfixedRoot" (the default), "BM", or "lambda".
 #' See \code{\link[phylolm]{phylolm}} for more details.
-#' @param measurement_error a logical value indicating whether there is measurement error.
-#' Default to \code{TRUE}.
+#' @param measurement_error a logical value indicating whether there is measurement error,
+#' or individual independent (non phylogenetic) variation among samples.
+#' Default to \code{TRUE}. Setting this to \code{FALSE} can give unexpected results,
+#' except for the "lambda" model.
 #' See \code{\link[phylolm]{phylolm}} for more details.
-#' @param use_consensus If \code{TRUE}, one consensus tree is used to represent the correlation structure. see \code{\link{phylogeneticCorrelations}}.
-#' If \code{FALSE}, each gene will use its own model parameters and will have its own correlation structure accordingly.
-#' Default to TRUE.
+#' @param use_consensus If \code{TRUE} (the default),
+#' one unique consensus tree is used to represent the correlation structure,
+#' using a trimmed mean of the transformed parameters.
+#' See \code{\link{phylogeneticCorrelations}} for more details, and
+#' \code{limma} function \code{\link[limma]{duplicateCorrelation}}.
+#' If \code{FALSE}, each gene will use its own model parameters and will have
+#' its own correlation structure accordingly.
 #' @param consensus_tree If not \code{NULL}, the consensus tree containing the correlation structure,
 #' result of function \code{\link{phylogeneticCorrelations}}.
 #' If provided, arguments \code{phy}, \code{model} and \code{measurement_error} will be ignored.
@@ -36,60 +48,79 @@
 #' with list components \code{coefficients}, \code{stdev.unscaled},
 #' \code{sigma} and \code{df.residual}.
 #' These quantities take the phylogenetic model into account.
-#' The object can be passed to \code{\link{eBayes}}.
+#' The object inherits from the \code{limma} class
+#' \code{\link[limma]{MArrayLM-class}}, and can be passed to \code{\link[limma]{eBayes}}.
 #'
 #' @details
+#' This function performs the fit in several steps:
+#' 1. Fit a phylogenetic linear model with \code{\link[phylolm]{phylolm}} on each gene.
+#' 2. If `use_consensus = TRUE`, use the trimmed mean of transformed parameters to get one regularized value for all the genes.
+#' This step uses \code{\link{phylogeneticCorrelations}}, and is similar to \code{\link[limma]{duplicateCorrelation}}.
+#' For more details on the specific parameters used in the regularization, see function \code{getParameters}.
+#' 3. Compute the estimated phylogenetic correlation matrix \eqn{\hat{C}_g} for each gene (it is the same for all genes if `use_consensus = TRUE`).
+#' 4. De-correlate the normalized data by left-multiplying it by \eqn{\hat{C}^{-1/2}_g} the inverse Cholesky decomposition of the correlation matrix.
+#' 5. Use \code{\link[limma]{lmFit}} on the de-correlated data.
+#'
+#' In particular, this procedure ensures that the fitted
+#' \code{coefficients}, \code{stdev.unscaled},
+#' \code{sigma} and \code{df.residual} do take the phylogeny into account,
+#' and can be used directly in downstream processing such as \code{\link[limma]{eBayes}}.
+#'
 #' The default bounds on the phylogenetic parameters are the same as in
-#' \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU.
+#' \code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU,
+#' that use ad-hoc bounds from function \code{\link{getBoundsSelectionStrength}},
+#' and the \code{sigma2_error} of the intra-specific variance,
+#' that takes it lower bound from function \code{\link{getMinError}}.
 #'
 #' @examples
-#' ## Simulate a tree
-#' set.seed(1289)
-#' ntips <- 20
-#' tree <- ape::rphylo(ntips, 0.1, 0)
-#' condition <- sample(c(0, 1), ntips, replace = TRUE)
-#'
-#' ## Simulate data with replicates
-#' reps <- sample(1:5, ntips, replace = TRUE)
-#' rep_ids <- make.unique(rep(tree$tip.label, times = reps), sep = "_")
-#' ngenes <- 20
-#' dat <- matrix(rnorm(sum(reps) * ngenes, 1, 0.5), nrow = ngenes)
-#' rownames(dat) <- paste0("g", 1:ngenes)
-#' colnames(dat) <- rep_ids
-#'
-#' ## Add differentially expressed genes
-#' condition_reps <- rep(condition, times = reps)
-#' ndiff <- 5
-#' dat[1:ndiff, ] <- dat[1:ndiff, ] + rexp(ndiff, 1/2) %*% t(condition_reps)
+#' ## Use the normalized Crayfish dataset
+#' data(crayfish)
+#' # For more details on the normalization, see \code{vignette("crayfish_exemple_tutorial")}
+#' norm_data <- lengthNormalizeRNASeq(crayfish$counts, crayfish$lengths)
 #'
 #' ## Design matrix
-#' design <- cbind(rep(1, ncol(dat)), condition_reps)
-#' colnames(design) <- c("(Intercept)", "condition")
-#' rownames(design) <- rep_ids
+#' design <- model.matrix(~ sights, model.frame(crayfish$sights))
 #'
-#' ## linear model fit
-#' pfit <- phylolmFit(dat,
-#'                    design = design,
-#'                    phy = tree,
-#'                    model = "OUfixedRoot",
-#'                    measurement_error = TRUE,
-#'                    use_consensus = TRUE)
+#' ## Consensus tree (using only genes 1 to 50)
+#' ctree <- phylogeneticCorrelations(norm_data[1:50, ], design = design, phy = crayfish$tree)
+#' ctree
+#'
+#' ## linear model fit using the consensus tree
+#' pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree, consensus_tree = ctree)
+#' pfit
 #'
 #' ## eBayes correction
-#' pfit <- eBayes(pfit, trend = TRUE)
+#' pfit <- limma::eBayes(pfit, trend = TRUE)
+#' limma::topTable(pfit, coef = 2)
+#'
+#' ## Volcano plot
+#' limma::volcanoplot(pfit, coef = 2, highlight = 2)
+#'
+#' ## Direct call to phylolmFit gives the same results
+#' pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree)
+#' pfit
+#'
+#' ## eBayes correction
+#' pfit <- limma::eBayes(pfit, trend = TRUE)
 #' limma::topTable(pfit, coef = 2)
 #'
 #'
-#' @seealso \code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}},
-#' \code{\link{phylogeneticCorrelations}}, \code{\link{eBayes}}
+#' @seealso \code{\link[limma]{lmFit}},
+#' \code{\link[phylolm]{phylolm}},
+#' \code{\link{PhyloMArrayLM-class}},
+#' \code{\link{phylogeneticCorrelations}},
+#' \code{\link[limma]{eBayes}},
+#' \code{\link{getParameters}},
+#' \code{\link{plotParameters}},
+#' \code{\link{consensusTree}}.
 #'
 #' @importFrom methods new
 #'
 #' @export
 #'
 phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
-                       model = c("BM", "lambda", "OUfixedRoot"),
-                       measurement_error = FALSE,
+                       model = c("OUfixedRoot", "BM", "lambda"),
+                       measurement_error = TRUE,
                        use_consensus = TRUE,
                        consensus_tree = NULL,
                        REML = TRUE,
@@ -173,7 +204,11 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                              stdev.unscaled = resLmFit$stdev.unscaled,
                              df.residual = resLmFit$df.residual,
                              Amean = resLmFit$Amean,
-                             qr = resLmFit$qr))
+                             qr = resLmFit$qr,
+                             cov.coefficients = resLmFit$cov.coefficients,
+                             pivot = resLmFit$pivot))
+    resFitFormat$design <- design
+    resFitFormat$design_trans <- design_trans
   } else {
     resFitFormat <- new("PhyloMArrayLM",
                         list(coefficients = do.call(rbind, resLmFit["coefficients", ]),
@@ -181,7 +216,9 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
                              stdev.unscaled = do.call(rbind, resLmFit["stdev.unscaled", ]),
                              df.residual = do.call(c, resLmFit["df.residual", ]),
                              Amean = do.call(c, resLmFit["Amean", ]),
-                             qr = resLmFit["qr", ]))
+                             qr = resLmFit["qr", ],
+                             cov.coefficients = resLmFit["cov.coefficients", ],
+                             pivot = resLmFit["pivot", ]))
   }
 
   resFitFormat$df.residual <- ddf_fits
@@ -197,7 +234,7 @@ phylolmFit <- function(object, design = NULL, phy, col_species = NULL,
   resFitFormat$sigma2_phy <- C_tree_params$sigma2_phy
   resFitFormat$sigma2_error <- C_tree_params$sigma2_error
   resFitFormat$REML <- REML
-  if (use_consensus) resFitFormat$consensus_tree <- consensus_tree
+  if (use_consensus) resFitFormat$consensus_tree <- new("ConsensusTreeModel", consensus_tree)
   resFitFormat$use_consensus <- use_consensus
 
   ## Result
@@ -504,73 +541,3 @@ transform_data_tree <- function(C_tree, y_data) {
                 C_tree,
                 lapply(seq_len(nrow(y_data)), function(i) y_data[i,])))
 }
-
-#' @title Log likelihood of a `PhyloMArrayLM` object
-#'
-#' @param object an object of class \code{\linkS4class{PhyloMArrayLM}}.
-#'
-#' @return log likelihood of the fitted linear model on all the genes
-#'
-#' @rdname log_likelihood
-#'
-#' @export
-#'
-setGeneric("log_likelihood", function(object) standardGeneric("log_likelihood"))
-#' @rdname log_likelihood
-setMethod("log_likelihood", "PhyloMArrayLM", function(object) log_likelihood_internal(object))
-
-log_likelihood_internal <- function (object) {
-  REML <- object$REML
-  sigma_hat <- object$sigma^2
-  N <- length(object$phy$tip.label)
-  p <-  N - object$df.residual
-  sum_res <- sigma_hat * (N - p)
-  if (!is.null(object$weights)) stop("A PhyloMArrayLM object cannot have weights.")
-  if (!is.list(object$C_tree)) {
-    tree_det <- sum(log(diag(object$C_tree)))
-  } else {
-    tree_det <- sapply(object$C_tree, function(CC) sum(log(diag(CC))))
-  }
-  N0 <- N
-  if (REML) N <- N - p
-  val <- 0.5 * (- N * (log(2 * pi) + 1 + log(sum_res) - log(N))) - tree_det
-  if (REML) {
-    if (object$use_consensus) {
-      val <- val - sapply(p, function(pp) sum(log(abs(diag(object$qr$qr)[1L:pp]))))
-    } else {
-      val <- val - sapply(1:length(p), function(pp) sum(log(abs(diag(object$qr[[pp]]$qr)[1L:p[pp]]))))
-    }
-  }
-  attr(val, "nall") <- N0
-  attr(val, "nobs") <- N
-  attr(val, "df") <- p + 1
-  class(val) <- "logLik"
-  val
-}
-
-
-#' @title Consensus tree of a `PhyloMArrayLM` object
-#'
-#' @param object an object of class \code{\linkS4class{PhyloMArrayLM}}.
-#'
-#' @return the consensus tree used in the linear fit
-#'
-#' @rdname consensus_tree
-#'
-#' @export
-#'
-setGeneric("consensus_tree", function(object) standardGeneric("consensus_tree"))
-#' @rdname consensus_tree
-setMethod("consensus_tree", "PhyloMArrayLM", function(object) consensus_tree_internal(object))
-
-consensus_tree_internal <- function (object) {
-  if (!object$use_consensus) {
-    warning("The fitted object did not use a consensus tree.")
-    return(NULL)
-  }
-  return(object$consensus_tree$tree)
-}
-
-## TODO: create a special class for a consensus tree
-## (tree with the associated parameters ?)
-

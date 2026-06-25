@@ -2,7 +2,7 @@
 % Please edit documentation in R/addReplicatesOnTree.R
 \name{parse_species}
 \alias{parse_species}
-\title{Add replicates to a tree}
+\title{Parse the species names}
 \usage{
 parse_species(tree, ids, pattern = "(_|\\\\.).*$")
 }
@@ -15,9 +15,11 @@ parse_species(tree, ids, pattern = "(_|\\\\.).*$")
 Default to removing everything after a dot or underscore.}
 }
 \value{
-A vector of the same length as `ids`, with the species of each sample.
+A vector of the same length as \code{ids}, with the species of each sample.
 }
 \description{
-Utility function to add replicates to a tree, as tips with zero length branches.
+Utility function to parse the species names from the replicates,
+assuming that the replicates are named according to a pattern
+"speciesName_replicateID" or "speciesName.replicateID".
 }
 \keyword{internal}

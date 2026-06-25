@@ -12,7 +12,7 @@ mean_trim(x, trim = 0.15, na.rm = FALSE, ...)
 \item{trim}{a vector of size two, with the proportion of lower and upper values to trim.
 If a single value is provided, it will be used for lower and upper trim.}
 
-\item{na.rm}{whether to remove `NA`s before the computation.}
+\item{na.rm}{whether to remove \code{NA}s before the computation.}
 
 \item{...}{further arguments passed to or from other methods.}
 }
@@ -21,7 +21,7 @@ The trimmed arithmetic mean.
 }
 \description{
 Trimmed mean, with asymetric trim up and down.
-Code adapted from `mean.default`, with a different
+Code adapted from \code{mean.default}, with a different
 trim value for the lower and upper ends.
 }
 \keyword{internal}

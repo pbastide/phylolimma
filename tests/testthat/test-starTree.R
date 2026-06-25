@@ -50,14 +50,40 @@ test_that("phylogeneticCorrelations - star tree", {
                            measurement_error = TRUE,
                            use_consensus = TRUE, consensus_tree = phycor)
 
-  expect_equal(fitlimma$sigma, fitphyloDE$sigma, tolerance = 1e-2)
-  expect_equal(fitlimma$coefficients, fitphyloDE$coefficients, tolerance = 1e-2)
+  expect_equal(fitlimma$sigma, fitphyloDE$sigma, tolerance = 1e-5)
+  expect_equal(fitlimma$coefficients, fitphyloDE$coefficients, tolerance = 1e-5)
+  expect_equal(fitlimma$design, fitphyloDE$design)
 
+  ## eBayes
   fitbayes <- limma::eBayes(fitlimma, trend = FALSE)
   fitphylobayes <- limma::eBayes(fitphyloDE, trend = FALSE)
 
-  expect_equal(fitbayes$t, fitphylobayes$t, tolerance = 1e-2)
-  expect_equal(fitbayes$p.value, fitphylobayes$p.value, tolerance = 1e-2)
+  expect_equal(fitbayes$t, fitphylobayes$t, tolerance = 1e-5)
+  expect_equal(fitbayes$p.value, fitphylobayes$p.value, tolerance = 1e-5)
+
+  expect_equal(fitbayes$cov.coefficients, fitphylobayes$cov.coefficients, tolerance = 1e-5)
+  expect_equal(fitbayes$F, fitphylobayes$F, tolerance = 1e-5)
+  expect_equal(fitbayes$F.p.value, fitphylobayes$F.p.value, tolerance = 1e-5)
+
+  ## treat
+  fittreat <- limma::treat(fitlimma, robust = TRUE)
+  fitphylotreat <- limma::treat(fitphyloDE, robust = TRUE)
+
+  expect_equal(fittreat$t, fitphylotreat$t, tolerance = 1e-5)
+  expect_equal(fittreat$p.value, fitphylotreat$p.value, tolerance = 1e-5)
+
+  ## decideTests
+  fitdt <- limma::decideTests(fitlimma, method = "global")
+  fitphylodt <- limma::decideTests(fitphyloDE, method = "global")
+  expect_equal(fitdt@.Data, fitphylodt@.Data)
+
+  fitdt <- limma::decideTests(fitlimma, method = "nestedF")
+  fitphylodt <- limma::decideTests(fitphyloDE, method = "nestedF")
+  expect_equal(fitdt@.Data, fitphylodt@.Data)
+
+  fitdt <- limma::decideTests(fitlimma, method = "hierarchical", p.value = 0.5)
+  fitphylodt <- limma::decideTests(fitphyloDE, method = "hierarchical", p.value = 0.5)
+  expect_equal(fitdt@.Data, fitphylodt@.Data)
 
 })
 

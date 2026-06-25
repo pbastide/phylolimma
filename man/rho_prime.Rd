@@ -17,7 +17,7 @@ rho_prime(alpha, t_tree, tol = .Machine$double.eps)
 Value of rhoprime
 }
 \description{
-rhoprime = 1 - rho = (1 - exp(-2*alpha*t_H)) / (2 * alpha * t_H) is the variance of the OU over the variance of the BM.
+rhoprime = 1 - rho = (1 - exp(-2\emph{alpha}t_H)) / (2 * alpha * t_H) is the variance of the OU over the variance of the BM.
 Taken from Cornuault, 2023, Syst. Biol.
 It is the fraction of the variance that can be explained by "neutral" BM evolution.
 When alpha goes to 0, rhoprime goes to 1: trait can be explained by "neutral" BM process.

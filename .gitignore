@@ -5,3 +5,5 @@
 examples/debug
 *.DS_Store
 docs
+inst/doc
+.positai

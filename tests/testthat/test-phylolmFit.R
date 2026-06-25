@@ -40,7 +40,7 @@ test_that("phylolmFit - BM", {
   resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
                               model = model,
                               measurement_error = measurement_error,
-                              use_consensus = FALSE)
+                              use_consensus = TRUE)
   ## Fit
   resLmFit <- limma::lmFit(y_data, design = design)
 
@@ -57,17 +57,29 @@ test_that("phylolmFit - BM", {
   expect_equal(getSpeciesNumber(tree), ntips)
 
   ## ebayes
-  fitphy <- eBayes(resPhyloLmFit)
   fitlimma <- limma::eBayes(resLmFit)
+  fitphy <- limma::eBayes(resPhyloLmFit)
 
   ## Test names and dimensions
   expect_equal(colnames(fitphy$p.value), colnames(fitlimma$p.value))
   expect_equal(dim(fitphy$p.value), dim(fitlimma$p.value))
 
   ## Other functions
-  expect_error(treat(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
-  expect_error(decideTests(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
-  expect_error(classifyTestsF(resPhyloLmFit), "is not supported for an object of class `PhyloMArrayLM`.")
+  expect_equal(dim(treat(fitlimma)$p.value), dim(treat(fitphy)$p.value))
+  expect_equal(dim(decideTests(fitlimma)@.Data), dim(decideTests(fitphy)@.Data))
+  expect_equal(dim(classifyTestsF(fitlimma)@.Data), dim(classifyTestsF(fitphy)@.Data))
+
+  ## Methods
+  resPhyloLmFit <- phylolmFit(y_data, design = design, phy = tree,
+                              model = model,
+                              measurement_error = measurement_error,
+                              use_consensus = FALSE)
+
+  expect_error(getParameters(resPhyloLmFit), "Fit did not use a consensus tree.")
+  pp <- getParameters(resPhyloLmFit, consensus = FALSE)
+  expect_equal(dim(pp), c(20, 1))
+  expect_equal(colnames(pp), "lambda")
+  expect_warning(expect_null(consensusTree(resPhyloLmFit)), "did not use a consensus tree")
 
 })
 

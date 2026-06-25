@@ -1,6 +1,12 @@
 url: https://pbastide.github.io/phyloDE/
 template:
   bootstrap: 5
+navbar:
+  left:
+  - text: Tutorial
+    href: articles/crayfish_exemple_tutorial.html
+  - text: Reference
+    href: reference/index.html
 reference:
 - title: Phylogenetic Differential Expression
   desc: Functions to test for differential expression using moderated phylogenetic linear regression.
@@ -8,16 +14,25 @@ reference:
   - phyloDE-package
   - phylolmFit
   - phylogeneticCorrelations
-- title: PhyloMArrayLM Class
-  desc: Class containing the result of a fit and associated helper functions.
+- title: S4 Classes
+  desc: Classes containing the result of a fit and associated helper functions.
   contents:
   - PhyloMArrayLM-class
-  - consensus_tree
-  - eBayes
-  - log_likelihood
-  - decideTests
+  - ConsensusTreeModel-class
+  - getParameters
+  - plotParameters
+  - consensusTree
+  - logLikelihood
 - title: Helper Functions
   desc: Function to pre-process the tree or the data.
   contents:
+  - phyHeatmap
   - addReplicatesOnTree
   - lengthNormalizeRNASeq
+  - rhoFromAlpha
+  - getBoundsSelectionStrength
+  - getMinError
+- title: Dataset
+  desc: Crayfish dataset
+  contents:
+  - crayfish

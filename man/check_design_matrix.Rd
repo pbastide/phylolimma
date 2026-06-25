@@ -11,9 +11,14 @@ check_design_matrix(design, y, phy)
 with rows corresponding to samples and columns to coefficients to be estimated.
 Defaults to the unit vector (intercept).}
 
-\item{phy}{an object of class \code{\link[ape]{phylo}}.
-It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-or a tree such that tip labels match with species names in `col_species`.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of \code{object} follow the pattern
+\code{SpeciesName_SampleId} or \code{SpeciesName.SampleId},
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in \code{col_species} (see below).
+The tip labels of the tree can also match exactly the names as the columns of \code{object},
+so that the tree directly includes all the replicates.}
 }
 \value{
 the correctly formatted design matrix

@@ -2,14 +2,14 @@
 % Please edit documentation in R/phylogeneticCorrelations.R
 \name{phylogeneticCorrelations}
 \alias{phylogeneticCorrelations}
-\title{Phylogenetic correlation using a consensus tree}
+\title{Phylogenetic Correlation using a Consensus Tree}
 \usage{
 phylogeneticCorrelations(
   object,
   design = NULL,
   phy,
   col_species = NULL,
-  model = c("BM", "lambda", "OUfixedRoot"),
+  model = c("OUfixedRoot", "BM", "lambda"),
   measurement_error = TRUE,
   trim = c(0.25, 0.05),
   REML = TRUE,
@@ -18,29 +18,40 @@ phylogeneticCorrelations(
 )
 }
 \arguments{
-\item{object}{A matrix data object containing normalized expression values,
+\item{object}{a matrix data object containing normalized expression values,
 with rows corresponding to genes and columns to samples (species).}
 
 \item{design}{the design matrix of the experiment,
 with rows corresponding to samples and columns to coefficients to be estimated.
 Defaults to the unit vector (intercept).}
 
-\item{phy}{an object of class \code{\link[ape]{phylo}}.
-It must be either a tree with tips having the same names as the columns of \code{object} (including replicates),
-or a tree such that tip labels match with species names in `col_species`.}
+\item{phy}{an object of class \code{\link[ape]{phylo}}, representing the phylogenetic
+relationships between the species. It must be dated and ultrametric.
+If the column names of \code{object} follow the pattern
+\code{SpeciesName_SampleId} or \code{SpeciesName.SampleId},
+an automatic matching of the samples on the tip of the tree is performed.
+Otherwise, the tree tip labels must match with species names in \code{col_species} (see below).
+The tip labels of the tree can also match exactly the names as the columns of \code{object},
+so that the tree directly includes all the replicates.}
 
-\item{col_species}{a character vector with same length as columns in the expression matrix,
-specifying the species for the corresponding column. If left `NULL`, an automatic parsing of species names with sample ids is attempted.}
+\item{col_species}{a character vector with same length as there are columns
+in the expression matrix, specifying the species for the corresponding column.
+If left \code{NULL} (the default), an automatic parsing of species names with sample ids is attempted.}
 
 \item{model}{the phylogenetic model used to correct for the phylogeny.
-Must be one of "BM", "lambda" or "OUfixedRoot".
+Must be one of  "OUfixedRoot" (the default), "BM", or "lambda".
 See \code{\link[phylolm]{phylolm}} for more details.}
 
-\item{measurement_error}{a logical value indicating whether there is measurement error.
-Default to \code{TRUE}.
+\item{measurement_error}{a logical value indicating whether there is measurement error,
+or individual independent (non phylogenetic) variation among samples.
+Default to \code{TRUE}. Setting this to \code{FALSE} can give unexpected results,
+except for the "lambda" model.
 See \code{\link[phylolm]{phylolm}} for more details.}
 
-\item{trim}{a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of `atanh(all.lambdas)` and `atanh(rho)` when computing the trimmed mean. If a single value is provided, it is recycled as a vector of size two. Default to `c(0.25, 0.05)`. See also the `trim` argument in \code{\link[limma]{duplicateCorrelation}}.}
+\item{trim}{a vector of size two, with the fraction of observations to be trimmed from the lower and upper ends of
+\code{atanh(all.lambdas)} and \code{atanh(rho)} when computing the trimmed mean.
+If a single value is provided, it is recycled as a vector of size two.
+Default to \code{c(0.25, 0.05)}. See also the \code{trim} argument in \code{\link[limma]{duplicateCorrelation}}.}
 
 \item{REML}{Use REML (default) or ML for estimating the parameters.}
 
@@ -49,22 +60,87 @@ See \code{\link[phylolm]{phylolm}} for more details.}
 \item{...}{further parameters to be passed to \code{\link[phylolm]{phylolm}}.}
 }
 \value{
-An object of class \code{TransTree-class},
-with list components:
-\itemize{
-\item \code{tree} the transformed consensus tree
-\item \code{params} the associated consensus parameters.
-}
-This consensus tree defines a correlation structure, and can be passed on to \code{\link[limma]{lmFit}}.
+An object of class \code{\link{ConsensusTreeModel-class}}.
+This consensus tree defines a correlation structure,
+and can be passed on to \code{\link{phylolmFit}}.
 }
 \description{
-This function applies \code{\link[limma]{lmFit}} to the normalized data,
-in order to take the phylogeny into account.
-TODO: explain more.
+This function finds a consensus correlation structure common to all genes,
+that can be used as an entry in \code{\link{phylolmFit}}.
+It is similar to \code{\link[limma]{duplicateCorrelation}},
+but instead of being simply block diagonal, the correlation matrix
+has a structure given by the phylogenetic tree and the model of trait
+evolution.
+}
+\details{
+This function finds a consensus tree in two steps:
+\enumerate{
+\item Fit a phylogenetic linear model with \code{\link[phylolm]{phylolm}} on each gene.
+\item Use the trimmed mean of transformed parameters to get one regularized value for all the genes.
+}
+
+Given a vector of parameters \code{params_genes} on all genes,
+the consensus parameter \code{param_consensus} is found using the formula:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{param_consensus = mean_trim(tanh(params_genes), trim = trim)
+}\if{html}{\out{</div>}}
+
+The regularized parameters \code{params} depend on the phylogenetic model used:
+\itemize{
+\item For a BM with measurement error or a Pagel's lambda model, the
+regularized parameter is \code{lambda}.
+\item For a OU process with measurement error the
+regularized parameters are \code{lambda} and \code{rho}.
+}
+
+The consensus tree can then be given to \code{\link{phylolmFit}} with the
+argument \code{consensus_tree}.
+This two step procedure is equivalent to calling \code{\link{phylolmFit}}
+with \code{use_consensus = TRUE} and no consensus tree directly (see Examples).
+
+The default bounds on the phylogenetic parameters are the same as in
+\code{\link[phylolm]{phylolm}}, except for the \code{alpha} parameter of the OU,
+that use ad-hoc bounds from function \code{\link{getBoundsSelectionStrength}},
+and the \code{sigma2_error} of the intra-specific variance,
+that takes it lower bound from function \code{\link{getMinError}}.
+}
+\examples{
+## Use the normalized Crayfish dataset
+data(crayfish)
+# For more details on the normalization, see \code{vignette("crayfish_exemple_tutorial")}
+norm_data <- lengthNormalizeRNASeq(crayfish$counts, crayfish$lengths)
+
+## Design matrix
+design <- model.matrix(~ sights, model.frame(crayfish$sights))
+
+## Consensus tree (using only genes 1 to 50)
+ctree <- phylogeneticCorrelations(norm_data[1:50, ], design = design, phy = crayfish$tree)
+ctree
+
+## linear model fit using the consensus tree
+pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree, consensus_tree = ctree)
+pfit
+
+## eBayes correction
+pfit <- limma::eBayes(pfit, trend = TRUE)
+limma::topTable(pfit, coef = 2)
+
+## Volcano plot
+limma::volcanoplot(pfit, coef = 2, highlight = 2)
+
+## Direct call to phylolmFit gives the same results
+pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree)
+pfit
+
+## eBayes correction
+pfit <- limma::eBayes(pfit, trend = TRUE)
+limma::topTable(pfit, coef = 2)
+
 }
 \seealso{
-\code{\link[limma]{lmFit}}, \code{\link[phylolm]{phylolm}}, \code{\link[limma]{duplicateCorrelation}}
-
-\code{\link[limma]{lmFit}}, \code{\link{phylolmFit}},
-\code{\link[phylolm]{phylolm}}, \code{\link{eBayes}}
+\code{\link{phylolmFit}},
+\code{\link[phylolm]{phylolm}},
+\code{\link[limma]{duplicateCorrelation}}
+\code{\link{mean_trim}}
+\code{\link{lengthNormalizeRNASeq}}
 }

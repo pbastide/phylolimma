@@ -122,7 +122,7 @@ test_that("Errors with phylogenetic correlations", {
   expect_equal(pc$params$alpha, 5.80, tol = 1e-2)
 
   expect_error(
-    phylolmFit(y_data, design = design, phy = tree, use_consensus = TRUE, consensus_tree = pc),
+    phylolmFit(y_data, design = design, phy = tree, model = "BM", use_consensus = TRUE, consensus_tree = pc),
     "The consensus tree was computed with the OUfixedRoot model, but the model used is BM.")
 
   expect_error(
