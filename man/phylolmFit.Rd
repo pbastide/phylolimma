@@ -105,33 +105,20 @@ and the \code{sigma2_error} of the intra-specific variance,
 that takes it lower bound from function \code{\link{getMinError}}.
 }
 \examples{
-## Simulate a tree with tip conditions
-set.seed(1289)
-ntips <- 10
-tree <- ape::rphylo(ntips, 0.1, 0)
-condition <- c(0, 0, 1, 1, 1, 0, 0, 1, 1, 0)
-plot(tree, tip.color = hcl.colors(3)[condition + 1])
-
-## Simulate data with 1 to 3 samples per species
-reps <- sample(1:3, ntips, replace = TRUE)
-rep_ids <- make.unique(rep(tree$tip.label, times = reps), sep = "_")
-ngenes <- 20
-dat <- matrix(rnorm(sum(reps) * ngenes, 1, 0.5), nrow = ngenes)
-rownames(dat) <- paste0("g", 1:ngenes)
-colnames(dat) <- rep_ids
-
-## Add differentially expressed genes
-condition_reps <- rep(condition, times = reps)
-ndiff <- 5
-dat[1:ndiff, ] <- dat[1:ndiff, ] + rexp(ndiff, 1/2) \%*\% t(condition_reps)
+## Use the normalized Crayfish dataset
+data(crayfish)
+# For more details on the normalization, see \code{vignette("crayfish_exemple_tutorial")}
+norm_data <- lengthNormalizeRNASeq(crayfish$counts, crayfish$lengths)
 
 ## Design matrix
-design <- cbind(rep(1, ncol(dat)), condition_reps)
-colnames(design) <- c("(Intercept)", "condition")
-rownames(design) <- rep_ids
+design <- model.matrix(~ sights, model.frame(crayfish$sights))
 
-## linear model fit
-pfit <- phylolmFit(dat, design = design, phy = tree)
+## Consensus tree (using only genes 1 to 50)
+ctree <- phylogeneticCorrelations(norm_data[1:50, ], design = design, phy = crayfish$tree)
+ctree
+
+## linear model fit using the consensus tree
+pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree, consensus_tree = ctree)
 pfit
 
 ## eBayes correction
@@ -139,7 +126,15 @@ pfit <- limma::eBayes(pfit, trend = TRUE)
 limma::topTable(pfit, coef = 2)
 
 ## Volcano plot
-limma::volcanoplot(pfit, coef = 2, highlight = ndiff)
+limma::volcanoplot(pfit, coef = 2, highlight = 2)
+
+## Direct call to phylolmFit gives the same results
+pfit <- phylolmFit(norm_data[1:50, ], design = design, phy = crayfish$tree)
+pfit
+
+## eBayes correction
+pfit <- limma::eBayes(pfit, trend = TRUE)
+limma::topTable(pfit, coef = 2)
 
 
 }
