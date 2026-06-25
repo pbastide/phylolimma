@@ -190,7 +190,7 @@ that takes it lower bound from function <code><a href="getMinError.html">getMinE
 <span class="r-out co"><span class="r-pr">#&gt;</span> ConsensusTreeModel</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Consensus tree on: 50 genes.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Model: OUfixedRoot, with measurement error.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Consensus parameters: lambda = 0.7632214, rho = 0.911506</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Consensus parameters: lambda = 0.7632214, rho = 0.9115059</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## linear model fit using the consensus tree</span></span></span>
 <span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">phylolmFit</span><span class="op">(</span><span class="va">norm_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="op">]</span>, design <span class="op">=</span> <span class="va">design</span>, phy <span class="op">=</span> <span class="va">crayfish</span><span class="op">$</span><span class="va">tree</span>, consensus_tree <span class="op">=</span> <span class="va">ctree</span><span class="op">)</span></span></span>
@@ -203,17 +203,17 @@ that takes it lower bound from function <code><a href="getMinError.html">getMinE
 <span class="r-in"><span><span class="co">## eBayes correction</span></span></span>
 <span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">pfit</span>, trend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/toptable.html" class="external-link">topTable</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               logFC  AveExpr         t    P.Value adj.P.Val         B</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000013 -1.762035 4.157728 -2.371752 0.02271043 0.3322022 -4.553342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000006 -1.123699 4.661495 -2.264746 0.02913447 0.3322022 -4.557420</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000011 -1.515651 6.119281 -2.198865 0.03385542 0.3322022 -4.559880</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000045 -1.656621 4.360357 -2.180602 0.03527915 0.3322022 -4.560555</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000017 -1.246775 3.627495 -2.170592 0.03608178 0.3322022 -4.560923</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000000 -1.125277 3.112778 -2.125918 0.03986427 0.3322022 -4.562556</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000041 -1.567679 3.964510 -2.008296 0.05153887 0.3631216 -4.566756</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000025 -1.957641 4.706274 -1.952082 0.05809945 0.3631216 -4.568710</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000031 -1.226828 4.569394 -1.849555 0.07192955 0.3996086 -4.572180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000046 -0.970511 6.000647 -1.599226 0.11780259 0.5133275 -4.580095</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                logFC  AveExpr         t    P.Value adj.P.Val         B</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000013 -1.7620345 4.157728 -2.371752 0.02271045 0.3322023 -4.553342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000006 -1.1236994 4.661494 -2.264745 0.02913448 0.3322023 -4.557420</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000011 -1.5156510 6.119280 -2.198865 0.03385544 0.3322023 -4.559880</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000045 -1.6566211 4.360357 -2.180602 0.03527917 0.3322023 -4.560555</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000017 -1.2467750 3.627495 -2.170592 0.03608177 0.3322023 -4.560923</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000000 -1.1252774 3.112777 -2.125918 0.03986428 0.3322023 -4.562556</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000041 -1.5676790 3.964509 -2.008296 0.05153887 0.3631214 -4.566756</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000025 -1.9576408 4.706273 -1.952082 0.05809943 0.3631214 -4.568710</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000031 -1.2268282 4.569394 -1.849555 0.07192953 0.3996085 -4.572180</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000046 -0.9705111 6.000647 -1.599226 0.11780259 0.5133276 -4.580095</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Volcano plot</span></span></span>
 <span class="r-in"><span><span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/volcanoplot.html" class="external-link">volcanoplot</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span>, highlight <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
@@ -230,17 +230,17 @@ that takes it lower bound from function <code><a href="getMinError.html">getMinE
 <span class="r-in"><span><span class="co">## eBayes correction</span></span></span>
 <span class="r-in"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">eBayes</a></span><span class="op">(</span><span class="va">pfit</span>, trend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">limma</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/limma/man/toptable.html" class="external-link">topTable</a></span><span class="op">(</span><span class="va">pfit</span>, coef <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               logFC  AveExpr         t    P.Value adj.P.Val         B</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000013 -1.762035 4.157728 -2.371752 0.02271043 0.3322022 -4.553342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000006 -1.123699 4.661495 -2.264746 0.02913447 0.3322022 -4.557420</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000011 -1.515651 6.119281 -2.198865 0.03385542 0.3322022 -4.559880</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000045 -1.656621 4.360357 -2.180602 0.03527915 0.3322022 -4.560555</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000017 -1.246775 3.627495 -2.170592 0.03608178 0.3322022 -4.560923</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000000 -1.125277 3.112778 -2.125918 0.03986427 0.3322022 -4.562556</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000041 -1.567679 3.964510 -2.008296 0.05153887 0.3631216 -4.566756</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000025 -1.957641 4.706274 -1.952082 0.05809945 0.3631216 -4.568710</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000031 -1.226828 4.569394 -1.849555 0.07192955 0.3996086 -4.572180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000046 -0.970511 6.000647 -1.599226 0.11780259 0.5133275 -4.580095</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                logFC  AveExpr         t    P.Value adj.P.Val         B</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000013 -1.7620345 4.157728 -2.371752 0.02271045 0.3322023 -4.553342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000006 -1.1236994 4.661494 -2.264745 0.02913448 0.3322023 -4.557420</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000011 -1.5156510 6.119280 -2.198865 0.03385544 0.3322023 -4.559880</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000045 -1.6566211 4.360357 -2.180602 0.03527917 0.3322023 -4.560555</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000017 -1.2467750 3.627495 -2.170592 0.03608177 0.3322023 -4.560923</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000000 -1.1252774 3.112777 -2.125918 0.03986428 0.3322023 -4.562556</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000041 -1.5676790 3.964509 -2.008296 0.05153887 0.3631214 -4.566756</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000025 -1.9576408 4.706273 -1.952082 0.05809943 0.3631214 -4.568710</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000031 -1.2268282 4.569394 -1.849555 0.07192953 0.3996085 -4.572180</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> OG0000046 -0.9705111 6.000647 -1.599226 0.11780259 0.5133276 -4.580095</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
