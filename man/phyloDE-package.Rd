@@ -13,8 +13,8 @@ with moderated statistics tailored for gene expression implemented in \code{\lin
 With a design matrix that expresses a grouping conditions at the tip of a phylogeny,
 \code{phyloDE} can perform Differential Expression analysis.
 
-The main function of the package is \code{\link{phylolmFit}},
-that inherits from the interfaces of both \code{\link[phylolm]{phylolm}}
+The main function of the package are \code{\link{phylolmFit}} and \code{\link{phylogeneticCorrelations}},
+that inherit from the interfaces of both \code{\link[phylolm]{phylolm}}
 and \code{\link[limma]{limma}}.
 }
 \seealso{

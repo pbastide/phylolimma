@@ -1,4 +1,4 @@
-#' @title Get Bounds on alpha for an OU
+#' @title Get bounds on alpha for an OU
 #'
 #' @description
 #' Find reasonable bounds on the \code{alpha} parameter of an OU process on a tree

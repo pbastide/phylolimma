@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{getBoundsSelectionStrength}
 \alias{getBoundsSelectionStrength}
-\title{Get Bounds on alpha for an OU}
+\title{Get bounds on alpha for an OU}
 \usage{
 getBoundsSelectionStrength(
   phy,

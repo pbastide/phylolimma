@@ -46,7 +46,7 @@ setClass("PhyloMArrayLM",
 #' \code{ConsensusTreeModel} objects do not contain any slots (apart from .Data)
 #' but they should contain the following list components:
 #'
-#'#' \itemize{
+#' \itemize{
 #' \item \code{tree} the transformed consensus tree
 #' \item \code{params} the associated consensus parameters.
 #' }
