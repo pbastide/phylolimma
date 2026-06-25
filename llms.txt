@@ -73,7 +73,7 @@ Function to pre-process the tree or the data.
   [`alphaFromRho()`](https://pbastide.github.io/phyloDE/reference/rhoFromAlpha.md)
   : Compute rho parameter
 - [`getBoundsSelectionStrength()`](https://pbastide.github.io/phyloDE/reference/getBoundsSelectionStrength.md)
-  : Get Bounds on alpha for an OU
+  : Get bounds on alpha for an OU
 - [`getMinError()`](https://pbastide.github.io/phyloDE/reference/getMinError.md)
   : Get Lower Bound on sigma2_error
 

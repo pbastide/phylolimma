@@ -9,8 +9,6 @@ parameters, obtained through function
 `ConsensusTreeModel` objects do not contain any slots (apart from .Data)
 but they should contain the following list components:
 
-\#'
-
 - `tree` the transformed consensus tree
 
 - `params` the associated consensus parameters.

@@ -1,4 +1,4 @@
-# Get Bounds on alpha for an OU
+# Get bounds on alpha for an OU
 
 Find reasonable bounds on the `alpha` parameter of an OU process on a
 tree when fitted with
