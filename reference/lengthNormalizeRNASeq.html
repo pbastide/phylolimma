@@ -9,7 +9,7 @@ an appropriate transformation."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">phyloDE</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,23 +55,23 @@ an appropriate transformation.</p>
 
 
 <dl><dt id="arg-countmatrix">countMatrix<a class="anchor" aria-label="anchor" href="#arg-countmatrix"></a></dt>
-<dd><p>The RNASeq count matrix. Rows and columns should be named.</p></dd>
+<dd><p>the RNASeq count matrix. Rows and columns should be named.</p></dd>
 
 
 <dt id="arg-lengthmatrix">lengthMatrix<a class="anchor" aria-label="anchor" href="#arg-lengthmatrix"></a></dt>
-<dd><p>The associated length matrix. Should have the same dimensions as <code>countMatrix</code>, with the same names.</p></dd>
+<dd><p>the associated length matrix. Should have the same dimensions as <code>countMatrix</code>, with the same names.</p></dd>
 
 
 <dt id="arg-normalisationfactor">normalisationFactor<a class="anchor" aria-label="anchor" href="#arg-normalisationfactor"></a></dt>
-<dd><p>Normalization factors to scale the raw library sizes, as computed e.g. by <code><a href="https://rdrr.io/pkg/edgeR/man/calcNormFactors.html" class="external-link">calcNormFactors</a></code>.</p></dd>
+<dd><p>normalization factors to scale the raw library sizes, as computed e.g. by <code><a href="https://rdrr.io/pkg/edgeR/man/calcNormFactors.html" class="external-link">calcNormFactors</a></code>.</p></dd>
 
 
 <dt id="arg-lengthnormalization">lengthNormalization<a class="anchor" aria-label="anchor" href="#arg-lengthnormalization"></a></dt>
-<dd><p>one of "none" (no correction), "TPM" (default) or "RPKM". See details.</p></dd>
+<dd><p>one of "none", "TPM" (default) or "RPKM". See details.</p></dd>
 
 
 <dt id="arg-datatransformation">dataTransformation<a class="anchor" aria-label="anchor" href="#arg-datatransformation"></a></dt>
-<dd><p>one of "log2", "asin(sqrt)" or "sqrt." See details.</p></dd>
+<dd><p>one of "log2" (default), "asin(sqrt)" or "sqrt." See details.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -80,17 +80,28 @@ an appropriate transformation.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The normalization procedures are:</p><dl><dt><code>none</code>:</dt>
-<dd><p>No length normalization.</p></dd>
-
-<dt><code>TPM</code>:</dt>
-<dd><p>TODO</p></dd>
-
-<dt><code>RPKM</code>:</dt>
-<dd><p>TODO</p></dd>
-
-
-</dl></div>
+    <p>The <code>lengthMatrix</code>
+is used to normalize the counts, using one of the following formulas:</p><ul><li><p><code>lengthNormalization="none"</code> : \(CPM_{gi} = \frac{N_{gi} + 0.5}{NF_i \times \sum_{g} N_{gi} + 1} \times 10^6\)</p></li>
+<li><p><code>lengthNormalization="TPM"</code> : \(TPM_{gi} = \frac{(N_{gi} + 0.5) / L_{gi}}{NF_i \times \sum_{g} N_{gi}/L_{gi} + 1} \times 10^6\)</p></li>
+<li><p><code>lengthNormalization="RPKM"</code> : \(RPKM_{gi} = \frac{(N_{gi} + 0.5) / L_{gi}}{NF_i \times \sum_{g} N_{gi} + 1} \times 10^9\)</p></li>
+</ul><p>where \(N_{gi}\) is the count for gene g and sample i,
+\(L_{gi}\) is the length of gene g in sample i,
+and \(NF_i\) is the normalization for sample i
+stored in <code>normalisationFactor</code>.</p>
+<p>The function specified by the <code>dataTransformation</code> is then applied
+to the normalized count matrix.</p>
+<p>The "\(+0.5\)" is taken from Law et al 2014,
+and dropped from the normalization
+when the transformation is something else than <code>log2</code>.</p>
+<p>The "\(\times 10^6\)" and "\(\times 10^9\)" factors are omitted when
+the <code>asin(sqrt)</code> transformation is taken, as \(asin\) can only
+be applied to real numbers smaller than 1.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Law, C. W., Chen, Y., Shi, W. and Smyth, G. K. (2014), 'voom: precision weights unlock linear model analysis tools for RNA-seq read counts', Genome Biology 15(2), R29.</p>
+<p>Bastide, P., Soneson, C., Stern, D. B., Lespinet, O. and Gallopin, M. (2023), 'A Phylogenetic Framework to Simulate Synthetic Interspecies RNA-Seq Data', Molecular Biology and Evolution 40(1), msac269.</p>
+    </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

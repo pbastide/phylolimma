@@ -153,6 +153,7 @@ lower bound from function
 [`phylolm`](https://rdrr.io/pkg/phylolm/man/phylolm.html),
 [`duplicateCorrelation`](https://rdrr.io/pkg/limma/man/dupcor.html)
 [`mean_trim`](https://pbastide.github.io/phyloDE/reference/mean_trim.md)
+[`lengthNormalizeRNASeq`](https://pbastide.github.io/phyloDE/reference/lengthNormalizeRNASeq.md)
 
 ## Examples
 
