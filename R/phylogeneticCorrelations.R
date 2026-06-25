@@ -56,6 +56,7 @@ NULL
 #' \code{\link[phylolm]{phylolm}},
 #' \code{\link[limma]{duplicateCorrelation}}
 #' \code{\link{mean_trim}}
+#' \code{\link{lengthNormalizeRNASeq}}
 #'
 #' @examples
 #' ## Use the normalized Crayfish dataset

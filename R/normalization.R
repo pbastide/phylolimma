@@ -4,21 +4,42 @@
 #' This function normalizes a count matrix, using the matrix of length, and
 #' an appropriate transformation.
 #'
-#' @param countMatrix The RNASeq count matrix. Rows and columns should be named.
-#' @param lengthMatrix The associated length matrix. Should have the same dimensions as \code{countMatrix}, with the same names.
-#' @param normalisationFactor Normalization factors to scale the raw library sizes, as computed e.g. by \code{\link[edgeR]{calcNormFactors}}.
-#' @param lengthNormalization one of "none" (no correction), "TPM" (default) or "RPKM". See details.
-#' @param dataTransformation one of "log2", "asin(sqrt)" or "sqrt." See details.
+#' @param countMatrix the RNASeq count matrix. Rows and columns should be named.
+#' @param lengthMatrix the associated length matrix. Should have the same dimensions as \code{countMatrix}, with the same names.
+#' @param normalisationFactor normalization factors to scale the raw library sizes, as computed e.g. by \code{\link[edgeR]{calcNormFactors}}.
+#' @param lengthNormalization one of "none", "TPM" (default) or "RPKM". See details.
+#' @param dataTransformation one of "log2" (default), "asin(sqrt)" or "sqrt." See details.
 #'
 #' @return A matrix of normalized and transformed counts, with the same dimensions as \code{countMatrix}.
 #'
 #' @details
-#' The normalization procedures are:
-#' \describe{
-#' \item{\code{none}:}{No length normalization.}
-#' \item{\code{TPM}:}{TODO}
-#' \item{\code{RPKM}:}{TODO}
-#' }
+#' The \code{lengthMatrix}
+#' is used to normalize the counts, using one of the following formulas:
+#' * \code{lengthNormalization="none"} : \eqn{CPM_{gi} = \frac{N_{gi} + 0.5}{NF_i \times \sum_{g} N_{gi} + 1} \times 10^6}
+#' * \code{lengthNormalization="TPM"} : \eqn{TPM_{gi} = \frac{(N_{gi} + 0.5) / L_{gi}}{NF_i \times \sum_{g} N_{gi}/L_{gi} + 1} \times 10^6}
+#' * \code{lengthNormalization="RPKM"} : \eqn{RPKM_{gi} = \frac{(N_{gi} + 0.5) / L_{gi}}{NF_i \times \sum_{g} N_{gi} + 1} \times 10^9}
+#'
+#' where \eqn{N_{gi}} is the count for gene g and sample i,
+#' \eqn{L_{gi}} is the length of gene g in sample i,
+#' and \eqn{NF_i} is the normalization for sample i
+#' stored in \code{normalisationFactor}.
+#'
+#' The function specified by the \code{dataTransformation} is then applied
+#' to the normalized count matrix.
+#'
+#' The "\eqn{+0.5}" is taken from Law et al 2014,
+#' and dropped from the normalization
+#' when the transformation is something else than \code{log2}.
+#'
+#' The "\eqn{\times 10^6}" and "\eqn{\times 10^9}" factors are omitted when
+#' the \code{asin(sqrt)} transformation is taken, as \eqn{asin} can only
+#' be applied to real numbers smaller than 1.
+#'
+#' @references
+#' Law, C. W., Chen, Y., Shi, W. and Smyth, G. K. (2014), 'voom: precision weights unlock linear model analysis tools for RNA-seq read counts', Genome Biology 15(2), R29.
+#'
+#' Bastide, P., Soneson, C., Stern, D. B., Lespinet, O. and Gallopin, M. (2023), 'A Phylogenetic Framework to Simulate Synthetic Interspecies RNA-Seq Data', Molecular Biology and Evolution 40(1), msac269.
+#'
 #'
 #' @export
 lengthNormalizeRNASeq <- function(countMatrix,

@@ -1,7 +1,7 @@
 Package: phyloDE
 Type: Package
 Title: Phylogenetic gene Differential Expression analysis
-Version: 0.0.1.9000
+Version: 0.1.0
 Authors@R: c(
     person("Paul", "Bastide", email = "paul.bastide@cnrs.fr", role = c("aut", "cre")),
     person("Mélina", "Gallopin", role = "aut"),
